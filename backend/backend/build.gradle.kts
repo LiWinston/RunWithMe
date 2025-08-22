@@ -2,7 +2,7 @@ val kotlin_version: String by project
 val logback_version: String by project
 
 plugins {
-    kotlin("jvm") version "2.1.10"
+    kotlin("jvm")
     id("io.ktor.plugin") version "3.2.3"
 }
 
@@ -12,11 +12,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     }
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17)) // 统一 JDK 版本
-    }
-}
+
 
 group = "com.example"
 version = "0.0.1"
@@ -28,11 +24,11 @@ application {
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
 
-repositories {
-    mavenCentral()
-}
 
 dependencies {
     implementation("io.ktor:ktor-server-call-logging:3.2.3")

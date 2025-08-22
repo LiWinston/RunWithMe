@@ -21,3 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "My Application"
 include(":app")
+include(":backend1")
+project(":backend1").projectDir = File(rootDir, "backend/backend/")
