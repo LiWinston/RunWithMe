@@ -43,8 +43,7 @@ public class WeatherGeoCacheService {
     private static final double CACHE_RADIUS_KM = 10.0; // 10公里范围内认为是相近位置
     private static final long CACHE_DURATION_MINUTES = 30; // 缓存数据30分钟（自动过期）
     private static final long GEO_CLEANUP_HOURS = 1; // Geo数据1小时清理一次（兜底机制）
-    private static final long GEO_CLEANUP_HOURS = 1; // Geo数据1小时清理一次
-    
+
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
     

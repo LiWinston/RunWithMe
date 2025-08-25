@@ -60,4 +60,27 @@ dependencies {
     
     // 安全加密
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    
+    // Fragment KTX
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
+    
+    // 生命周期组件
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    
+    // Google Play Services (位置服务)
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    
+    // Glide (图片加载)
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    
+    // RecyclerView
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    
+    // CardView
+    implementation("androidx.cardview:cardview:1.0.0")
+    
+    // Dagger Hilt (依赖注入)
+    implementation("com.google.dagger:hilt-android:2.48")
+    // kapt("com.google.dagger:hilt-compiler:2.48")
 }
