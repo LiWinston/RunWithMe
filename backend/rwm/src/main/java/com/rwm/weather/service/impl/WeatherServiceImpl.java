@@ -1,5 +1,7 @@
 package com.rwm.weather.service.impl;
 
+import com.rwm.weather.cache.WeatherCacheEntry;
+import com.rwm.weather.cache.WeatherGeoCacheService;
 import com.rwm.weather.client.WeatherApiClient;
 import com.rwm.weather.config.WeatherConfig;
 import com.rwm.weather.dto.CurrentConditionsResponse;
@@ -11,8 +13,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 /**
  * Weather 服务实现
+ * 集成了基于地理位置的缓存功能
  */
 @Service
 public class WeatherServiceImpl implements WeatherService {
@@ -21,10 +26,14 @@ public class WeatherServiceImpl implements WeatherService {
     
     private final WeatherApiClient weatherApiClient;
     private final WeatherConfig weatherConfig;
+    private final WeatherGeoCacheService cacheService;
     
-    public WeatherServiceImpl(WeatherApiClient weatherApiClient, WeatherConfig weatherConfig) {
+    public WeatherServiceImpl(WeatherApiClient weatherApiClient, 
+                             WeatherConfig weatherConfig,
+                             WeatherGeoCacheService cacheService) {
         this.weatherApiClient = weatherApiClient;
         this.weatherConfig = weatherConfig;
+        this.cacheService = cacheService;
     }
     
     @Override
@@ -50,10 +59,22 @@ public class WeatherServiceImpl implements WeatherService {
     public CurrentConditionsResponse getCurrentConditions(Location location, UnitsSystem unitsSystem) {
         logger.info("Getting current conditions for location: {}, units: {}", location, unitsSystem);
         
+        // 首先检查缓存
+        Optional<WeatherCacheEntry> cachedEntry = cacheService.findNearbyCache(location);
+        if (cachedEntry.isPresent() && cachedEntry.get().getCurrentConditions() != null) {
+            logger.info("Found cached current conditions for nearby location (within 10km)");
+            return cachedEntry.get().getCurrentConditions();
+        }
+        
         try {
+            // 缓存未命中，调用API获取数据
+            logger.debug("Cache miss, fetching current conditions from API");
             CurrentConditionsResponse response = weatherApiClient.getCurrentConditions(location, unitsSystem);
             
-            logger.info("Successfully retrieved current conditions for location: {}", location);
+            // 缓存结果
+            cacheService.cacheCurrentConditions(location, response);
+            
+            logger.info("Successfully retrieved and cached current conditions for location: {}", location);
             return response;
             
         } catch (Exception e) {
@@ -100,10 +121,22 @@ public class WeatherServiceImpl implements WeatherService {
         logger.info("Getting hourly forecast for location: {}, units: {}, hours: {}, pageSize: {}", 
                    location, unitsSystem, hours, pageSize);
         
+        // 首先检查缓存
+        Optional<WeatherCacheEntry> cachedEntry = cacheService.findNearbyCache(location);
+        if (cachedEntry.isPresent() && cachedEntry.get().getHourlyForecast() != null) {
+            logger.info("Found cached hourly forecast for nearby location (within 10km)");
+            return cachedEntry.get().getHourlyForecast();
+        }
+        
         try {
+            // 缓存未命中，调用API获取数据
+            logger.debug("Cache miss, fetching hourly forecast from API");
             HourlyForecastResponse response = weatherApiClient.getHourlyForecast(location, unitsSystem, hours, pageSize, pageToken);
             
-            logger.info("Successfully retrieved hourly forecast for location: {}", location);
+            // 缓存结果
+            cacheService.cacheHourlyForecast(location, response);
+            
+            logger.info("Successfully retrieved and cached hourly forecast for location: {}", location);
             return response;
             
         } catch (Exception e) {
