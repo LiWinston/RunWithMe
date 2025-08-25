@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="80dp"
+    android:height="80dp"
+    android:viewportWidth="80"
+    android:viewportHeight="80">
+    
+    <!-- Dumbbell -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M15,35L65,35C67,35 68,36 68,38L68,42C68,44 67,45 65,45L15,45C13,45 12,44 12,42L12,38C12,36 13,35 15,35Z" />
+    
+    <!-- Dumbbell weights -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M8,30L18,30C19,30 20,31 20,32L20,48C20,49 19,50 18,50L8,50C7,50 6,49 6,48L6,32C6,31 7,30 8,30Z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M62,30L72,30C73,30 74,31 74,32L74,48C74,49 73,50 72,50L62,50C61,50 60,49 60,48L60,32C60,31 61,30 62,30Z" />
+    
+    <!-- Heart rate line -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M20,15L25,15L27,10L30,20L32,5L35,25L37,15L42,15" />
+    
+    <!-- Target/Goal circle using path -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:fillColor="#00000000"
+        android:pathData="M40,57C44.4,57 48,60.6 48,65C48,69.4 44.4,73 40,73C35.6,73 32,69.4 32,65C32,60.6 35.6,57 40,57Z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,62C42.2,62 44,63.8 44,66C44,68.2 42.2,70 40,70C37.8,70 36,68.2 36,66C36,63.8 37.8,62 40,62Z" />
+        
+</vector>

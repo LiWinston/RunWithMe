@@ -1,8 +1,7 @@
 package com.example.myapplication.landr.registerapp
 
 import android.content.Intent
-import android.widget.RadioGroup
-import android.widget.RadioButton
+import android.widget.LinearLayout
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.util.Log
@@ -27,7 +26,10 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var emailEt: EditText
     private lateinit var firstnameEt: EditText
     private lateinit var lastnameEt: EditText
-    private lateinit var genderRg: RadioGroup
+    private lateinit var maleOption: LinearLayout
+    private lateinit var femaleOption: LinearLayout
+    private lateinit var otherOption: LinearLayout
+    private var selectedGender: String? = null
     private lateinit var ageEt: EditText
     private lateinit var phoneEt: EditText
     private lateinit var heightEt: EditText
@@ -46,6 +48,7 @@ class RegisterActivity : AppCompatActivity() {
 
         initViews()
         setupFitnessLevelSpinner()
+        setupGenderSelection()
         setupClickListeners()
     }
 
@@ -55,7 +58,9 @@ class RegisterActivity : AppCompatActivity() {
         emailEt = findViewById(R.id.emailEt)
         firstnameEt = findViewById(R.id.firstnameEt)
         lastnameEt = findViewById(R.id.lastnameEt)
-        genderRg = findViewById(R.id.genderRg)
+        maleOption = findViewById(R.id.maleOption)
+        femaleOption = findViewById(R.id.femaleOption)
+        otherOption = findViewById(R.id.otherOption)
         ageEt = findViewById(R.id.ageEt)
         phoneEt = findViewById(R.id.phoneEt)
         heightEt = findViewById(R.id.heightEt)
@@ -74,6 +79,31 @@ class RegisterActivity : AppCompatActivity() {
         )
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         fitnessLevelSpinner.adapter = adapter
+    }
+
+    private fun setupGenderSelection() {
+        maleOption.setOnClickListener {
+            selectGender("MALE", maleOption)
+        }
+        
+        femaleOption.setOnClickListener {
+            selectGender("FEMALE", femaleOption)
+        }
+        
+        otherOption.setOnClickListener {
+            selectGender("OTHER", otherOption)
+        }
+    }
+
+    private fun selectGender(gender: String, selectedView: LinearLayout) {
+        // Reset all selections
+        maleOption.isSelected = false
+        femaleOption.isSelected = false
+        otherOption.isSelected = false
+        
+        // Set the selected gender
+        selectedGender = gender
+        selectedView.isSelected = true
     }
 
     private fun setupClickListeners() {
@@ -125,17 +155,7 @@ class RegisterActivity : AppCompatActivity() {
         }
 
         // 获取性别
-        val selectedGenderId = genderRg.checkedRadioButtonId
-        var gender: String? = null
-        if (selectedGenderId != -1) {
-            val selectedGenderRb = findViewById<RadioButton>(selectedGenderId)
-            gender = when (selectedGenderRb.text.toString()) {
-                "Male" -> "MALE"
-                "Female" -> "FEMALE"
-                "Other" -> "OTHER"
-                else -> "OTHER"
-            }
-        }
+        val gender = selectedGender
 
         // 转换数值类型
         val age = if (ageText.isNotEmpty()) ageText.toIntOrNull() else null

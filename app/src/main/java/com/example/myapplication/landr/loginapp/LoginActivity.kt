@@ -32,12 +32,6 @@ class LoginActivity : AppCompatActivity() {
         RetrofitClient.init(this)
         tokenManager = TokenManager.getInstance(this)
         
-        // 检查是否已登录
-        if (tokenManager.isLoggedIn()) {
-            navigateToMain()
-            return
-        }
-        
         setContentView(R.layout.activity_login)
 
         usernameEt = findViewById(R.id.usernameEt)

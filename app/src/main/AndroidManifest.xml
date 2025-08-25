@@ -12,23 +12,38 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.MyApplication">
+        
+        <!-- Splash Activity - 启动页面 -->
         <activity
-            android:name=".landr.loginapp.LoginActivity"
-            android:exported="true">
+            android:name=".SplashActivity"
+            android:exported="true"
+            android:theme="@style/SplashTheme"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
+        <!-- Login Activity -->
+        <activity
+            android:name=".landr.loginapp.LoginActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
+        </activity>
+        
+        <!-- Register Activity -->
         <activity
             android:name=".landr.registerapp.RegisterActivity"
-            android:exported="true">
+            android:exported="true"
+            android:screenOrientation="portrait">
         </activity>
 
+        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:screenOrientation="portrait">
         </activity>
     </application>
     <uses-permission android:name="android.permission.INTERNET"/>
