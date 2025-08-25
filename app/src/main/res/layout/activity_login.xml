@@ -128,16 +128,12 @@
                 android:layout_gravity="end"
                 android:layout_marginBottom="24dp" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/loginBtn"
+                style="@style/Widget.RWM.Button.Primary"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="@drawable/button_primary_selector"
-                android:text="Sign In"
-                android:textColor="@android:color/white"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="16dp"
+                android:text="Sign In" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -167,15 +163,11 @@
 
             </LinearLayout>
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/registerBtn"
+                style="@style/Widget.RWM.Button.Outlined"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:background="@drawable/button_primary"
-                android:text="Create New Account"
-                android:textColor="#667eea"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:text="Create New Account" />
 
         </LinearLayout>
 

@@ -204,7 +204,6 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:gravity="center"
                             android:background="@drawable/edit_text_background"
                             android:padding="4dp">
 
@@ -212,28 +211,29 @@
                             <LinearLayout
                                 android:id="@+id/maleOption"
                                 android:layout_width="0dp"
-                                android:layout_height="60dp"
+                                android:layout_height="64dp"
                                 android:layout_weight="1"
                                 android:orientation="vertical"
                                 android:gravity="center"
                                 android:background="@drawable/gender_selector"
                                 android:clickable="true"
                                 android:focusable="true"
-                                android:layout_marginEnd="3dp">
+                                android:layout_marginEnd="2dp">
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="👨"
-                                    android:textSize="20sp"
-                                    android:layout_marginBottom="2dp" />
+                                    android:textSize="22sp"
+                                    android:layout_marginBottom="4dp" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="Male"
                                     android:textSize="11sp"
-                                    android:textColor="#666666" />
+                                    android:textColor="#666666"
+                                    android:gravity="center" />
 
                             </LinearLayout>
 
@@ -241,28 +241,29 @@
                             <LinearLayout
                                 android:id="@+id/femaleOption"
                                 android:layout_width="0dp"
-                                android:layout_height="60dp"
+                                android:layout_height="64dp"
                                 android:layout_weight="1"
                                 android:orientation="vertical"
                                 android:gravity="center"
                                 android:background="@drawable/gender_selector"
                                 android:clickable="true"
                                 android:focusable="true"
-                                android:layout_marginHorizontal="3dp">
+                                android:layout_marginHorizontal="2dp">
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="👩"
-                                    android:textSize="20sp"
-                                    android:layout_marginBottom="2dp" />
+                                    android:textSize="22sp"
+                                    android:layout_marginBottom="4dp" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="Female"
                                     android:textSize="11sp"
-                                    android:textColor="#666666" />
+                                    android:textColor="#666666"
+                                    android:gravity="center" />
 
                             </LinearLayout>
 
@@ -270,28 +271,29 @@
                             <LinearLayout
                                 android:id="@+id/otherOption"
                                 android:layout_width="0dp"
-                                android:layout_height="60dp"
+                                android:layout_height="64dp"
                                 android:layout_weight="1"
                                 android:orientation="vertical"
                                 android:gravity="center"
                                 android:background="@drawable/gender_selector"
                                 android:clickable="true"
                                 android:focusable="true"
-                                android:layout_marginStart="3dp">
+                                android:layout_marginStart="2dp">
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="🧑"
-                                    android:textSize="20sp"
-                                    android:layout_marginBottom="2dp" />
+                                    android:textSize="22sp"
+                                    android:layout_marginBottom="4dp" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="Other"
                                     android:textSize="11sp"
-                                    android:textColor="#666666" />
+                                    android:textColor="#666666"
+                                    android:gravity="center" />
 
                             </LinearLayout>
 
@@ -439,27 +441,19 @@
                     android:padding="12dp" />
 
                 <!-- Register Button -->
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/registerBtn"
+                    style="@style/Widget.RWM.Button.Primary"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:background="@drawable/button_primary_selector"
                     android:text="Create Account"
-                    android:textColor="@android:color/white"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
                     android:layout_marginBottom="16dp" />
 
                 <!-- Back to Login -->
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/backToLoginBtn"
+                    style="@style/Widget.RWM.Button.Outlined"
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@drawable/button_primary"
-                    android:text="Back to Login"
-                    android:textColor="#667eea"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:text="Back to Login" />
 
             </LinearLayout>
 
