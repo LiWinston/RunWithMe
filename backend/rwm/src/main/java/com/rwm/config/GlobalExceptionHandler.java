@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
         });
         
         log.warn("参数校验失败: {}", errors);
-        return ResponseEntity.ok(Result.error("参数校验失败", errors));
+        return ResponseEntity.ok(Result.error("Validation failed", errors));
     }
     
     /**
@@ -52,6 +52,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Result<String>> handleGenericException(Exception ex) {
         log.error("未知异常: {}", ex.getMessage(), ex);
-        return ResponseEntity.ok(Result.error("服务器内部错误"));
+        return ResponseEntity.ok(Result.error("Internal server error"));
     }
 }

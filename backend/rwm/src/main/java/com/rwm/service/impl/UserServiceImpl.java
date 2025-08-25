@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
         // 检查用户名是否已存在
         User existingUser = findByUsername(registerRequest.getUsername());
         if (existingUser != null) {
-            throw new RuntimeException("用户名已存在");
+            throw new RuntimeException("Username already exists");
         }
         
         // 检查邮箱是否已存在（如果提供了邮箱）
@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
             emailQuery.eq("email", registerRequest.getEmail());
             User existingEmailUser = userMapper.selectOne(emailQuery);
             if (existingEmailUser != null) {
-                throw new RuntimeException("邮箱已被注册");
+                throw new RuntimeException("Email already registered");
             }
         }
         
@@ -62,7 +62,7 @@ public class UserServiceImpl implements UserService {
             log.info("用户注册成功: {}", user.getUsername());
             return user;
         } else {
-            throw new RuntimeException("用户注册失败");
+            throw new RuntimeException("User registration failed");
         }
     }
     
@@ -71,12 +71,12 @@ public class UserServiceImpl implements UserService {
         // 查找用户
         User user = findByUsername(loginRequest.getUsername());
         if (user == null) {
-            throw new RuntimeException("用户名或密码错误");
+            throw new RuntimeException("Invalid username or password");
         }
         
         // 验证密码
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            throw new RuntimeException("用户名或密码错误");
+            throw new RuntimeException("Invalid username or password");
         }
         
         // 生成tokens
@@ -101,7 +101,7 @@ public class UserServiceImpl implements UserService {
         try {
             // 验证刷新令牌
             if (!jwtUtil.validateRefreshToken(refreshToken)) {
-                throw new RuntimeException("刷新令牌无效或已过期");
+                throw new RuntimeException("Invalid or expired refresh token");
             }
             
             // 从令牌中获取用户信息
@@ -111,7 +111,7 @@ public class UserServiceImpl implements UserService {
             // 查找用户
             User user = findById(userId);
             if (user == null || !user.getUsername().equals(username)) {
-                throw new RuntimeException("用户不存在");
+                throw new RuntimeException("User not found");
             }
             
             // 生成新的访问令牌
@@ -131,7 +131,7 @@ public class UserServiceImpl implements UserService {
             
         } catch (Exception e) {
             log.error("刷新令牌失败: {}", e.getMessage());
-            throw new RuntimeException("刷新令牌失败");
+            throw new RuntimeException("Token refresh failed");
         }
     }
     

@@ -51,7 +51,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            sendUnauthorizedResponse(response, "未提供有效的认证令牌");
+            sendUnauthorizedResponse(response, "No valid authentication token provided");
             return;
         }
         
@@ -60,7 +60,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             // 验证访问令牌
             if (!jwtUtil.validateAccessToken(token)) {
-                sendUnauthorizedResponse(response, "访问令牌无效或已过期");
+                sendUnauthorizedResponse(response, "Invalid or expired access token");
                 return;
             }
             
@@ -75,7 +75,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             
         } catch (Exception e) {
             log.error("JWT认证失败: {}", e.getMessage());
-            sendUnauthorizedResponse(response, "令牌解析失败");
+            sendUnauthorizedResponse(response, "Token parsing failed");
             return;
         }
         

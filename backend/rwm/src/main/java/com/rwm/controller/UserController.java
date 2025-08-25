@@ -32,9 +32,9 @@ public class UserController {
         if (user != null) {
             // 不返回密码字段
             user.setPassword(null);
-            return ResponseEntity.ok(Result.ok("获取用户信息成功", user));
+            return ResponseEntity.ok(Result.ok("Get user info successful", user));
         } else {
-            return ResponseEntity.ok(Result.error("用户不存在"));
+            return ResponseEntity.ok(Result.error("User not found"));
         }
     }
 }

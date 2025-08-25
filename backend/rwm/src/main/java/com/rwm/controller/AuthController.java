@@ -34,7 +34,7 @@ public class AuthController {
     public ResponseEntity<Result<String>> register(@Valid @RequestBody RegisterRequest registerRequest) {
         try {
             User user = userService.register(registerRequest);
-            return ResponseEntity.ok(Result.ok("注册成功", "用户 " + user.getUsername() + " 注册成功"));
+            return ResponseEntity.ok(Result.ok("Registration successful", "User " + user.getUsername() + " registered successfully"));
         } catch (Exception e) {
             log.error("用户注册失败: {}", e.getMessage());
             return ResponseEntity.ok(Result.error(e.getMessage()));
@@ -48,7 +48,7 @@ public class AuthController {
     public ResponseEntity<Result<LoginResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
         try {
             LoginResponse loginResponse = userService.login(loginRequest);
-            return ResponseEntity.ok(Result.ok("登录成功", loginResponse));
+            return ResponseEntity.ok(Result.ok("Login successful", loginResponse));
         } catch (Exception e) {
             log.error("用户登录失败: {}", e.getMessage());
             return ResponseEntity.ok(Result.error(e.getMessage()));
@@ -63,11 +63,11 @@ public class AuthController {
         try {
             String refreshToken = request.get("refreshToken");
             if (refreshToken == null || refreshToken.trim().isEmpty()) {
-                return ResponseEntity.ok(Result.error("刷新令牌不能为空"));
+                return ResponseEntity.ok(Result.error("Refresh token cannot be empty"));
             }
             
             LoginResponse loginResponse = userService.refreshToken(refreshToken);
-            return ResponseEntity.ok(Result.ok("令牌刷新成功", loginResponse));
+            return ResponseEntity.ok(Result.ok("Token refresh successful", loginResponse));
         } catch (Exception e) {
             log.error("令牌刷新失败: {}", e.getMessage());
             return ResponseEntity.ok(Result.error(e.getMessage()));
@@ -80,6 +80,6 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Result<String>> logout() {
         // 这里可以实现token黑名单逻辑，暂时简单返回成功
-        return ResponseEntity.ok(Result.ok("登出成功"));
+        return ResponseEntity.ok(Result.ok("Logout successful"));
     }
 }

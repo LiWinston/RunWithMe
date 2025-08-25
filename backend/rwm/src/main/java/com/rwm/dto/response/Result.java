@@ -19,11 +19,11 @@ public class Result<T> {
     private T data;
     
     public static <T> Result<T> ok() {
-        return new Result<>(0, "操作成功", null);
+        return new Result<>(0, "Operation successful", null);
     }
     
     public static <T> Result<T> ok(T data) {
-        return new Result<>(0, "操作成功", data);
+        return new Result<>(0, "Operation successful", data);
     }
     
     public static <T> Result<T> ok(String message) {
@@ -35,7 +35,7 @@ public class Result<T> {
     }
     
     public static <T> Result<T> error() {
-        return new Result<>(1, "操作失败", null);
+        return new Result<>(1, "Operation failed", null);
     }
     
     public static <T> Result<T> error(String message) {
