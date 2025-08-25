@@ -1,36 +1,38 @@
 package com.rwm.util;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * JWT工具类
+ * JWT工具类（适配 JJWT 0.12.x）
  */
 @Slf4j
 @Component
 public class JwtUtil {
-    
+
     @Value("${jwt.secret}")
     private String secret;
-    
+
     @Value("${jwt.access-token-expiration}")
     private Long accessTokenExpiration;
-    
+
     @Value("${jwt.refresh-token-expiration}")
     private Long refreshTokenExpiration;
-    
+
     private SecretKey getSignKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
-    
+
     /**
      * 生成访问令牌
      */
@@ -39,16 +41,16 @@ public class JwtUtil {
         claims.put("userId", userId);
         claims.put("username", username);
         claims.put("type", "access");
-        
+
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
-                .signWith(getSignKey(), SignatureAlgorithm.HS256)
+                .subject(username)
+                .claims(claims)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
+                .signWith(getSignKey()) // HS256 inferred for HMAC key
                 .compact();
     }
-    
+
     /**
      * 生成刷新令牌
      */
@@ -57,56 +59,59 @@ public class JwtUtil {
         claims.put("userId", userId);
         claims.put("username", username);
         claims.put("type", "refresh");
-        
+
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
-                .signWith(getSignKey(), SignatureAlgorithm.HS256)
+                .subject(username)
+                .claims(claims)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
+                .signWith(getSignKey())
                 .compact();
     }
-    
+
     /**
      * 从token中获取用户名
      */
     public String getUsernameFromToken(String token) {
         return getClaimsFromToken(token).getSubject();
     }
-    
+
     /**
      * 从token中获取用户ID
      */
     public Long getUserIdFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
-        return Long.valueOf(claims.get("userId").toString());
+        Object val = claims.get("userId");
+        return val == null ? null : Long.valueOf(String.valueOf(val));
     }
-    
+
     /**
      * 获取token类型
      */
     public String getTokenType(String token) {
         Claims claims = getClaimsFromToken(token);
-        return claims.get("type").toString();
+        Object val = claims.get("type");
+        return val == null ? null : String.valueOf(val);
     }
-    
+
     /**
      * 获取token过期时间
      */
     public Date getExpirationDateFromToken(String token) {
         return getClaimsFromToken(token).getExpiration();
     }
-    
+
     /**
      * 从token中获取claims
      */
     private Claims getClaimsFromToken(String token) {
         return Jwts.parser()
-                .setSigningKey(getSignKey())
-                .parseClaimsJws(token)
-                .getBody();
+                .verifyWith(getSignKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
-    
+
     /**
      * 判断token是否过期
      */
@@ -118,7 +123,7 @@ public class JwtUtil {
             return true;
         }
     }
-    
+
     /**
      * 验证token
      */
@@ -131,7 +136,7 @@ public class JwtUtil {
             return false;
         }
     }
-    
+
     /**
      * 验证访问令牌
      */
@@ -144,7 +149,7 @@ public class JwtUtil {
             return false;
         }
     }
-    
+
     /**
      * 验证刷新令牌
      */
