@@ -13,12 +13,10 @@ import com.example.myapplication.landr.RetrofitClient
 import com.example.myapplication.landr.loginapp.LoginActivity
 import com.example.myapplication.R
 import com.example.myapplication.landr.registerapp.models.RegisterRequest
-import com.example.myapplication.landr.registerapp.models.RegisterResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -31,9 +29,11 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var registerBtn: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
+
+        // 初始化 RetrofitClient
+        RetrofitClient.init(this)
 
         firstnameEt = findViewById(R.id.firstnameEt)
         lastnameEt = findViewById(R.id.lastnameEt)
@@ -44,46 +44,72 @@ class RegisterActivity : AppCompatActivity() {
         registerBtn = findViewById(R.id.registerBtn)
 
         registerBtn.setOnClickListener {
-            val first_name = firstnameEt.text.toString()
-            val last_name = lastnameEt.text.toString()
-            val user_name = usernameEt.text.toString()
+            val firstName = firstnameEt.text.toString().trim()
+            val lastName = lastnameEt.text.toString().trim()
+            val username = usernameEt.text.toString().trim()
             val selectedGenderId = genderRg.checkedRadioButtonId
-            var gender = ""
+            val ageText = ageEt.text.toString().trim()
+            val password = passwordEt.text.toString().trim()
+
+            // 验证输入
+            if (firstName.isEmpty() || lastName.isEmpty() || username.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "请填写所有必填字段", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (password.length < 6) {
+                Toast.makeText(this, "密码至少6位", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            var gender: String? = null
             if (selectedGenderId != -1) {
                 val selectedGenderRb = findViewById<RadioButton>(selectedGenderId)
-                gender = selectedGenderRb.text.toString()
+                gender = when (selectedGenderRb.text.toString()) {
+                    "Male" -> "MALE"
+                    "Female" -> "FEMALE"
+                    else -> "OTHER"
+                }
                 Log.d("Register", "Selected gender: $gender")
             } else {
-                Toast.makeText(this, "Please select a gender", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "请选择性别", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
-            val age = ageEt.text.toString().toInt()
-            val password = passwordEt.text.toString()
 
+            val age = if (ageText.isNotEmpty()) ageText.toIntOrNull() else null
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val response: RegisterResponse = RetrofitClient.api.register(
+                    val response = RetrofitClient.api.register(
                         RegisterRequest(
-                            first_name,
-                            last_name,
-                            user_name,
-                            gender,
-                            age,
-                            password
+                            username = username,
+                            password = password,
+                            firstName = firstName,
+                            lastName = lastName,
+                            gender = gender,
+                            age = age
                         )
                     )
+                    
                     withContext(Dispatchers.Main) {
-                        if (response.status == "success") {
-                            Toast.makeText(this@RegisterActivity, "Register success", Toast.LENGTH_SHORT)
-                                .show()
-                            val intent = Intent(this@RegisterActivity, LoginActivity::class.java)
-                            startActivity(intent)
-
-                            finish()
+                        if (response.isSuccessful) {
+                            val registerResponse = response.body()
+                            if (registerResponse?.status == 1) {
+                                Toast.makeText(this@RegisterActivity, "注册成功！请登录", Toast.LENGTH_SHORT).show()
+                                val intent = Intent(this@RegisterActivity, LoginActivity::class.java)
+                                startActivity(intent)
+                                finish()
+                            } else {
+                                Toast.makeText(
+                                    this@RegisterActivity,
+                                    registerResponse?.message ?: "注册失败",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         } else {
                             Toast.makeText(
                                 this@RegisterActivity,
-                                "Register error",
+                                "网络错误: ${response.code()}",
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -91,7 +117,7 @@ class RegisterActivity : AppCompatActivity() {
                 } catch (e: Exception) {
                     e.printStackTrace()
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@RegisterActivity, "Network error", Toast.LENGTH_SHORT)
+                        Toast.makeText(this@RegisterActivity, "网络错误: ${e.message}", Toast.LENGTH_SHORT)
                             .show()
                     }
                 }

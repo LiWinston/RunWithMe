@@ -1,3 +1,17 @@
 package com.example.myapplication.landr.registerapp.models
 
-data class RegisterRequest(val first_name: String, val last_name: String, val user_name: String, val gender: String, val age: Int, val password: String)
+data class RegisterRequest(
+    val username: String,
+    val password: String,
+    val email: String? = null,
+    val firstName: String,
+    val lastName: String,
+    val gender: String? = null,
+    val age: Int? = null,
+    val phoneNumber: String? = null,
+    val height: Double? = null,
+    val weight: Double? = null,
+    val fitnessGoal: String? = null,
+    val fitnessLevel: String? = null,
+    val weeklyAvailability: String? = null
+)
