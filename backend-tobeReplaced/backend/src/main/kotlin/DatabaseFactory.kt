@@ -4,7 +4,7 @@ import io.ktor.network.sockets.*
 import java.sql.Connection
 import java.sql.DriverManager
 
-object DatabaseFactory {
+object atabaseFactory {
     private const val url = "jdbc:mysql://192.168.0.4:3306/myapp?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
     private const val user = "appuser"
     private const val password = "MyP@ssw0rd123"
