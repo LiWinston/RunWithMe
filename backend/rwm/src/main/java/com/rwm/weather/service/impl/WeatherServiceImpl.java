@@ -3,6 +3,7 @@ package com.rwm.weather.service.impl;
 import com.rwm.weather.client.WeatherApiClient;
 import com.rwm.weather.config.WeatherConfig;
 import com.rwm.weather.dto.CurrentConditionsResponse;
+import com.rwm.weather.dto.HourlyForecastResponse;
 import com.rwm.weather.dto.Location;
 import com.rwm.weather.dto.UnitsSystem;
 import com.rwm.weather.service.WeatherService;
@@ -57,6 +58,56 @@ public class WeatherServiceImpl implements WeatherService {
             
         } catch (Exception e) {
             logger.error("Failed to get current conditions for location: {}", location, e);
+            throw e;
+        }
+    }
+    
+    @Override
+    public HourlyForecastResponse getHourlyForecast(Double latitude, Double longitude) {
+        return getHourlyForecast(latitude, longitude, UnitsSystem.valueOf(weatherConfig.getDefaultUnitsSystem()));
+    }
+    
+    @Override
+    public HourlyForecastResponse getHourlyForecast(Double latitude, Double longitude, UnitsSystem unitsSystem) {
+        return getHourlyForecast(latitude, longitude, unitsSystem, null);
+    }
+    
+    @Override
+    public HourlyForecastResponse getHourlyForecast(Double latitude, Double longitude, UnitsSystem unitsSystem, Integer hours) {
+        return getHourlyForecast(latitude, longitude, unitsSystem, hours, null, null);
+    }
+    
+    @Override
+    public HourlyForecastResponse getHourlyForecast(Double latitude, Double longitude, UnitsSystem unitsSystem, 
+                                                   Integer hours, Integer pageSize, String pageToken) {
+        Location location = new Location(latitude, longitude);
+        return getHourlyForecast(location, unitsSystem, hours, pageSize, pageToken);
+    }
+    
+    @Override
+    public HourlyForecastResponse getHourlyForecast(Location location) {
+        return getHourlyForecast(location, UnitsSystem.valueOf(weatherConfig.getDefaultUnitsSystem()));
+    }
+    
+    @Override
+    public HourlyForecastResponse getHourlyForecast(Location location, UnitsSystem unitsSystem) {
+        return getHourlyForecast(location, unitsSystem, null, null, null);
+    }
+    
+    @Override
+    public HourlyForecastResponse getHourlyForecast(Location location, UnitsSystem unitsSystem, 
+                                                   Integer hours, Integer pageSize, String pageToken) {
+        logger.info("Getting hourly forecast for location: {}, units: {}, hours: {}, pageSize: {}", 
+                   location, unitsSystem, hours, pageSize);
+        
+        try {
+            HourlyForecastResponse response = weatherApiClient.getHourlyForecast(location, unitsSystem, hours, pageSize, pageToken);
+            
+            logger.info("Successfully retrieved hourly forecast for location: {}", location);
+            return response;
+            
+        } catch (Exception e) {
+            logger.error("Failed to get hourly forecast for location: {}", location, e);
             throw e;
         }
     }

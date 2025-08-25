@@ -2,6 +2,7 @@ package com.rwm.weather.client;
 
 import com.rwm.weather.config.WeatherConfig;
 import com.rwm.weather.dto.*;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,6 +16,7 @@ import java.net.URI;
  * Google Maps Weather API 客户端
  */
 @Component
+@Slf4j
 public class WeatherApiClient {
     
     private static final Logger logger = LoggerFactory.getLogger(WeatherApiClient.class);
@@ -60,6 +62,24 @@ public class WeatherApiClient {
     }
     
     /**
+     * 获取每小时天气预报
+     */
+    public HourlyForecastResponse getHourlyForecast(Location location, UnitsSystem unitsSystem, 
+                                                    Integer hours, Integer pageSize, String pageToken) {
+        try {
+            log.info("Getting hourly forecast for location: {}, hours: {}, pageSize: {}", 
+                    location, hours, pageSize);
+            
+            URI uri = buildHourlyForecastUri(location, unitsSystem, hours, pageSize, pageToken);
+            
+            return restTemplate.getForObject(uri, HourlyForecastResponse.class);
+        } catch (Exception e) {
+            log.error("Failed to get hourly forecast for location: {}", location, e);
+            throw new WeatherApiException("Failed to get hourly weather forecast", e);
+        }
+    }
+    
+    /**
      * 构建当前天气状况请求URI
      */
     private URI buildCurrentConditionsUri(Location location, UnitsSystem unitsSystem) {
@@ -72,6 +92,37 @@ public class WeatherApiClient {
         
         if (unitsSystem != null) {
             builder.queryParam("unitsSystem", unitsSystem.name());
+        }
+        
+        return builder.build().toUri();
+    }
+    
+    /**
+     * 构建每小时天气预报请求URI
+     */
+    private URI buildHourlyForecastUri(Location location, UnitsSystem unitsSystem, 
+                                       Integer hours, Integer pageSize, String pageToken) {
+        UriComponentsBuilder builder = UriComponentsBuilder
+                .fromHttpUrl(weatherConfig.getBaseUrl())
+                .path("/forecast/hours:lookup")
+                .queryParam("key", weatherConfig.getApiKey())
+                .queryParam("location.latitude", location.getLatitude())
+                .queryParam("location.longitude", location.getLongitude());
+        
+        if (unitsSystem != null) {
+            builder.queryParam("unitsSystem", unitsSystem.name());
+        }
+        
+        if (hours != null) {
+            builder.queryParam("hours", hours);
+        }
+        
+        if (pageSize != null) {
+            builder.queryParam("pageSize", pageSize);
+        }
+        
+        if (pageToken != null && !pageToken.trim().isEmpty()) {
+            builder.queryParam("pageToken", pageToken);
         }
         
         return builder.build().toUri();
