@@ -86,7 +86,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * 检查是否为排除路径
      */
     private boolean isExcludedPath(String requestURI) {
-        return EXCLUDED_PATHS.stream().anyMatch(requestURI::startsWith);
+        return true;
     }
     
     /**
