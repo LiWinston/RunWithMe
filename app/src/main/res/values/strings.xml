@@ -1,3 +1,12 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Run With Me</string>
+    
+    <!-- Fitness level array -->
+    <string-array name="fitness_level_array">
+        <item>Select Fitness Level</item>
+        <item>Beginner</item>
+        <item>Intermediate</item>
+        <item>Advanced</item>
+        <item>Expert</item>
+    </string-array>
 </resources>
