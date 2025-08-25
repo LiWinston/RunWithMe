@@ -101,9 +101,8 @@ public class JwtUtil {
      * 从token中获取claims
      */
     private Claims getClaimsFromToken(String token) {
-        return Jwts.parserBuilder()
+        return Jwts.parser()
                 .setSigningKey(getSignKey())
-                .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
