@@ -5,30 +5,31 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rwm.weather.dto.CurrentConditionsResponse;
 import com.rwm.weather.dto.HourlyForecastResponse;
 import com.rwm.weather.dto.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.geo.Distance;
-import org.springframework.data.geo.GeoResults;
-import org.springframework.data.geo.Point;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.geo.Circle;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.GeoResult;
+import org.springframework.data.geo.GeoResults;
+import org.springframework.data.geo.Metrics;
+import org.springframework.data.geo.Point;
 import org.springframework.data.redis.connection.RedisGeoCommands;
-import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.domain.geo.GeoLocation;
-import org.springframework.data.redis.domain.geo.Metrics;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 基于Redis Geo的天气缓存服务
+ * 使用Redis TTL机制自动清理过期数据，无需定时任务
+ */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class WeatherGeoCacheService {
-    
-    private static final Logger logger = LoggerFactory.getLogger(WeatherGeoCacheService.class);
     
     // Redis Key前缀
     private static final String GEO_KEY = "weather:geo:locations";
@@ -36,18 +37,11 @@ public class WeatherGeoCacheService {
     
     // 缓存配置
     private static final double CACHE_RADIUS_KM = 10.0; // 10公里范围内认为是相近位置
-    private static final long CACHE_DURATION_MINUTES = 30; // 缓存30分钟
+    private static final long CACHE_DURATION_MINUTES = 30; // 缓存数据30分钟
+    private static final long GEO_CLEANUP_HOURS = 1; // Geo数据1小时清理一次
     
     private final StringRedisTemplate stringRedisTemplate;
-    private final GeoOperations<String, String> geoOperations;
     private final ObjectMapper objectMapper;
-    
-    @Autowired
-    public WeatherGeoCacheService(StringRedisTemplate stringRedisTemplate, ObjectMapper objectMapper) {
-        this.stringRedisTemplate = stringRedisTemplate;
-        this.geoOperations = stringRedisTemplate.opsForGeo();
-        this.objectMapper = objectMapper;
-    }
     
     /**
      * 查找附近的天气缓存
@@ -56,39 +50,39 @@ public class WeatherGeoCacheService {
      */
     public Optional<WeatherCacheEntry> findNearbyCache(Location location) {
         try {
-            logger.debug("Searching for nearby weather cache for location: {}", location);
+            log.debug("Searching for nearby weather cache for location: {}", location);
             
             // 在指定半径内查找附近的位置
             GeoResults<RedisGeoCommands.GeoLocation<String>> results =
-                geoOperations.radius(GEO_KEY, 
-                    new org.springframework.data.geo.Circle(
+                stringRedisTemplate.opsForGeo().radius(GEO_KEY, 
+                    new Circle(
                         new Point(location.getLongitude(), location.getLatitude()),
                         new Distance(CACHE_RADIUS_KM, Metrics.KILOMETERS)
                     ));
             
             if (results == null || results.getContent().isEmpty()) {
-                logger.debug("No nearby cached locations found");
+                log.debug("No nearby cached locations found");
                 return Optional.empty();
             }
             
             // 查找最近的有效缓存
-            for (var result : results.getContent()) {
+            for (GeoResult<RedisGeoCommands.GeoLocation<String>> result : results.getContent()) {
                 String cacheKey = result.getContent().getName();
-                logger.debug("Found nearby location with cache key: {}, distance: {} km", 
+                log.debug("Found nearby location with cache key: {}, distance: {} km", 
                     cacheKey, result.getDistance().getValue());
                 
                 Optional<WeatherCacheEntry> cacheEntry = getCacheData(cacheKey);
-                if (cacheEntry.isPresent() && !cacheEntry.get().isExpired()) {
-                    logger.debug("Found valid nearby cache entry");
+                if (cacheEntry.isPresent()) {
+                    log.debug("Found valid nearby cache entry");
                     return cacheEntry;
                 }
             }
             
-            logger.debug("No valid nearby cache entries found");
+            log.debug("No valid nearby cache entries found");
             return Optional.empty();
             
         } catch (Exception e) {
-            logger.error("Error while searching for nearby weather cache", e);
+            log.error("Error while searching for nearby weather cache", e);
             return Optional.empty();
         }
     }
@@ -107,16 +101,18 @@ public class WeatherGeoCacheService {
             WeatherCacheEntry entry = new WeatherCacheEntry(cacheKey, location, now, expiresAt);
             entry.setCurrentConditions(currentConditions);
             
-            // 保存地理位置信息
-            geoOperations.add(GEO_KEY, new Point(location.getLongitude(), location.getLatitude()), cacheKey);
+            // 保存地理位置信息（设置较长的TTL，定期清理）
+            stringRedisTemplate.opsForGeo().add(GEO_KEY, 
+                new Point(location.getLongitude(), location.getLatitude()), cacheKey);
+            stringRedisTemplate.expire(GEO_KEY, GEO_CLEANUP_HOURS, TimeUnit.HOURS);
             
-            // 保存缓存数据
+            // 保存缓存数据（设置30分钟TTL，让Redis自动清理）
             saveCacheData(cacheKey, entry);
             
-            logger.debug("Cached current weather conditions for location: {} with key: {}", location, cacheKey);
+            log.debug("Cached current weather conditions for location: {} with key: {}", location, cacheKey);
             
         } catch (Exception e) {
-            logger.error("Error while caching current weather conditions", e);
+            log.error("Error while caching current weather conditions", e);
         }
     }
     
@@ -134,102 +130,75 @@ public class WeatherGeoCacheService {
             WeatherCacheEntry entry = new WeatherCacheEntry(cacheKey, location, now, expiresAt);
             entry.setHourlyForecast(hourlyForecast);
             
-            // 保存地理位置信息
-            geoOperations.add(GEO_KEY, new Point(location.getLongitude(), location.getLatitude()), cacheKey);
+            // 保存地理位置信息（设置较长的TTL，定期清理）
+            stringRedisTemplate.opsForGeo().add(GEO_KEY, 
+                new Point(location.getLongitude(), location.getLatitude()), cacheKey);
+            stringRedisTemplate.expire(GEO_KEY, GEO_CLEANUP_HOURS, TimeUnit.HOURS);
             
-            // 保存缓存数据
+            // 保存缓存数据（设置30分钟TTL，让Redis自动清理）
             saveCacheData(cacheKey, entry);
             
-            logger.debug("Cached hourly forecast for location: {} with key: {}", location, cacheKey);
+            log.debug("Cached hourly forecast for location: {} with key: {}", location, cacheKey);
             
         } catch (Exception e) {
-            logger.error("Error while caching hourly forecast", e);
+            log.error("Error while caching hourly forecast", e);
         }
     }
-    
+
     /**
-     * 清理过期的缓存条目
+     * 清理所有缓存（主要用于测试）
      */
-    public void cleanupExpiredCache() {
+    public void clearAllCache() {
         try {
-            logger.debug("Starting cleanup of expired weather cache entries");
+            // 删除地理位置索引
+            stringRedisTemplate.delete(GEO_KEY);
             
-            // 获取所有地理位置
-            GeoResults<RedisGeoCommands.GeoLocation<String>> allLocations =
-                geoOperations.radius(GEO_KEY, 
-                    new org.springframework.data.geo.Circle(
-                        new Point(0, 0), 
-                        new Distance(Double.MAX_VALUE, Metrics.KILOMETERS)
-                    ));
-            
-            if (allLocations == null || allLocations.getContent().isEmpty()) {
-                return;
-            }
-            
-            int cleanedCount = 0;
-            for (var result : allLocations.getContent()) {
-                String cacheKey = result.getContent().getName();
-                Optional<WeatherCacheEntry> cacheEntry = getCacheData(cacheKey);
-                
-                if (cacheEntry.isEmpty() || cacheEntry.get().isExpired()) {
-                    // 删除过期的地理位置和缓存数据
-                    geoOperations.remove(GEO_KEY, cacheKey);
-                    deleteCacheData(cacheKey);
-                    cleanedCount++;
-                    logger.debug("Cleaned up expired cache entry: {}", cacheKey);
-                }
-            }
-            
-            logger.info("Cleaned up {} expired weather cache entries", cleanedCount);
+            // 删除所有缓存数据（这里需要遍历所有可能的key，实际上Redis的TTL会自动清理）
+            log.info("Cache cleared manually");
             
         } catch (Exception e) {
-            logger.error("Error during cache cleanup", e);
+            log.error("Error while clearing cache", e);
         }
     }
     
-    /**
-     * 生成唯一的缓存键
-     */
-    private String generateCacheKey() {
-        return "cache_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8);
-    }
+    // 私有辅助方法
     
-    /**
-     * 保存缓存数据
-     */
-    private void saveCacheData(String cacheKey, WeatherCacheEntry entry) {
-        try {
-            String dataKey = CACHE_DATA_PREFIX + cacheKey;
-            String jsonData = objectMapper.writeValueAsString(entry);
-            stringRedisTemplate.opsForValue().set(dataKey, jsonData, CACHE_DURATION_MINUTES, TimeUnit.MINUTES);
-        } catch (JsonProcessingException e) {
-            logger.error("Error while serializing cache entry", e);
-        }
-    }
-    
-    /**
-     * 获取缓存数据
-     */
     private Optional<WeatherCacheEntry> getCacheData(String cacheKey) {
         try {
-            String dataKey = CACHE_DATA_PREFIX + cacheKey;
-            String jsonData = stringRedisTemplate.opsForValue().get(dataKey);
-            if (jsonData != null) {
-                WeatherCacheEntry entry = objectMapper.readValue(jsonData, WeatherCacheEntry.class);
-                return Optional.of(entry);
+            String cacheDataKey = CACHE_DATA_PREFIX + cacheKey;
+            String data = stringRedisTemplate.opsForValue().get(cacheDataKey);
+            
+            if (data == null) {
+                log.debug("No cache data found for key: {}", cacheKey);
+                return Optional.empty();
             }
-            return Optional.empty();
-        } catch (Exception e) {
-            logger.error("Error while retrieving cache data for key: {}", cacheKey, e);
+            
+            WeatherCacheEntry entry = objectMapper.readValue(data, WeatherCacheEntry.class);
+            log.debug("Retrieved cache entry for key: {}", cacheKey);
+            return Optional.of(entry);
+            
+        } catch (JsonProcessingException e) {
+            log.error("Error deserializing cache data for key: {}", cacheKey, e);
             return Optional.empty();
         }
     }
     
-    /**
-     * 删除缓存数据
-     */
-    private void deleteCacheData(String cacheKey) {
-        String dataKey = CACHE_DATA_PREFIX + cacheKey;
-        stringRedisTemplate.delete(dataKey);
+    private void saveCacheData(String cacheKey, WeatherCacheEntry entry) {
+        try {
+            String cacheDataKey = CACHE_DATA_PREFIX + cacheKey;
+            String data = objectMapper.writeValueAsString(entry);
+            
+            // 设置TTL，让Redis自动清理过期数据
+            stringRedisTemplate.opsForValue().set(cacheDataKey, data, CACHE_DURATION_MINUTES, TimeUnit.MINUTES);
+            
+            log.debug("Saved cache data for key: {} with TTL: {} minutes", cacheKey, CACHE_DURATION_MINUTES);
+            
+        } catch (JsonProcessingException e) {
+            log.error("Error serializing cache data for key: {}", cacheKey, e);
+        }
+    }
+    
+    private String generateCacheKey() {
+        return UUID.randomUUID().toString();
     }
 }
