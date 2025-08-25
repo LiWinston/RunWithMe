@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
         
         log.warn("参数校验失败: {}", errors);
         return ResponseEntity.badRequest()
-                .body(Result.badRequest("参数校验失败").data(errors));
+                .body(Result.error("参数校验失败", errors));
     }
     
     /**

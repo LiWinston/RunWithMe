@@ -37,7 +37,7 @@ public class AuthController {
             return ResponseEntity.ok(Result.ok("注册成功", "用户 " + user.getUsername() + " 注册成功"));
         } catch (Exception e) {
             log.error("用户注册失败: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(Result.badRequest(e.getMessage()));
+            return ResponseEntity.badRequest().body(Result.error(e.getMessage()));
         }
     }
     
@@ -51,7 +51,7 @@ public class AuthController {
             return ResponseEntity.ok(Result.ok("登录成功", loginResponse));
         } catch (Exception e) {
             log.error("用户登录失败: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(Result.unauthorized(e.getMessage()));
+            return ResponseEntity.badRequest().body(Result.error(e.getMessage()));
         }
     }
     
@@ -63,14 +63,14 @@ public class AuthController {
         try {
             String refreshToken = request.get("refreshToken");
             if (refreshToken == null || refreshToken.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Result.badRequest("刷新令牌不能为空"));
+                return ResponseEntity.badRequest().body(Result.error("刷新令牌不能为空"));
             }
             
             LoginResponse loginResponse = userService.refreshToken(refreshToken);
             return ResponseEntity.ok(Result.ok("令牌刷新成功", loginResponse));
         } catch (Exception e) {
             log.error("令牌刷新失败: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(Result.unauthorized(e.getMessage()));
+            return ResponseEntity.badRequest().body(Result.error(e.getMessage()));
         }
     }
     
