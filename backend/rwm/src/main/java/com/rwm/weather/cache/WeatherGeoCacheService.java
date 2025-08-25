@@ -1,17 +1,20 @@
 package com.rwm.weather.cache;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rwm.weather.dto.CurrentConditionsResponse;
 import com.rwm.weather.dto.HourlyForecastResponse;
 import com.rwm.weather.dto.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Point;
+import org.springframework.data.geo.Circle;
 import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.GeoOperations;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.domain.geo.GeoLocation;
 import org.springframework.data.redis.domain.geo.Metrics;
 import org.springframework.stereotype.Service;
@@ -22,10 +25,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-/**
- * 天气地理位置缓存服务
- * 使用Redis的Geo数据类型实现基于地理位置的天气缓存
- */
 @Service
 public class WeatherGeoCacheService {
     
@@ -39,12 +38,15 @@ public class WeatherGeoCacheService {
     private static final double CACHE_RADIUS_KM = 10.0; // 10公里范围内认为是相近位置
     private static final long CACHE_DURATION_MINUTES = 30; // 缓存30分钟
     
-    private final RedisTemplate<String, Object> redisTemplate;
-    private final GeoOperations<String, Object> geoOperations;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final GeoOperations<String, String> geoOperations;
+    private final ObjectMapper objectMapper;
     
-    public WeatherGeoCacheService(@Qualifier("weatherRedisTemplate") RedisTemplate<String, Object> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-        this.geoOperations = redisTemplate.opsForGeo();
+    @Autowired
+    public WeatherGeoCacheService(StringRedisTemplate stringRedisTemplate, ObjectMapper objectMapper) {
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.geoOperations = stringRedisTemplate.opsForGeo();
+        this.objectMapper = objectMapper;
     }
     
     /**
@@ -57,10 +59,12 @@ public class WeatherGeoCacheService {
             logger.debug("Searching for nearby weather cache for location: {}", location);
             
             // 在指定半径内查找附近的位置
-            GeoResults<RedisGeoCommands.GeoLocation<Object>> results =
+            GeoResults<RedisGeoCommands.GeoLocation<String>> results =
                 geoOperations.radius(GEO_KEY, 
-                    new Point(location.getLongitude(), location.getLatitude()),
-                    new Distance(CACHE_RADIUS_KM, Metrics.KILOMETERS));
+                    new org.springframework.data.geo.Circle(
+                        new Point(location.getLongitude(), location.getLatitude()),
+                        new Distance(CACHE_RADIUS_KM, Metrics.KILOMETERS)
+                    ));
             
             if (results == null || results.getContent().isEmpty()) {
                 logger.debug("No nearby cached locations found");
@@ -69,7 +73,7 @@ public class WeatherGeoCacheService {
             
             // 查找最近的有效缓存
             for (var result : results.getContent()) {
-                String cacheKey = (String) result.getContent().getName();
+                String cacheKey = result.getContent().getName();
                 logger.debug("Found nearby location with cache key: {}, distance: {} km", 
                     cacheKey, result.getDistance().getValue());
                 
@@ -151,10 +155,12 @@ public class WeatherGeoCacheService {
             logger.debug("Starting cleanup of expired weather cache entries");
             
             // 获取所有地理位置
-            GeoResults<RedisGeoCommands.GeoLocation<Object>> allLocations =
+            GeoResults<RedisGeoCommands.GeoLocation<String>> allLocations =
                 geoOperations.radius(GEO_KEY, 
-                    new Point(0, 0), 
-                    new Distance(Double.MAX_VALUE, Metrics.KILOMETERS));
+                    new org.springframework.data.geo.Circle(
+                        new Point(0, 0), 
+                        new Distance(Double.MAX_VALUE, Metrics.KILOMETERS)
+                    ));
             
             if (allLocations == null || allLocations.getContent().isEmpty()) {
                 return;
@@ -162,7 +168,7 @@ public class WeatherGeoCacheService {
             
             int cleanedCount = 0;
             for (var result : allLocations.getContent()) {
-                String cacheKey = (String) result.getContent().getName();
+                String cacheKey = result.getContent().getName();
                 Optional<WeatherCacheEntry> cacheEntry = getCacheData(cacheKey);
                 
                 if (cacheEntry.isEmpty() || cacheEntry.get().isExpired()) {
@@ -185,15 +191,20 @@ public class WeatherGeoCacheService {
      * 生成唯一的缓存键
      */
     private String generateCacheKey() {
-        return UUID.randomUUID().toString();
+        return "cache_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8);
     }
     
     /**
      * 保存缓存数据
      */
     private void saveCacheData(String cacheKey, WeatherCacheEntry entry) {
-        String dataKey = CACHE_DATA_PREFIX + cacheKey;
-        redisTemplate.opsForValue().set(dataKey, entry, CACHE_DURATION_MINUTES, TimeUnit.MINUTES);
+        try {
+            String dataKey = CACHE_DATA_PREFIX + cacheKey;
+            String jsonData = objectMapper.writeValueAsString(entry);
+            stringRedisTemplate.opsForValue().set(dataKey, jsonData, CACHE_DURATION_MINUTES, TimeUnit.MINUTES);
+        } catch (JsonProcessingException e) {
+            logger.error("Error while serializing cache entry", e);
+        }
     }
     
     /**
@@ -202,9 +213,10 @@ public class WeatherGeoCacheService {
     private Optional<WeatherCacheEntry> getCacheData(String cacheKey) {
         try {
             String dataKey = CACHE_DATA_PREFIX + cacheKey;
-            Object data = redisTemplate.opsForValue().get(dataKey);
-            if (data instanceof WeatherCacheEntry) {
-                return Optional.of((WeatherCacheEntry) data);
+            String jsonData = stringRedisTemplate.opsForValue().get(dataKey);
+            if (jsonData != null) {
+                WeatherCacheEntry entry = objectMapper.readValue(jsonData, WeatherCacheEntry.class);
+                return Optional.of(entry);
             }
             return Optional.empty();
         } catch (Exception e) {
@@ -218,6 +230,6 @@ public class WeatherGeoCacheService {
      */
     private void deleteCacheData(String cacheKey) {
         String dataKey = CACHE_DATA_PREFIX + cacheKey;
-        redisTemplate.delete(dataKey);
+        stringRedisTemplate.delete(dataKey);
     }
 }
