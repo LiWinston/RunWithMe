@@ -1,0 +1,85 @@
+package com.rwm.controller;
+
+import com.rwm.dto.request.LoginRequest;
+import com.rwm.dto.request.RegisterRequest;
+import com.rwm.dto.response.ApiResponse;
+import com.rwm.dto.response.LoginResponse;
+import com.rwm.entity.User;
+import com.rwm.service.UserService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import java.util.Map;
+
+/**
+ * 认证控制器
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
+@Validated
+public class AuthController {
+    
+    private final UserService userService;
+    
+    /**
+     * 用户注册
+     */
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<String>> register(@Valid @RequestBody RegisterRequest registerRequest) {
+        try {
+            User user = userService.register(registerRequest);
+            return ResponseEntity.ok(ApiResponse.success("注册成功", "用户 " + user.getUsername() + " 注册成功"));
+        } catch (Exception e) {
+            log.error("用户注册失败: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, e.getMessage()));
+        }
+    }
+    
+    /**
+     * 用户登录
+     */
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
+        try {
+            LoginResponse loginResponse = userService.login(loginRequest);
+            return ResponseEntity.ok(ApiResponse.success("登录成功", loginResponse));
+        } catch (Exception e) {
+            log.error("用户登录失败: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(ApiResponse.error(401, e.getMessage()));
+        }
+    }
+    
+    /**
+     * 刷新访问令牌
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<LoginResponse>> refreshToken(@RequestBody Map<String, String> request) {
+        try {
+            String refreshToken = request.get("refreshToken");
+            if (refreshToken == null || refreshToken.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(ApiResponse.error(400, "刷新令牌不能为空"));
+            }
+            
+            LoginResponse loginResponse = userService.refreshToken(refreshToken);
+            return ResponseEntity.ok(ApiResponse.success("令牌刷新成功", loginResponse));
+        } catch (Exception e) {
+            log.error("令牌刷新失败: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(ApiResponse.error(401, e.getMessage()));
+        }
+    }
+    
+    /**
+     * 登出（客户端删除token即可，服务端可以选择将token加入黑名单）
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<String>> logout() {
+        // 这里可以实现token黑名单逻辑，暂时简单返回成功
+        return ResponseEntity.ok(ApiResponse.success("登出成功"));
+    }
+}
