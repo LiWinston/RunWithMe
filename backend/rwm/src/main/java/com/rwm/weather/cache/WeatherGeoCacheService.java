@@ -7,6 +7,7 @@ import com.rwm.weather.dto.HourlyForecastResponse;
 import com.rwm.weather.dto.Location;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.geo.Circle;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResult;
@@ -20,11 +21,14 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
  * 基于Redis Geo的天气缓存服务
- * 使用Redis TTL机制自动清理过期数据，无需定时任务
+ * 使用Redis TTL机制自动清理过期数据，同时在查询过程中异步清理无效的geo引用
+ * 这种策略既保证了响应速度，又能及时清理过期数据，避免geo数据堆积
  */
 @Slf4j
 @Service
@@ -37,11 +41,15 @@ public class WeatherGeoCacheService {
     
     // 缓存配置
     private static final double CACHE_RADIUS_KM = 10.0; // 10公里范围内认为是相近位置
-    private static final long CACHE_DURATION_MINUTES = 30; // 缓存数据30分钟
+    private static final long CACHE_DURATION_MINUTES = 30; // 缓存数据30分钟（自动过期）
+    private static final long GEO_CLEANUP_HOURS = 1; // Geo数据1小时清理一次（兜底机制）
     private static final long GEO_CLEANUP_HOURS = 1; // Geo数据1小时清理一次
     
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
+    
+    @Qualifier("cacheCleanupExecutor")
+    private final Executor cacheCleanupExecutor;
     
     /**
      * 查找附近的天气缓存
@@ -75,6 +83,9 @@ public class WeatherGeoCacheService {
                 if (cacheEntry.isPresent()) {
                     log.debug("Found valid nearby cache entry");
                     return cacheEntry;
+                } else {
+                    // 异步删除无效的geo条目，不阻塞查询流程
+                    asyncRemoveStaleGeoEntry(cacheKey);
                 }
             }
             
@@ -196,6 +207,33 @@ public class WeatherGeoCacheService {
         } catch (JsonProcessingException e) {
             log.error("Error serializing cache data for key: {}", cacheKey, e);
         }
+    }
+    
+    /**
+     * 异步删除无效的地理位置条目
+     * 当发现geo中的cacheKey对应的数据已过期时，异步删除该geo条目
+     * 此操作不会阻塞主要的查询流程
+     */
+    private void asyncRemoveStaleGeoEntry(String cacheKey) {
+        // 使用专用线程池异步执行，避免阻塞主线程
+        CompletableFuture.runAsync(() -> {
+            try {
+                // 再次确认数据确实已过期
+                String cacheDataKey = CACHE_DATA_PREFIX + cacheKey;
+                if (!Boolean.TRUE.equals(stringRedisTemplate.hasKey(cacheDataKey))) {
+                    // 数据确实不存在，删除geo条目
+                    Long removed = stringRedisTemplate.opsForGeo().remove(GEO_KEY, cacheKey);
+                    if (removed != null && removed > 0) {
+                        log.debug("Async removed stale geo entry: {}", cacheKey);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Error during async removal of stale geo entry: {}", cacheKey, e);
+            }
+        }, cacheCleanupExecutor).exceptionally(throwable -> {
+            log.warn("Async geo cleanup failed for key: {}", cacheKey, throwable);
+            return null;
+        });
     }
     
     private String generateCacheKey() {
