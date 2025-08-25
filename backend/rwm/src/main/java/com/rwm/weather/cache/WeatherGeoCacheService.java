@@ -7,11 +7,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.GeoResults;
+import org.springframework.data.geo.Point;
+import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.domain.geo.GeoResults;
+import org.springframework.data.redis.domain.geo.GeoLocation;
 import org.springframework.data.redis.domain.geo.Metrics;
-import org.springframework.data.redis.domain.geo.Point;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -55,7 +57,7 @@ public class WeatherGeoCacheService {
             logger.debug("Searching for nearby weather cache for location: {}", location);
             
             // 在指定半径内查找附近的位置
-            GeoResults<org.springframework.data.redis.domain.geo.GeoLocation<Object>> results =
+            GeoResults<RedisGeoCommands.GeoLocation<Object>> results =
                 geoOperations.radius(GEO_KEY, 
                     new Point(location.getLongitude(), location.getLatitude()),
                     new Distance(CACHE_RADIUS_KM, Metrics.KILOMETERS));
@@ -149,7 +151,7 @@ public class WeatherGeoCacheService {
             logger.debug("Starting cleanup of expired weather cache entries");
             
             // 获取所有地理位置
-            GeoResults<org.springframework.data.redis.domain.geo.GeoLocation<Object>> allLocations = 
+            GeoResults<RedisGeoCommands.GeoLocation<Object>> allLocations =
                 geoOperations.radius(GEO_KEY, 
                     new Point(0, 0), 
                     new Distance(Double.MAX_VALUE, Metrics.KILOMETERS));

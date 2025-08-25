@@ -26,6 +26,6 @@ public class WeatherCacheController {
     @PostMapping("/cleanup")
     public Result<String> cleanupCache() {
         cacheService.cleanupExpiredCache();
-        return Result.success("Cache cleanup completed successfully");
+        return Result.ok("Cache cleanup completed successfully");
     }
 }
