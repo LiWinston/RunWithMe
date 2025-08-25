@@ -34,7 +34,7 @@ public class UserController {
             user.setPassword(null);
             return ResponseEntity.ok(Result.ok("获取用户信息成功", user));
         } else {
-            return ResponseEntity.badRequest().body(Result.error("用户不存在"));
+            return ResponseEntity.ok(Result.error("用户不存在"));
         }
     }
 }

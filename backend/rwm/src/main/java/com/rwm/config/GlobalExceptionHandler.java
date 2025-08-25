@@ -34,8 +34,7 @@ public class GlobalExceptionHandler {
         });
         
         log.warn("参数校验失败: {}", errors);
-        return ResponseEntity.badRequest()
-                .body(Result.error("参数校验失败", errors));
+        return ResponseEntity.ok(Result.error("参数校验失败", errors));
     }
     
     /**
@@ -44,8 +43,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Result<String>> handleRuntimeException(RuntimeException ex) {
         log.error("运行时异常: {}", ex.getMessage(), ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Result.error(ex.getMessage()));
+        return ResponseEntity.ok(Result.error(ex.getMessage()));
     }
     
     /**
@@ -54,7 +52,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Result<String>> handleGenericException(Exception ex) {
         log.error("未知异常: {}", ex.getMessage(), ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Result.error("服务器内部错误"));
+        return ResponseEntity.ok(Result.error("服务器内部错误"));
     }
 }
