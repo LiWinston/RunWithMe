@@ -42,7 +42,9 @@ class HourlyForecastAdapter : RecyclerView.Adapter<HourlyForecastAdapter.HourlyV
         private val hourTime: TextView = itemView.findViewById(R.id.hour_time)
         private val hourWeatherIcon: ImageView = itemView.findViewById(R.id.hour_weather_icon)
         private val hourTemperature: TextView = itemView.findViewById(R.id.hour_temperature)
+        private val hourFeelsLike: TextView = itemView.findViewById(R.id.hour_feels_like)
         private val hourPrecipitation: TextView = itemView.findViewById(R.id.hour_precipitation)
+        private val hourHumidity: TextView = itemView.findViewById(R.id.hour_humidity)
         
         fun bind(item: HourlyForecastItem) {
             // 格式化时间
@@ -57,8 +59,14 @@ class HourlyForecastAdapter : RecyclerView.Adapter<HourlyForecastAdapter.HourlyV
             // 设置温度
             hourTemperature.text = "${item.temperature.degrees.toInt()}°"
             
+            // 设置体感温度 (使用当前温度作为占位符)
+            hourFeelsLike.text = "体感${item.temperature.degrees.toInt()}°"
+            
             // 设置降水概率
             hourPrecipitation.text = "${item.precipitationProbability}%"
+            
+            // 设置湿度
+            hourHumidity.text = "湿度${item.humidity}%"
         }
         
         private fun formatTime(timeString: String): String {

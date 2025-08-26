@@ -6,7 +6,8 @@
     android:background="@drawable/weather_card_background"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:padding="12dp"
+    android:minWidth="80dp">
 
     <TextView
         android:id="@+id/hour_time"
@@ -14,13 +15,14 @@
         android:layout_height="wrap_content"
         android:text="14:00"
         android:textColor="#CCFFFFFF"
-        android:textSize="10sp" />
+        android:textSize="11sp"
+        android:textStyle="bold" />
 
     <ImageView
         android:id="@+id/hour_weather_icon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginVertical="4dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginVertical="6dp"
         android:src="@mipmap/ic_launcher" />
 
     <TextView
@@ -29,8 +31,17 @@
         android:layout_height="wrap_content"
         android:text="21°"
         android:textColor="@android:color/white"
-        android:textSize="12sp"
+        android:textSize="14sp"
         android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/hour_feels_like"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="体感19°"
+        android:textColor="#CCFFFFFF"
+        android:textSize="9sp" />
 
     <TextView
         android:id="@+id/hour_precipitation"
@@ -40,5 +51,14 @@
         android:text="10%"
         android:textColor="#99FFFFFF"
         android:textSize="9sp" />
+
+    <TextView
+        android:id="@+id/hour_humidity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="1dp"
+        android:text="湿度65%"
+        android:textColor="#99FFFFFF"
+        android:textSize="8sp" />
 
 </LinearLayout>

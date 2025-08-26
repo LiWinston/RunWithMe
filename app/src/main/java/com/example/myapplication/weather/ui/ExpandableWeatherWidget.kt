@@ -41,6 +41,9 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
     private lateinit var compactTemperatureText: TextView
     private lateinit var compactHumidityText: TextView
     private lateinit var compactWindText: TextView
+    private lateinit var compactFeelsLikeText: TextView
+    private lateinit var compactPressureText: TextView
+    private lateinit var compactUvText: TextView
     
     // 展开视图组件
     private lateinit var expandedCard: View
@@ -49,11 +52,15 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
     private lateinit var expandedWeatherDescription: TextView
     private lateinit var expandedTemperatureText: TextView
     private lateinit var expandedHumidityValue: TextView
+    private lateinit var expandedFeelsLikeValue: TextView
     private lateinit var expandedWindValue: TextView
+    private lateinit var expandedWindGustValue: TextView
     private lateinit var expandedPressureValue: TextView
     private lateinit var expandedVisibilityValue: TextView
     private lateinit var expandedUvIndexValue: TextView
     private lateinit var expandedDewPointValue: TextView
+    private lateinit var expandedWindChillValue: TextView
+    private lateinit var expandedHeatIndexValue: TextView
     private lateinit var hourlyForecastRecycler: RecyclerView
     
     // 每小时预报适配器
@@ -91,6 +98,9 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
         compactTemperatureText = compactCard.findViewById(R.id.temperature_text)
         compactHumidityText = compactCard.findViewById(R.id.humidity_text)
         compactWindText = compactCard.findViewById(R.id.wind_text)
+        compactFeelsLikeText = compactCard.findViewById(R.id.feels_like_text)
+        compactPressureText = compactCard.findViewById(R.id.pressure_text)
+        compactUvText = compactCard.findViewById(R.id.uv_text)
     }
     
     private fun initExpandedViews() {
@@ -99,11 +109,15 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
         expandedWeatherDescription = expandedCard.findViewById(R.id.weather_description_expanded)
         expandedTemperatureText = expandedCard.findViewById(R.id.temperature_text_expanded)
         expandedHumidityValue = expandedCard.findViewById(R.id.humidity_value_expanded)
+        expandedFeelsLikeValue = expandedCard.findViewById(R.id.feels_like_value_expanded)
         expandedWindValue = expandedCard.findViewById(R.id.wind_value_expanded)
+        expandedWindGustValue = expandedCard.findViewById(R.id.wind_gust_value_expanded)
         expandedPressureValue = expandedCard.findViewById(R.id.pressure_value_expanded)
         expandedVisibilityValue = expandedCard.findViewById(R.id.visibility_value_expanded)
         expandedUvIndexValue = expandedCard.findViewById(R.id.uv_index_value_expanded)
         expandedDewPointValue = expandedCard.findViewById(R.id.dew_point_value_expanded)
+        expandedWindChillValue = expandedCard.findViewById(R.id.wind_chill_value_expanded)
+        expandedHeatIndexValue = expandedCard.findViewById(R.id.heat_index_value_expanded)
         hourlyForecastRecycler = expandedCard.findViewById(R.id.hourly_forecast_recycler)
     }
     
@@ -207,6 +221,9 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
             compactTemperatureText.text = "${weather.temperature.degrees.toInt()}°"
             compactHumidityText.text = "湿度 ${weather.humidity}%"
             compactWindText.text = "风速 ${weather.wind.speed.value.toInt()}${weather.wind.speed.unit}"
+            compactFeelsLikeText.text = "体感 ${weather.feelsLikeTemperature.degrees.toInt()}°"
+            compactPressureText.text = "气压 ${weather.pressure.meanSeaLevelMillibars.toInt()} hPa"
+            compactUvText.text = "UV ${weather.uvIndex}"
         }
     }
     
@@ -225,20 +242,33 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
             
             // 更新详细信息
             expandedHumidityValue.text = "${weather.humidity}%"
+            expandedFeelsLikeValue.text = "${weather.feelsLikeTemperature.degrees.toInt()}°C"
             expandedWindValue.text = "${weather.wind.speed.value.toInt()} ${weather.wind.speed.unit} ${weather.wind.direction.cardinal}"
+            expandedWindGustValue.text = weather.wind.gust?.let { "${it.value.toInt()} ${it.unit}" } ?: "无"
             expandedPressureValue.text = "${weather.pressure.meanSeaLevelMillibars.toInt()} hPa"
             expandedVisibilityValue.text = "${weather.visibility.distance.toInt()} ${weather.visibility.unit}"
             expandedUvIndexValue.text = "${weather.uvIndex} ${getUvDescription(weather.uvIndex)}"
             expandedDewPointValue.text = "${weather.dewPoint.degrees.toInt()}°C"
+            expandedWindChillValue.text = "${weather.windChill.degrees.toInt()}°C"
+            expandedHeatIndexValue.text = "${weather.heatIndex.degrees.toInt()}°C"
         }
         
         // 更新每小时预报
         hourlyForecast?.let { forecast ->
             android.util.Log.d("ExpandableWeatherWidget", "更新每小时预报数据，预报条目数: ${forecast.forecasts.size}")
-            forecast.forecasts.forEachIndexed { index, item ->
-                android.util.Log.d("ExpandableWeatherWidget", "预报[$index]: 时间=${item.time}, 温度=${item.temperature.value}°, 降水=${item.precipitationProbability}%")
+            if (forecast.forecasts.isNotEmpty()) {
+                forecast.forecasts.forEachIndexed { index, item ->
+                    android.util.Log.d("ExpandableWeatherWidget", "预报[$index]: 时间=${item.time}, 温度=${item.temperature.degrees}°, 降水=${item.precipitationProbability}%")
+                }
+                hourlyForecastAdapter.updateData(forecast.forecasts)
+                
+                // 添加一个淡入动画
+                hourlyForecastRecycler.alpha = 0f
+                hourlyForecastRecycler.animate()
+                    .alpha(1f)
+                    .setDuration(500)
+                    .start()
             }
-            hourlyForecastAdapter.updateData(forecast.forecasts)
         } ?: run {
             android.util.Log.w("ExpandableWeatherWidget", "每小时预报数据为空")
         }

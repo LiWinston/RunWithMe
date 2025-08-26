@@ -78,6 +78,7 @@ data class CurrentWeather(
     @SerializedName("weatherCondition")
     val condition: WeatherCondition,
     val temperature: Temperature,
+    val feelsLikeTemperature: Temperature,
     @SerializedName("relativeHumidity")
     val humidity: Int, // 后端返回的是Integer，不是Humidity对象
     val wind: Wind,
@@ -85,7 +86,9 @@ data class CurrentWeather(
     val pressure: AirPressure, // 后端返回的是AirPressure对象，不是Double
     val visibility: Visibility, // 后端返回的是Visibility对象，不是Double
     val uvIndex: Int,
-    val dewPoint: Temperature
+    val dewPoint: Temperature,
+    val windChill: Temperature,
+    val heatIndex: Temperature
 ) {
     // 为了保持向后兼容，提供计算属性
     val location: Location get() = Location(0.0, 0.0) // 临时占位符

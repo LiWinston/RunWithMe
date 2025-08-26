@@ -16,7 +16,7 @@ object WeatherIconUtils {
     fun getIconUrl(
         iconBaseUri: String,
         isDarkMode: Boolean = false,
-        format: IconFormat = IconFormat.SVG
+        format: IconFormat = IconFormat.PNG // 默认使用PNG格式
     ): String {
         val suffix = if (isDarkMode) "_dark${format.extension}" else format.extension
         return "$iconBaseUri$suffix"
