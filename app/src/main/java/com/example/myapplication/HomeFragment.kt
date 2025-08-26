@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -14,7 +15,11 @@ import com.example.myapplication.weather.api.WeatherApiService
 import com.example.myapplication.weather.repository.WeatherRepository
 import com.example.myapplication.weather.ui.ExpandableWeatherWidget
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -24,10 +29,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private lateinit var weatherWidget: ExpandableWeatherWidget
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var weatherRepository: WeatherRepository
+    private var locationCallback: LocationCallback? = null
     
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
         private const val TAG = "HomeFragment"
+        private const val DEFAULT_LATITUDE = -33.768796
+        private const val DEFAULT_LONGITUDE = 151.015735
     }
     
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -80,26 +88,97 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     
     private fun getCurrentLocationAndLoadWeather() {
         if (!checkLocationPermission()) {
+            Log.w(TAG, "位置权限未授权，使用默认位置")
             return
         }
         
+        Log.d(TAG, "开始获取当前位置...")
+        
+        // 首先尝试获取最后已知位置
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location: Location? ->
-                if (location != null) {
+                if (location != null && isLocationValid(location)) {
+                    Log.i(TAG, "成功获取最后已知位置: 纬度=${location.latitude}, 经度=${location.longitude}")
+                    Log.i(TAG, "位置精度: ${location.accuracy}米, 时间: ${location.time}")
                     fetchWeatherData(location.latitude, location.longitude)
                 } else {
-                    // 使用默认位置（墨尔本）
-                    fetchWeatherData(-37.79798624199073, 144.94433507262613)
+                    Log.w(TAG, "最后已知位置无效或为null，尝试请求新位置...")
+                    requestNewLocation()
                 }
             }
             .addOnFailureListener { exception ->
-                Log.e(TAG, "获取位置失败", exception)
-                // 使用默认位置（墨尔本）
-                fetchWeatherData(-37.79798624199073, 144.94433507262613)
+                Log.e(TAG, "获取最后已知位置失败: ${exception.message}", exception)
+                Log.w(TAG, "尝试请求新位置...")
+                requestNewLocation()
             }
     }
     
+    private fun isLocationValid(location: Location): Boolean {
+        // 检查位置是否有效（不是模拟器的默认位置，且时间不太旧）
+        val currentTime = System.currentTimeMillis()
+        val locationAge = currentTime - location.time
+        val maxAge = 5 * 60 * 1000 // 5分钟
+        
+        return locationAge <= maxAge && location.accuracy <= 100
+    }
+    
+    private fun requestNewLocation() {
+        if (!checkLocationPermission()) {
+            useDefaultLocation()
+            return
+        }
+        
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
+            .setMaxUpdateDelayMillis(5000)
+            .build()
+        
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                super.onLocationResult(locationResult)
+                val location = locationResult.lastLocation
+                if (location != null) {
+                    Log.i(TAG, "成功获取新位置: 纬度=${location.latitude}, 经度=${location.longitude}")
+                    Log.i(TAG, "位置精度: ${location.accuracy}米")
+                    
+                    // 停止位置更新
+                    fusedLocationClient.removeLocationUpdates(locationCallback!!)
+                    
+                    fetchWeatherData(location.latitude, location.longitude)
+                } else {
+                    Log.w(TAG, "获取新位置失败，使用默认位置")
+                    useDefaultLocation()
+                }
+            }
+        }
+        
+        try {
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback!!,
+                Looper.getMainLooper()
+            )
+            
+            // 5秒后如果还没有获取到位置，就使用默认位置
+            requireView().postDelayed({
+                if (locationCallback != null) {
+                    Log.w(TAG, "位置请求超时，使用默认位置")
+                    fusedLocationClient.removeLocationUpdates(locationCallback!!)
+                    useDefaultLocation()
+                }
+            }, 5000)
+            
+        } catch (e: SecurityException) {
+            Log.e(TAG, "位置权限被拒绝", e)
+            useDefaultLocation()
+        }
+    }
+    
+    private fun useDefaultLocation() {
+        fetchWeatherData(DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
+    }
+    
     private fun fetchWeatherData(latitude: Double, longitude: Double) {
+        Log.i(TAG, "正在获取天气数据 - 纬度: $latitude, 经度: $longitude")
         lifecycleScope.launch {
             try {
                 val (currentWeatherResult, hourlyForecastResult) = weatherRepository.getWeatherData(latitude, longitude)
@@ -143,13 +222,23 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         when (requestCode) {
             LOCATION_PERMISSION_REQUEST_CODE -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.i(TAG, "位置权限已授权，重新尝试获取位置")
                     getCurrentLocationAndLoadWeather()
                 } else {
                     // 权限被拒绝，使用默认位置
-                    fetchWeatherData(-37.79798624199073, 144.94433507262613)
+                    Log.w(TAG, "位置权限被拒绝，使用默认位置")
+                    useDefaultLocation()
                     Toast.makeText(requireContext(), "使用默认位置显示天气信息", Toast.LENGTH_SHORT).show()
                 }
             }
+        }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        // 清理位置回调
+        locationCallback?.let {
+            fusedLocationClient.removeLocationUpdates(it)
         }
     }
 }
