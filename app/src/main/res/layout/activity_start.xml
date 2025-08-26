@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:background="#F0F0F0"
+    android:layout_height="match_parent">
+
+
+    <!-- 顶部分组容器 -->
+    <FrameLayout
+        android:id="@+id/group_container"
+        android:layout_width="292dp"
+        android:layout_height="98dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp">
+
+        <!-- 背景矩形 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#CCCCCC" />
+
+        <!-- 上层文字 -->
+        <TextView
+            android:id="@+id/group_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="这是分组文字"
+            android:textColor="#000000"
+            android:textSize="18sp"/>
+    </FrameLayout>
+
+    <!-- 中间介绍性文字 -->
+
+    <!-- 底部按钮 -->
+
+    <!--
+    Font family: Inter
+    Line height: 24sp
+    -->
+
+
+    <TextView
+        android:id="@+id/join_friend"
+        android:layout_width="366dp"
+        android:layout_height="143dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="376dp"
+        android:gravity="center_horizontal|top"
+        android:padding="16dp"
+        android:text="@string/join_friend"
+        android:textAppearance="@style/join_friend"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/group_container" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Login in"
+        app:layout_constraintTop_toBottomOf="@id/join_friend"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginTop="24dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
