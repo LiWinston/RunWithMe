@@ -70,6 +70,10 @@ class LoginActivity : AppCompatActivity() {
                                 
                                 Toast.makeText(this@LoginActivity, "登录成功", Toast.LENGTH_SHORT).show()
                                 navigateToMain()
+                                val intent = Intent(this@LoginActivity, MainActivity::class.java)
+                                startActivity(intent)
+
+                                finish()
                             } else {
                                 Toast.makeText(
                                     this@LoginActivity,
