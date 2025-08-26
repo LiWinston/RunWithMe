@@ -126,6 +126,8 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
         hourlyForecastRecycler.apply {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
             adapter = hourlyForecastAdapter
+            // 启用嵌套滑动支持
+            isNestedScrollingEnabled = false
         }
     }
     
