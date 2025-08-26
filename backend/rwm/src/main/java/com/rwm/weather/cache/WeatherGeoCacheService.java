@@ -7,6 +7,7 @@ import com.rwm.weather.dto.HourlyForecastResponse;
 import com.rwm.weather.dto.Location;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.geo.Circle;
 import org.springframework.data.geo.Distance;
@@ -44,9 +45,13 @@ public class WeatherGeoCacheService {
     private static final long CACHE_DURATION_MINUTES = 30; // 缓存数据30分钟（自动过期）
     private static final long GEO_CLEANUP_HOURS = 1; // Geo数据1小时清理一次（兜底机制）
 
+    @Autowired
     private final StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
     private final ObjectMapper objectMapper;
-    
+
+    @Autowired
     @Qualifier("cacheCleanupExecutor")
     private final Executor cacheCleanupExecutor;
     

@@ -24,7 +24,7 @@ interface WeatherApiService {
     /**
      * 获取每小时天气预报
      */
-    @GET("api/weather/hourly")
+    @GET("api/weather/hourly-forecast")
     suspend fun getHourlyForecast(
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double,
