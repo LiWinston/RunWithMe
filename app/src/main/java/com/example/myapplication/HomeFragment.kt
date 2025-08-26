@@ -108,10 +108,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     currentWeatherResult.isSuccess && hourlyForecastResult.isSuccess -> {
                         val currentWeather = currentWeatherResult.getOrNull()!!
                         val hourlyForecast = hourlyForecastResult.getOrNull()
+                        Log.d(TAG, "成功获取两项数据 - 当前天气: ${currentWeather.temperature.degrees}°, 每小时预报数量: ${hourlyForecast?.forecasts?.size ?: 0}")
                         weatherWidget.updateWeatherData(currentWeather, hourlyForecast)
                     }
                     currentWeatherResult.isSuccess -> {
                         val currentWeather = currentWeatherResult.getOrNull()!!
+                        Log.d(TAG, "只获取到当前天气数据 - 温度: ${currentWeather.temperature.degrees}°")
                         weatherWidget.updateWeatherData(currentWeather)
                         Log.w(TAG, "每小时预报获取失败", hourlyForecastResult.exceptionOrNull())
                     }

@@ -204,9 +204,9 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
             // 更新文本信息
             compactLocationText.text = "墨尔本, 卡尔顿" // 可以根据实际位置获取
             compactWeatherDescription.text = WeatherIconUtils.getWeatherDescription(weather.condition.type)
-            compactTemperatureText.text = "${weather.temperature.value.toInt()}°"
-            compactHumidityText.text = "湿度 ${weather.humidity.value}%"
-            compactWindText.text = "风速 ${weather.wind.speed.toInt()}${weather.wind.unit}"
+            compactTemperatureText.text = "${weather.temperature.degrees.toInt()}°"
+            compactHumidityText.text = "湿度 ${weather.humidity}%"
+            compactWindText.text = "风速 ${weather.wind.speed.value.toInt()}${weather.wind.speed.unit}"
         }
     }
     
@@ -221,20 +221,26 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
             // 更新主要信息
             expandedLocationText.text = "墨尔本, 卡尔顿"
             expandedWeatherDescription.text = "${WeatherIconUtils.getWeatherDescription(weather.condition.type)}，适合户外运动"
-            expandedTemperatureText.text = "${weather.temperature.value.toInt()}°"
+            expandedTemperatureText.text = "${weather.temperature.degrees.toInt()}°"
             
             // 更新详细信息
-            expandedHumidityValue.text = "${weather.humidity.value}%"
-            expandedWindValue.text = "${weather.wind.speed.toInt()} ${weather.wind.unit} ${weather.wind.direction}"
-            expandedPressureValue.text = "${weather.pressure.toInt()} hPa"
-            expandedVisibilityValue.text = "${weather.visibility.toInt()} km"
+            expandedHumidityValue.text = "${weather.humidity}%"
+            expandedWindValue.text = "${weather.wind.speed.value.toInt()} ${weather.wind.speed.unit} ${weather.wind.direction.cardinal}"
+            expandedPressureValue.text = "${weather.pressure.meanSeaLevelMillibars.toInt()} hPa"
+            expandedVisibilityValue.text = "${weather.visibility.distance.toInt()} ${weather.visibility.unit}"
             expandedUvIndexValue.text = "${weather.uvIndex} ${getUvDescription(weather.uvIndex)}"
-            expandedDewPointValue.text = "${weather.dewPoint.toInt()}°C"
+            expandedDewPointValue.text = "${weather.dewPoint.degrees.toInt()}°C"
         }
         
         // 更新每小时预报
         hourlyForecast?.let { forecast ->
+            android.util.Log.d("ExpandableWeatherWidget", "更新每小时预报数据，预报条目数: ${forecast.forecasts.size}")
+            forecast.forecasts.forEachIndexed { index, item ->
+                android.util.Log.d("ExpandableWeatherWidget", "预报[$index]: 时间=${item.time}, 温度=${item.temperature.value}°, 降水=${item.precipitationProbability}%")
+            }
             hourlyForecastAdapter.updateData(forecast.forecasts)
+        } ?: run {
+            android.util.Log.w("ExpandableWeatherWidget", "每小时预报数据为空")
         }
     }
     

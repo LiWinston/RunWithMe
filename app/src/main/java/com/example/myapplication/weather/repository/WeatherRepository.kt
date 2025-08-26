@@ -56,14 +56,18 @@ class WeatherRepository @Inject constructor(
                 if (response.isSuccessful) {
                     val apiResult = response.body()
                     if (apiResult?.code == 0 && apiResult.data != null) {
+                        android.util.Log.d("WeatherRepository", "每小时预报API返回成功，数据: ${apiResult.data}")
                         Result.success(apiResult.data)
                     } else {
+                        android.util.Log.e("WeatherRepository", "每小时预报API返回错误: code=${apiResult?.code}, message=${apiResult?.message}")
                         Result.failure(Exception(apiResult?.message ?: "获取每小时预报失败"))
                     }
                 } else {
+                    android.util.Log.e("WeatherRepository", "每小时预报网络请求失败: ${response.code()}")
                     Result.failure(Exception("网络请求失败: ${response.code()}"))
                 }
             } catch (e: Exception) {
+                android.util.Log.e("WeatherRepository", "每小时预报请求异常", e)
                 Result.failure(e)
             }
         }

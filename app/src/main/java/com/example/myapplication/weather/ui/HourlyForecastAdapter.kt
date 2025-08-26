@@ -45,8 +45,8 @@ class HourlyForecastAdapter : RecyclerView.Adapter<HourlyForecastAdapter.HourlyV
         private val hourPrecipitation: TextView = itemView.findViewById(R.id.hour_precipitation)
         
         fun bind(item: HourlyForecastItem) {
-            // 格式化时间（假设time是ISO格式字符串）
-            hourTime.text = formatTime(item.time)
+            // 格式化时间
+            hourTime.text = item.time
             
             // 加载天气图标
             val iconUrl = WeatherIconUtils.getIconUrl(item.condition.iconBaseUri, false)
@@ -55,7 +55,7 @@ class HourlyForecastAdapter : RecyclerView.Adapter<HourlyForecastAdapter.HourlyV
                 .into(hourWeatherIcon)
             
             // 设置温度
-            hourTemperature.text = "${item.temperature.value.toInt()}°"
+            hourTemperature.text = "${item.temperature.degrees.toInt()}°"
             
             // 设置降水概率
             hourPrecipitation.text = "${item.precipitationProbability}%"
