@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -19,20 +18,20 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var tokenManager: TokenManager
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // 初始化
         RetrofitClient.init(this)
         tokenManager = TokenManager.getInstance(this)
-        
+
         // 检查登录状态
         if (!tokenManager.isLoggedIn()) {
             navigateToLogin()
             return
         }
-        
+
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -50,9 +49,10 @@ class MainActivity : AppCompatActivity() {
         bottomNav.setOnItemSelectedListener { item ->
             val fragment = when (item.itemId) {
                 R.id.nav_home -> HomeFragment()
-                R.id.nav_search -> SearchFragment()
+                R.id.nav_group -> GroupFragment()
                 R.id.nav_profile -> ProfileFragment()
-                R.id.nav_publish -> PublishFragment()
+                R.id.nav_history -> HistoryFragment()
+                R.id.nav_workout -> WorkoutFragment_1()
                 else -> null
             }
             fragment?.let {
@@ -63,12 +63,12 @@ class MainActivity : AppCompatActivity() {
             true
         }
     }
-    
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
         return true
     }
-    
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_logout -> {
@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-    
+
     private fun logout() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     private fun navigateToLogin() {
         val intent = Intent(this, LoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

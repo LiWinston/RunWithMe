@@ -9,4 +9,6 @@
         <item>Advanced</item>
         <item>Expert</item>
     </string-array>
+
+    <string name="btn_desc">start button</string>
 </resources>
