@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
             val fragment = when (item.itemId) {
                 R.id.nav_home -> HomeFragment()
                 R.id.nav_group -> GroupFragment()
-                R.id.nav_profile -> ProfileFragment()
+                R.id.nav_settings -> SettingsFragment()
                 R.id.nav_history -> HistoryFragment()
                 R.id.nav_workout -> WorkoutFragment_1()
                 else -> null
