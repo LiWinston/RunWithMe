@@ -64,8 +64,8 @@ class LoginActivity : AppCompatActivity() {
                                     loginResponse.data.refreshToken
                                 )
                                 tokenManager.saveUserInfo(
-                                    loginResponse.data.user.id,
-                                    loginResponse.data.user.username
+                                    loginResponse.data.userInfo.id,
+                                    loginResponse.data.userInfo.username
                                 )
                                 
                                 Toast.makeText(this@LoginActivity, "登录成功", Toast.LENGTH_SHORT).show()
