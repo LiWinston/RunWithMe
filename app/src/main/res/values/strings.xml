@@ -11,4 +11,5 @@
     </string-array>
 
     <string name="btn_desc">start button</string>
+<!--    <string name="gender_hint">Select gender</string>-->
 </resources>

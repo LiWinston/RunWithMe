@@ -6,27 +6,6 @@
     android:background="@drawable/splash_gradient_background">
 
     <!-- Background Decorative Elements -->
-    <ImageView
-        android:id="@+id/iv_decoration_left"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="120dp"
-        android:alpha="0.2"
-        android:src="@drawable/decoration_running"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:id="@+id/iv_decoration_right"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginEnd="40dp"
-        android:layout_marginBottom="150dp"
-        android:alpha="0.15"
-        android:src="@drawable/decoration_fitness"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Main Content Container -->
     <LinearLayout
@@ -42,39 +21,30 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <!-- App Logo/Icon -->
-        <ImageView
-            android:id="@+id/iv_logo"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:layout_marginBottom="24dp"
-            android:src="@drawable/app_logo" />
 
         <!-- App Name -->
+
         <TextView
-            android:id="@+id/tv_app_name"
+            android:id="@+id/tv_app_name1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="2dp"
             android:fontFamily="sans-serif-medium"
-            android:text="Run With Me"
+            android:text="Run Together,"
             android:textColor="@android:color/white"
-            android:textSize="32sp"
+            android:textSize="35sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/tv_app_name2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="80dp"
+            android:fontFamily="sans-serif-medium"
+            android:text="Grow Together"
+            android:textColor="#83FFCB"
+            android:textSize="35sp"
             android:textStyle="bold" />
 
-        <!-- Tagline -->
-        <TextView
-            android:id="@+id/tv_tagline"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:fontFamily="sans-serif"
-            android:gravity="center"
-            android:lineSpacingExtra="4dp"
-            android:text="Run Together,\nGrow Together"
-            android:textColor="#B3FFFFFF"
-            android:textSize="18sp" />
-
-        <!-- Subtitle -->
         <TextView
             android:id="@+id/tv_subtitle"
             android:layout_width="match_parent"
@@ -84,8 +54,9 @@
             android:gravity="center"
             android:lineSpacingExtra="2dp"
             android:text="Join friends, track workouts, and achieve fitness goals together.\n\nTurn your daily runs into shared adventures with AI coaching and social motivation."
-            android:textColor="#99FFFFFF"
-            android:textSize="14sp" />
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"/>
 
         <!-- Loading Progress Bar -->
         <ProgressBar

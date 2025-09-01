@@ -15,7 +15,7 @@
         android:layout_height="120dp"
         android:layout_marginTop="80dp"
         android:src="@drawable/ic_launcher_foreground"
-        android:background="@drawable/button_primary"
+        android:background="@drawable/btn_primary_normal"
         android:scaleType="centerInside"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -40,7 +40,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="Your fitness journey starts here"
-        android:textColor="#B3FFFFFF"
+        android:textColor="@android:color/white"
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -65,15 +65,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="24dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Welcome Back"
-                android:textColor="#333333"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="24dp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/til_username"
@@ -123,7 +114,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Forgot Password?"
-                android:textColor="#667eea"
+                android:textColor="#469BD0"
                 android:textSize="14sp"
                 android:layout_gravity="end"
                 android:layout_marginBottom="24dp" />
@@ -132,15 +123,17 @@
                 android:id="@+id/loginBtn"
                 style="@style/Widget.RWM.Button.Primary"
                 android:layout_width="match_parent"
-                android:layout_marginBottom="16dp"
-                android:text="Sign In" />
+                android:background="@drawable/btn_primary_ripple"
+                app:backgroundTint="@null"
+                android:layout_marginBottom="3dp"
+                android:text="Log In" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="3dp">
 
                 <View
                     android:layout_width="0dp"
@@ -166,6 +159,8 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/registerBtn"
                 style="@style/Widget.RWM.Button.Outlined"
+                app:strokeColor="#42AB77"
+                android:textColor= "#469BD0"
                 android:layout_width="match_parent"
                 android:text="Create New Account" />
 
