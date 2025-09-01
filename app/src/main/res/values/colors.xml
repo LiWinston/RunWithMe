@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- App Brand Colors -->
+    <color name="primary_blue">#667eea</color>
+    <color name="primary_blue_dark">#5A67D8</color>
+    <color name="secondary_purple">#764ba2</color>
+    <color name="secondary_purple_dark">#6B46C1</color>
+    
+    <!-- UI Colors -->
+    <color name="background_light">#F8FAFC</color>
+    <color name="surface_light">#FFFFFF</color>
+    <color name="text_primary">#1A202C</color>
+    <color name="text_secondary">#718096</color>
+    <color name="text_hint">#A0AEC0</color>
+    <color name="border_light">#E2E8F0</color>
+    
+    <!-- Status Colors -->
+    <color name="success">#48BB78</color>
+    <color name="warning">#ED8936</color>
+    <color name="error">#F56565</color>
+</resources>

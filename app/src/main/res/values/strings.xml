@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Run With Me</string>
+    
+    <!-- Fitness level array -->
+    <string-array name="fitness_level_array">
+        <item>Select Fitness Level</item>
+        <item>Beginner</item>
+        <item>Intermediate</item>
+        <item>Advanced</item>
+        <item>Expert</item>
+    </string-array>
+
+    <string name="btn_desc">start button</string>
+<!--    <string name="gender_hint">Select gender</string>-->
+</resources>
