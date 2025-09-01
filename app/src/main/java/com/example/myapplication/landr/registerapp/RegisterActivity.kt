@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import android.widget.AutoCompleteTextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication.landr.RetrofitClient
 import com.example.myapplication.landr.loginapp.LoginActivity
@@ -26,10 +27,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var emailEt: EditText
     private lateinit var firstnameEt: EditText
     private lateinit var lastnameEt: EditText
-    private lateinit var maleOption: LinearLayout
-    private lateinit var femaleOption: LinearLayout
-    private lateinit var otherOption: LinearLayout
-    private var selectedGender: String? = null
+    private lateinit var genderDropdown: AutoCompleteTextView
     private lateinit var ageEt: EditText
     private lateinit var phoneEt: EditText
     private lateinit var heightEt: EditText
@@ -58,9 +56,7 @@ class RegisterActivity : AppCompatActivity() {
         emailEt = findViewById(R.id.emailEt)
         firstnameEt = findViewById(R.id.firstnameEt)
         lastnameEt = findViewById(R.id.lastnameEt)
-//        maleOption = findViewById(R.id.maleOption)
-//        femaleOption = findViewById(R.id.femaleOption)
-//        otherOption = findViewById(R.id.otherOption)
+        genderDropdown = findViewById(R.id.genderDropdown)
         ageEt = findViewById(R.id.ageEt)
         phoneEt = findViewById(R.id.phoneEt)
         heightEt = findViewById(R.id.heightEt)
@@ -82,28 +78,20 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun setupGenderSelection() {
-        maleOption.setOnClickListener {
-            selectGender("MALE", maleOption)
-        }
-        
-        femaleOption.setOnClickListener {
-            selectGender("FEMALE", femaleOption)
-        }
-        
-        otherOption.setOnClickListener {
-            selectGender("OTHER", otherOption)
-        }
-    }
+        val items = arrayOf("Male", "Female", "Other")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, items)
+        genderDropdown.setAdapter(adapter)
 
-    private fun selectGender(gender: String, selectedView: LinearLayout) {
-        // Reset all selections
-        maleOption.isSelected = false
-        femaleOption.isSelected = false
-        otherOption.isSelected = false
-        
-        // Set the selected gender
-        selectedGender = gender
-        selectedView.isSelected = true
+        // 确保下拉菜单可以点击
+        genderDropdown.setOnClickListener {
+            genderDropdown.showDropDown()
+        }
+
+        // 处理选择事件
+        genderDropdown.setOnItemClickListener { _, _, position, _ ->
+            // 选择后自动填入文本
+            genderDropdown.clearFocus()
+        }
     }
 
     private fun setupClickListeners() {
@@ -130,32 +118,36 @@ class RegisterActivity : AppCompatActivity() {
 
         // 验证必填字段
         if (username.isEmpty()) {
-            Toast.makeText(this, "请输入用户名", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Username can not be empty", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (password.isEmpty()) {
-            Toast.makeText(this, "请输入密码", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Password can not be empty", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (password.length < 6) {
-            Toast.makeText(this, "密码至少6位", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (firstName.isEmpty()) {
-            Toast.makeText(this, "请输入名字", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "FirstName can not be empty", Toast.LENGTH_SHORT).show()
             return
         }
 
         if (lastName.isEmpty()) {
-            Toast.makeText(this, "请输入姓氏", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Lastname can not be empty", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // 获取性别
-        val gender = selectedGender
+        val gender = when(genderDropdown.text.toString().trim().lowercase()) {
+            "male" -> "MALE"
+            "female" -> "FEMALE"
+            "other" -> "OTHER"
+            else -> null
+        }
 
         // 转换数值类型
         val age = if (ageText.isNotEmpty()) ageText.toIntOrNull() else null
@@ -180,7 +172,7 @@ class RegisterActivity : AppCompatActivity() {
             weight = weight,
             fitnessGoal = if (fitnessGoal.isNotEmpty()) fitnessGoal else null,
             fitnessLevel = fitnessLevel,
-            weeklyAvailability = null // 暂时不包含此字段
+            weeklyAvailability = null
         )
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -191,21 +183,21 @@ class RegisterActivity : AppCompatActivity() {
                     if (response.isSuccessful) {
                         val registerResponse = response.body()
                         if (registerResponse?.status == 1) {
-                            Toast.makeText(this@RegisterActivity, "注册成功！请登录", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@RegisterActivity, "Register Successfully! Please Log in.", Toast.LENGTH_SHORT).show()
                             val intent = Intent(this@RegisterActivity, LoginActivity::class.java)
                             startActivity(intent)
                             finish()
                         } else {
                             Toast.makeText(
                                 this@RegisterActivity,
-                                registerResponse?.message ?: "注册失败",
+                                registerResponse?.message ?: "Register Failed",
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
                     } else {
                         Toast.makeText(
                             this@RegisterActivity,
-                            "网络错误: ${response.code()}",
+                            "Network Error: ${response.code()}",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -213,7 +205,7 @@ class RegisterActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@RegisterActivity, "网络错误: ${e.message}", Toast.LENGTH_SHORT)
+                    Toast.makeText(this@RegisterActivity, "Network Error: ${e.message}", Toast.LENGTH_SHORT)
                         .show()
                 }
             }
