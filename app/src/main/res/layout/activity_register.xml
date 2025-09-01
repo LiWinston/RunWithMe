@@ -222,9 +222,8 @@
                                 android:layout_height="wrap_content"
                                 android:inputType="none"
                                 android:focusable="false"
-                                android:textColor="@android:color/white"
-                                android:dropDownVerticalOffset="8dp"
-                                android:entries="@array/gender_options"/>
+                                android:textColor="@android:color/black"
+                                android:dropDownVerticalOffset="8dp" />
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
 
