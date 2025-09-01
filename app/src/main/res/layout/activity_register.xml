@@ -223,9 +223,7 @@
                                 android:inputType="none"
                                 android:focusable="false"
                                 android:textColor="@android:color/white"
-                                android:hintTextColor="#80FFFFFF"
                                 android:dropDownVerticalOffset="8dp"
-                                android:dropDownBackground="@android:color/white"
                                 android:entries="@array/gender_options"/>
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
@@ -267,7 +265,6 @@
                                 android:layout_height="wrap_content"
                                 android:inputType="number"
                                 android:textColor="@android:color/white"
-                                android:hintTextColor="#80FFFFFF"
                                 android:background="@null"/>
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
