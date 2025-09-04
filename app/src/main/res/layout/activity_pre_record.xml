@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/pre_record_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/record_background">
+
+    <!-- 顶部返回按钮 -->
+    <ImageButton
+        android:id="@+id/btn_back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@android:color/transparent"
+        android:src="@android:drawable/ic_menu_revert"
+        app:tint="@android:color/black" />
+
+    <!-- 标题 -->
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Workout"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:layout_centerHorizontal="true"
+        android:layout_alignTop="@id/btn_back"
+        android:layout_marginTop="10dp"/>
+
+    <!-- 倒计时数字 -->
+    <TextView
+        android:id="@+id/tv_countdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="3"
+        android:textSize="80sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:layout_centerInParent="true" />
+
+</RelativeLayout>

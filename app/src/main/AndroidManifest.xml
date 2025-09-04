@@ -32,6 +32,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--<activity
+            android:name=".record.StartRecordActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>-->
         
         <!-- Login Activity -->
         <activity
@@ -53,6 +63,35 @@
             android:exported="true"
             android:screenOrientation="portrait">
         </activity>
+
+        <!-- gsh RecordActivity -->
+        <activity
+            android:name=".record.RecordingActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- gsh PreRecordActivity -->
+        <activity
+            android:name=".record.PreRecordActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- gsh StartActivity -->
+        <activity
+            android:name=".record.FinishActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- gsh FinishActivity -->
+        <activity
+            android:name=".record.StartRecordActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
+        </activity>
+
     </application>
     <uses-permission android:name="android.permission.INTERNET"/>
 

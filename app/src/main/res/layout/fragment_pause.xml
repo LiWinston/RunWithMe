@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/weather_card_expanded_background">
+
+    <!-- Workout 标题 -->
+    <TextView
+        android:id="@+id/tvWorkoutTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/WorkoutLabelText"
+        android:text="WORKOUT"
+        android:textSize="20sp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="40dp"/>
+
+    <!-- TIME -->
+    <TextView
+        android:id="@+id/tvLabelTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/WorkoutLabelText"
+        android:text="TIME"
+        app:layout_constraintTop_toBottomOf="@id/tvWorkoutTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"/>
+
+    <TextView
+        android:id="@+id/tvTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/WorkoutNumberText"
+        android:text="00:00:00"
+        app:layout_constraintTop_toBottomOf="@id/tvLabelTime"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- SPEED -->
+    <TextView
+        android:id="@+id/tvLabelSpeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/WorkoutLabelText"
+        android:text="SPEED"
+        app:layout_constraintTop_toBottomOf="@id/tvTime"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"/>
+
+    <TextView
+        android:id="@+id/tvSpeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/WorkoutNumberText"
+        android:text="0.00 mph"
+        app:layout_constraintTop_toBottomOf="@id/tvLabelSpeed"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- DISTANCE -->
+    <TextView
+        android:id="@+id/tvLabelDistance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/WorkoutLabelText"
+        android:text="DISTANCE"
+        app:layout_constraintTop_toBottomOf="@id/tvSpeed"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"/>
+
+    <TextView
+        android:id="@+id/tvDistance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/WorkoutNumberText"
+        android:text="0.00 miles"
+        app:layout_constraintTop_toBottomOf="@id/tvLabelDistance"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- CALORIES -->
+    <TextView
+        android:id="@+id/tvLabelCalories"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/WorkoutLabelText"
+        android:text="CALORIES"
+        app:layout_constraintTop_toBottomOf="@id/tvDistance"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"/>
+
+    <TextView
+        android:id="@+id/tvCalories"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/WorkoutNumberText"
+        android:text="0 kcal"
+        app:layout_constraintTop_toBottomOf="@id/tvLabelCalories"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- 按钮组 -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="60dp">
+
+        <Button
+            android:id="@+id/btnResume"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:text="▶️"
+            android:textSize="24sp"
+            android:backgroundTint="#88FFFFFF"
+            android:layout_marginEnd="40dp"/>
+
+        <Button
+            android:id="@+id/btnStop"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:text="⏹"
+            android:textSize="24sp"
+            android:backgroundTint="#88FFFFFF"/>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
