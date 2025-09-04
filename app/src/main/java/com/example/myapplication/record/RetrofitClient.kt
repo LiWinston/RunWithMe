@@ -1,4 +1,4 @@
-package com.example.myapplication.network
+package com.example.myapplication.record
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -8,11 +8,11 @@ object RetrofitClient {
     // ⚠️ 注意：如果你后端在自己电脑本地跑的 http://localhost:8080，
     // 在 Android 模拟器中要写成 http://10.0.2.2:8080
 
-    val api: ApiService by lazy {
+    val api: RecordApi by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(ApiService::class.java)
+            .create(RecordApi::class.java)
     }
 }
