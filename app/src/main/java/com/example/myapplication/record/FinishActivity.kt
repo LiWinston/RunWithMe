@@ -3,8 +3,12 @@ package com.example.myapplication.record
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class FinishActivity : AppCompatActivity() {
 
@@ -30,7 +34,42 @@ class FinishActivity : AppCompatActivity() {
         tvSpeed.text = speed  // 直接显示速度
 
         btnDone.setOnClickListener {
-            finish() // 结束页面，回到主界面
+            // 构造 Workout 数据对象
+            val workout = Workout(
+                distance = distance,
+                duration = duration,
+                speed = speed,
+                calories = calories,
+                userId = 1L // TODO: 这里改成你实际登录用户的 ID
+            )
+
+            // 调用 Retrofit 保存
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val response = RetrofitClient.api.saveWorkout(workout)
+                    runOnUiThread {
+                        if (response.isSuccessful) {
+                            Toast.makeText(this@FinishActivity, "保存成功！", Toast.LENGTH_SHORT).show()
+                            finish()
+                        } else {
+                            Toast.makeText(this@FinishActivity, "保存失败: ${response.code()}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        Toast.makeText(this@FinishActivity, "网络错误: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
         }
     }
 }
+
+// 前端用来传输数据的实体
+data class Workout(
+    val distance: String,
+    val duration: String,
+    val speed: String,
+    val calories: String,
+    val userId: Long
+)
