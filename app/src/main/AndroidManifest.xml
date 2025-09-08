@@ -5,7 +5,7 @@
     <!-- 网络权限 -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
+    
     <!-- 位置权限 -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -20,15 +20,10 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.MyApplication">
-
-        <!-- Google Maps API Key -->
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyC2wuXVOH90rM29mRaAlZ4rFTcDReSdOaI"/>
-
-        <!-- Splash Activity -->
+        
+        <!-- Splash Activity - 启动页面 -->
         <activity
-            android:name=".MainActivity"
+            android:name=".SplashActivity"
             android:exported="true"
             android:theme="@style/SplashTheme"
             android:screenOrientation="portrait">
@@ -37,25 +32,29 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        
         <!-- Login Activity -->
         <activity
             android:name=".landr.loginapp.LoginActivity"
             android:exported="true"
-            android:screenOrientation="portrait" />
-
+            android:screenOrientation="portrait">
+        </activity>
+        
         <!-- Register Activity -->
         <activity
             android:name=".landr.registerapp.RegisterActivity"
             android:exported="true"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait">
+        </activity>
 
         <!-- Main Activity -->
-<!--        <activity-->
-<!--            android:name=".MainActivity"-->
-<!--            android:exported="true"-->
-<!--            android:screenOrientation="portrait" />-->
-
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
+        </activity>
     </application>
+    <uses-permission android:name="android.permission.INTERNET"/>
+
 
 </manifest>
