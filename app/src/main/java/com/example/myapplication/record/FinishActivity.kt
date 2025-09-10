@@ -34,25 +34,39 @@ class FinishActivity : AppCompatActivity() {
         tvSpeed.text = speed  // 直接显示速度
 
         btnDone.setOnClickListener {
-            // 构造 Workout 数据对象
-            val workout = Workout(
-                distance = distance,
-                duration = duration,
-                speed = speed,
-                calories = calories,
-                userId = 1L // TODO: 这里改成你实际登录用户的 ID
+            // 构造 WorkoutCreateRequest 数据对象
+            val workoutRequest = WorkoutCreateRequest(
+                userId = 1L, // TODO: 这里改成你实际登录用户的 ID
+                workoutType = "OUTDOOR_RUN", // 可以根据实际运动类型修改
+                distance = parseDistance(distance),
+                duration = parseDuration(duration),
+                steps = null, // 如果有步数数据可以传入
+                calories = parseCalories(calories),
+                avgSpeed = parseSpeed(speed),
+                avgPace = null, // 可以根据速度和距离计算
+                avgHeartRate = null, // 如果有心率数据可以传入
+                maxHeartRate = null,
+                startTime = java.time.LocalDateTime.now().minusSeconds(parseDuration(duration)?.toLong() ?: 0L).toString(), // 估算开始时间
+                endTime = java.time.LocalDateTime.now().toString(),
+                status = "COMPLETED",
+                visibility = "PRIVATE",
+                goalAchieved = checkGoalAchievement(parseDistance(distance), parseDuration(duration)),
+                notes = null,
+                weatherCondition = null,
+                temperature = null
             )
 
             // 调用 Retrofit 保存
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val response = RetrofitClient.api.saveWorkout(workout)
+                    val response = RetrofitClient.api.createWorkout(workoutRequest)
                     runOnUiThread {
-                        if (response.isSuccessful) {
+                        if (response.isSuccessful && response.body()?.code == 0) {
                             Toast.makeText(this@FinishActivity, "保存成功！", Toast.LENGTH_SHORT).show()
                             finish()
                         } else {
-                            Toast.makeText(this@FinishActivity, "保存失败: ${response.code()}", Toast.LENGTH_SHORT).show()
+                            val errorMsg = response.body()?.message ?: "保存失败"
+                            Toast.makeText(this@FinishActivity, errorMsg, Toast.LENGTH_SHORT).show()
                         }
                     }
                 } catch (e: Exception) {
@@ -63,13 +77,137 @@ class FinishActivity : AppCompatActivity() {
             }
         }
     }
+    
+    // 辅助函数 - 解析距离字符串 (如 "2.5 miles" -> 4.023 km)
+    private fun parseDistance(distanceStr: String): Double? {
+        return try {
+            val regex = Regex("""(\d+\.?\d*)\s*(miles|km)""")
+            val matchResult = regex.find(distanceStr)
+            if (matchResult != null) {
+                val value = matchResult.groupValues[1].toDouble()
+                val unit = matchResult.groupValues[2]
+                when (unit) {
+                    "miles" -> value * 1.609344 // 转换为公里
+                    "km" -> value
+                    else -> value
+                }
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    // 辅助函数 - 解析时长字符串 (如 "01:23:45" -> 5025 秒)
+    private fun parseDuration(durationStr: String): Int? {
+        return try {
+            val parts = durationStr.split(":")
+            if (parts.size == 3) {
+                val hours = parts[0].toInt()
+                val minutes = parts[1].toInt()
+                val seconds = parts[2].toInt()
+                hours * 3600 + minutes * 60 + seconds
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    // 辅助函数 - 解析卡路里字符串 (如 "120 kcal" -> 120.0)
+    private fun parseCalories(caloriesStr: String): Double? {
+        return try {
+            val regex = Regex("""(\d+\.?\d*)\s*kcal""")
+            val matchResult = regex.find(caloriesStr)
+            matchResult?.groupValues?.get(1)?.toDouble()
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    // 辅助函数 - 解析速度字符串 (如 "5.2 mph" -> 8.369 km/h)
+    private fun parseSpeed(speedStr: String): Double? {
+        return try {
+            val regex = Regex("""(\d+\.?\d*)\s*(mph|kmh|km/h)""")
+            val matchResult = regex.find(speedStr)
+            if (matchResult != null) {
+                val value = matchResult.groupValues[1].toDouble()
+                val unit = matchResult.groupValues[2]
+                when (unit) {
+                    "mph" -> value * 1.609344 // 转换为 km/h
+                    "kmh", "km/h" -> value
+                    else -> value
+                }
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    // 辅助函数 - 检查目标达成 (距离>=1km 或 时长>=15分钟)
+    private fun checkGoalAchievement(distance: Double?, duration: Int?): Boolean {
+        val distanceGoal = distance != null && distance >= 1.0
+        val durationGoal = duration != null && duration >= 900 // 15分钟
+        return distanceGoal || durationGoal
+    }
 }
 
-// 前端用来传输数据的实体
+// 前端用来传输数据的实体 - 适配新的后端结构
+data class WorkoutCreateRequest(
+    val userId: Long,
+    val workoutType: String = "OUTDOOR_RUN",
+    val distance: Double?,
+    val duration: Int?, // 秒
+    val steps: Int?,
+    val calories: Double?,
+    val avgSpeed: Double?,
+    val avgPace: Int?,
+    val avgHeartRate: Int?,
+    val maxHeartRate: Int?,
+    val startTime: String, // ISO格式时间
+    val endTime: String?,
+    val status: String = "COMPLETED",
+    val visibility: String = "PRIVATE",
+    val goalAchieved: Boolean = false,
+    val groupId: Long? = null,
+    val notes: String? = null,
+    val weatherCondition: String? = null,
+    val temperature: Double? = null
+)
+
+// 后端响应的Workout实体
 data class Workout(
-    val distance: String,
-    val duration: String,
-    val speed: String,
-    val calories: String,
-    val userId: Long
+    val id: Long,
+    val userId: Long,
+    val workoutType: String,
+    val distance: Double?,
+    val duration: Int?,
+    val steps: Int?,
+    val calories: Double?,
+    val avgSpeed: Double?,
+    val avgPace: Int?,
+    val avgHeartRate: Int?,
+    val maxHeartRate: Int?,
+    val startTime: String,
+    val endTime: String?,
+    val status: String,
+    val visibility: String,
+    val goalAchieved: Boolean,
+    val groupId: Long?,
+    val notes: String?,
+    val weatherCondition: String?,
+    val temperature: Double?,
+    val createdAt: String,
+    val updatedAt: String
+)
+
+// API响应包装
+data class ApiResponse<T>(
+    val code: Int,
+    val message: String,
+    val data: T?
 )

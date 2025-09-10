@@ -2,6 +2,7 @@ package com.rwm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -14,20 +15,59 @@ public class Workout {
     @TableField("user_id")   // 外键，关联 users.id
     private Long userId;
 
-    @TableField("distance")
-    private Double distance;
+    @TableField("workout_type") // 运动类型：OUTDOOR_RUN, TREADMILL, WALK
+    private String workoutType;
 
-    @TableField("duration")
-    private String duration;
+    @TableField("distance") // 距离(km)
+    private BigDecimal distance;
 
-    @TableField("calories")
-    private Double calories;
+    @TableField("duration") // 持续时间(秒)
+    private Integer duration;
 
-    @TableField("speed")
-    private Double speed;
+    @TableField("steps") // 步数
+    private Integer steps;
 
-    @TableField("date")
-    private LocalDateTime date;
+    @TableField("calories") // 卡路里
+    private BigDecimal calories;
+
+    @TableField("avg_speed") // 平均速度(km/h)
+    private BigDecimal avgSpeed;
+
+    @TableField("avg_pace") // 平均配速(秒/km)
+    private Integer avgPace;
+
+    @TableField("avg_heart_rate") // 平均心率(bpm)
+    private Integer avgHeartRate;
+
+    @TableField("max_heart_rate") // 最大心率(bpm)
+    private Integer maxHeartRate;
+
+    @TableField("start_time") // 开始时间
+    private LocalDateTime startTime;
+
+    @TableField("end_time") // 结束时间
+    private LocalDateTime endTime;
+
+    @TableField("status") // 运动状态：STARTED, PAUSED, COMPLETED, STOPPED
+    private String status;
+
+    @TableField("visibility") // 可见性：PUBLIC, GROUP, PRIVATE
+    private String visibility;
+
+    @TableField("goal_achieved") // 是否达成日目标
+    private Boolean goalAchieved;
+
+    @TableField("group_id") // 关联群组ID（可选）
+    private Long groupId;
+
+    @TableField("notes") // 运动备注
+    private String notes;
+
+    @TableField("weather_condition") // 天气条件
+    private String weatherCondition;
+
+    @TableField("temperature") // 温度(℃)
+    private BigDecimal temperature;
 
     @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;

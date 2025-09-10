@@ -16,3 +16,4 @@ local.properties
 /.idea
 /.github/instructions
 /backend/.idea
+/.cursor

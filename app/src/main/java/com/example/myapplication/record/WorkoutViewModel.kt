@@ -22,12 +22,20 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     private val _distance = MutableLiveData("0.00 miles")
     private val _calories = MutableLiveData("0 kcal")
     private val _debugInfo = MutableLiveData("Idle")
+    
+    // 新增数据
+    private val _steps = MutableLiveData(0)
+    private val _heartRate = MutableLiveData(0)
+    private val _currentWorkoutId = MutableLiveData<Long?>(null)
 
     val time: LiveData<String> = _time
     val speed: LiveData<String> = _speed
     val distance: LiveData<String> = _distance
     val calories: LiveData<String> = _calories
     val debugInfo: LiveData<String> = _debugInfo
+    val steps: LiveData<Int> = _steps
+    val heartRate: LiveData<Int> = _heartRate
+    val currentWorkoutId: LiveData<Long?> = _currentWorkoutId
 
     // 状态
     private var running = false
@@ -55,6 +63,10 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     // GPS 控制
     private var lastGpsUpdateTime: Long = 0L
     private var useGps = true
+    
+    // 路线追踪
+    private val routePoints = mutableListOf<WorkoutRoute>()
+    private var routeSequence = 0
 
     private lateinit var locationCallback: LocationCallback
 
@@ -134,6 +146,9 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                     lastGpsUpdateTime = System.currentTimeMillis()
                     useGps = true
                     _debugInfo.value = "GPS Mode"
+                    
+                    // 记录路线点
+                    recordRoutePoint(location)
                 }
             }
         }
@@ -177,6 +192,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             // ✅ 阈值调低，方便 Emulator 触发
             if (accel > 1.2 && now - lastUpdate > 300) {
                 stepCount++
+                _steps.value = stepCount
                 lastUpdate = now
             }
         }
@@ -216,5 +232,92 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         _distance.value = "0.00 miles"
         _calories.value = "0 kcal"
         _debugInfo.value = "Stopped"
+    }
+    
+    // 记录路线点
+    private fun recordRoutePoint(location: Location) {
+        if (!running) return
+        
+        val routePoint = WorkoutRoute(
+            latitude = location.latitude,
+            longitude = location.longitude,
+            altitude = if (location.hasAltitude()) location.altitude else null,
+            accuracy = if (location.hasAccuracy()) location.accuracy.toDouble() else null,
+            speed = if (location.hasSpeed()) (location.speed * 3.6) else null, // m/s转km/h
+            heartRate = _heartRate.value?.takeIf { it > 0 },
+            timestamp = java.time.Instant.ofEpochMilli(location.time).toString(),
+            sequenceOrder = ++routeSequence
+        )
+        
+        routePoints.add(routePoint)
+    }
+    
+    // 获取当前运动的路线数据
+    fun getRoutePoints(): List<WorkoutRoute> {
+        return routePoints.toList()
+    }
+    
+    // 清除路线数据
+    fun clearRoutePoints() {
+        routePoints.clear()
+        routeSequence = 0
+    }
+    
+    // 获取运动数据用于保存
+    fun getWorkoutData(): WorkoutCreateRequest {
+        val durationSeconds = if (startTime > 0) {
+            ((System.currentTimeMillis() - startTime + pauseOffset) / 1000).toInt()
+        } else 0
+        
+        return WorkoutCreateRequest(
+            userId = 1L, // TODO: 从用户会话获取真实用户ID
+            workoutType = "OUTDOOR_RUN",
+            distance = totalDistance / 1000, // 米转公里
+            duration = durationSeconds,
+            steps = stepCount,
+            calories = calculateCalories(durationSeconds),
+            avgSpeed = calculateAvgSpeed(),
+            avgPace = calculateAvgPace(),
+            avgHeartRate = _heartRate.value?.takeIf { it > 0 },
+            maxHeartRate = _heartRate.value?.takeIf { it > 0 }, // 简化处理，实际应记录最大值
+            startTime = java.time.Instant.ofEpochMilli(startTime).toString(),
+            endTime = java.time.Instant.now().toString(),
+            status = "COMPLETED",
+            visibility = "PRIVATE",
+            goalAchieved = checkGoalAchievement(totalDistance / 1000, durationSeconds),
+            notes = null,
+            weatherCondition = null,
+            temperature = null
+        )
+    }
+    
+    private fun calculateCalories(durationSeconds: Int): Double? {
+        val hours = durationSeconds / 3600.0
+        return metValue * userWeightKg * hours
+    }
+    
+    private fun calculateAvgSpeed(): Double? {
+        val durationSeconds = if (startTime > 0) {
+            ((System.currentTimeMillis() - startTime + pauseOffset) / 1000).toInt()
+        } else 0
+        
+        return if (durationSeconds > 0 && totalDistance > 0) {
+            (totalDistance / 1000) / (durationSeconds / 3600.0) // km/h
+        } else null
+    }
+    
+    private fun calculateAvgPace(): Int? {
+        val distanceKm = totalDistance / 1000
+        val durationSeconds = if (startTime > 0) {
+            ((System.currentTimeMillis() - startTime + pauseOffset) / 1000).toInt()
+        } else 0
+        
+        return if (distanceKm > 0) {
+            (durationSeconds / distanceKm).toInt() // 秒/公里
+        } else null
+    }
+    
+    private fun checkGoalAchievement(distanceKm: Double, durationSeconds: Int): Boolean {
+        return distanceKm >= 1.0 || durationSeconds >= 900 // 1km或15分钟
     }
 }
