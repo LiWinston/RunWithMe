@@ -76,7 +76,8 @@ CREATE TABLE IF NOT EXISTS workouts (
     
     -- JSON列性能索引（MySQL 8.0+支持）
     INDEX idx_workout_data_route_count ((JSON_LENGTH(workout_data->'$.route'))),
-    INDEX idx_workout_data_start_location ((CAST(workout_data->'$.route[0].lat' AS DECIMAL(10,8)), CAST(workout_data->'$.route[0].lng' AS DECIMAL(11,8))))
+    INDEX idx_workout_data_start_lat ((CAST(workout_data->'$.route[0].lat' AS DECIMAL(10,8)))),
+    INDEX idx_workout_data_start_lng ((CAST(workout_data->'$.route[0].lng' AS DECIMAL(11,8))))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='运动记录表（JSON重构版）';
 
 -- 删除旧的路线轨迹表
