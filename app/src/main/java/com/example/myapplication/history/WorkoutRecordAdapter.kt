@@ -58,6 +58,10 @@ class WorkoutRecordAdapter(
             val localTime = utcTime.atZone(java.time.ZoneId.of("UTC"))
                 .withZoneSameInstant(java.time.ZoneId.systemDefault())
                 .toLocalDateTime()
+            
+            // 调试信息
+            android.util.Log.d("WorkoutRecordAdapter", "原始UTC时间: ${workout.startTime}, 转换后本地时间: $localTime, 系统时区: ${java.time.ZoneId.systemDefault()}")
+            
             tvStartTime.text = localTime.format(DateTimeFormatter.ofPattern("HH:mm"))
 
             // 距离

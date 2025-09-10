@@ -97,9 +97,9 @@ class HistoryTodayFragment : Fragment() {
 
     private fun updateStatsUI(stats: Map<String, Any>) {
         val distance = stats["totalDistance"] as? Double ?: 0.0
-        val duration = stats["totalDuration"] as? Int ?: 0 // 秒
+        val duration = (stats["totalDuration"] as? Number)?.toInt() ?: 0 // 秒，兼容Int和Double
         val calories = stats["totalCalories"] as? Double ?: 0.0
-        val workoutCount = stats["workoutCount"] as? Int ?: 0
+        val workoutCount = (stats["workoutCount"] as? Number)?.toInt() ?: 0
         
         // 调试信息
         android.util.Log.d("HistoryTodayFragment", "Stats received: $stats")

@@ -90,7 +90,7 @@ class HistoryMonthFragment : Fragment() {
 
     private fun updateStatsUI(stats: Map<String, Any>) {
         val distance = stats["totalDistance"] as? Double ?: 0.0
-        val duration = stats["totalDuration"] as? Int ?: 0
+        val duration = (stats["totalDuration"] as? Number)?.toInt() ?: 0 // 兼容Int和Double
         val calories = stats["totalCalories"] as? Double ?: 0.0
 
         tvMonthDistance.text = String.format("%.1f km", distance)
