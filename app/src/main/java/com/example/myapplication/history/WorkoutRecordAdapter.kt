@@ -53,9 +53,12 @@ class WorkoutRecordAdapter(
                 else -> "其他运动"
             }
 
-            // 开始时间
-            val startTime = LocalDateTime.parse(workout.startTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            tvStartTime.text = startTime.format(DateTimeFormatter.ofPattern("HH:mm"))
+            // 开始时间 - 将UTC时间转换为本地时间
+            val utcTime = LocalDateTime.parse(workout.startTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            val localTime = utcTime.atZone(java.time.ZoneId.of("UTC"))
+                .withZoneSameInstant(java.time.ZoneId.systemDefault())
+                .toLocalDateTime()
+            tvStartTime.text = localTime.format(DateTimeFormatter.ofPattern("HH:mm"))
 
             // 距离
             val distance = try {
@@ -84,8 +87,19 @@ class WorkoutRecordAdapter(
             }
             tvCalories.text = "${calories} kcal"
 
-            // 配速
-            val pace = workout.avgPace ?: 0
+            // 配速 - 优先使用avgPace，如果没有则从avgSpeed计算
+            val pace = when {
+                workout.avgPace != null && workout.avgPace > 0 -> workout.avgPace
+                workout.avgSpeed != null -> {
+                    try {
+                        val speedKmh = workout.avgSpeed.toDouble()
+                        if (speedKmh > 0) (3600 / speedKmh).toInt() else 0 // 从速度计算配速
+                    } catch (e: NumberFormatException) {
+                        0
+                    }
+                }
+                else -> 0
+            }
             val paceMinutes = pace / 60
             val paceSeconds = pace % 60
             tvPace.text = "${paceMinutes}'${String.format("%02d", paceSeconds)}\""

@@ -129,10 +129,8 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         accelerationHistory.clear()
         cadence = 0
         
-        // 检测是否是模拟器环境
-        isSimulatorMode = android.os.Build.FINGERPRINT.contains("generic") || 
-                         android.os.Build.MODEL.contains("Emulator") ||
-                         android.os.Build.MODEL.contains("Android SDK")
+        // 不再检测模拟器环境，允许在所有设备上正常工作
+        isSimulatorMode = false
 
         startLocationTracking()
         startStepSensors()

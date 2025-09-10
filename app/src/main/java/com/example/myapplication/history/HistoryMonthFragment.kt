@@ -97,10 +97,13 @@ class HistoryMonthFragment : Fragment() {
 
         val hours = duration / 3600
         val minutes = (duration % 3600) / 60
+        val seconds = duration % 60
         val timeText = if (hours > 0) {
             "${hours}hrs ${minutes}mins"
-        } else {
+        } else if (minutes > 0) {
             "${minutes}mins"
+        } else {
+            "${seconds}s"
         }
         tvMonthDuration.text = timeText
 

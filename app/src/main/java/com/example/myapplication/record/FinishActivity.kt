@@ -48,7 +48,7 @@ class FinishActivity : AppCompatActivity() {
                 steps = workoutViewModel.steps.value, // 从ViewModel获取步数
                 calories = parseCalories(calories),
                 avgSpeed = parseSpeed(speed),
-                avgPace = null, // 可以根据速度和距离计算
+                avgPace = calculateAvgPace(parseDistance(distance), parseDuration(duration)),
                 avgHeartRate = workoutViewModel.heartRate.value?.takeIf { it > 0 }, // 从ViewModel获取心率
                 maxHeartRate = workoutViewModel.heartRate.value?.takeIf { it > 0 },
                 startTime = java.time.LocalDateTime.now().minusSeconds(parseDuration(duration)?.toLong() ?: 0L).toString(), // 估算开始时间
@@ -159,6 +159,15 @@ class FinishActivity : AppCompatActivity() {
                 null
             }
         } catch (e: Exception) {
+            null
+        }
+    }
+    
+    // 辅助函数 - 计算平均配速 (秒/公里)
+    private fun calculateAvgPace(distance: Double?, duration: Int?): Int? {
+        return if (distance != null && duration != null && distance > 0) {
+            (duration / distance).toInt()
+        } else {
             null
         }
     }
