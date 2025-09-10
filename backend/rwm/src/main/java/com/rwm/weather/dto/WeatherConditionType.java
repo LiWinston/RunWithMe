@@ -1,8 +1,14 @@
 package com.rwm.weather.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Weather condition types as defined by Google Maps Weather API
  * 官方文档：https://developers.google.com/maps/documentation/weather/weather-condition-icons
+ * 支持鲁棒性处理，对于未知的枚举值会返回 UNKNOWN
  */
 public enum WeatherConditionType {
     // 晴朗天气
@@ -61,5 +67,39 @@ public enum WeatherConditionType {
     THUNDERSHOWER,                 // 雷电交加的阵雨
     LIGHT_THUNDERSTORM_RAIN,       // 轻度雷暴夹雨
     SCATTERED_THUNDERSTORMS,       // 短时间内降雨强度不一的雷暴
-    HEAVY_THUNDERSTORM             // 强雷暴
+    HEAVY_THUNDERSTORM,            // 强雷暴
+    
+    /**
+     * 未知天气条件（用作兜底）
+     */
+    UNKNOWN;
+    
+    private static final Logger logger = LoggerFactory.getLogger(WeatherConditionType.class);
+    
+    /**
+     * JSON 反序列化时的自定义处理
+     * 如果遇到未知的枚举值，返回 UNKNOWN 而不是抛出异常
+     */
+    @JsonCreator
+    public static WeatherConditionType fromString(String value) {
+        if (value == null) {
+            return UNKNOWN;
+        }
+        
+        try {
+            return WeatherConditionType.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            // 记录未知的枚举值，但不抛出异常
+            logger.warn("Unknown WeatherConditionType value: '{}', using UNKNOWN as fallback", value);
+            return UNKNOWN;
+        }
+    }
+    
+    /**
+     * JSON 序列化时使用原始枚举名称
+     */
+    @JsonValue
+    public String getValue() {
+        return this.name();
+    }
 }
