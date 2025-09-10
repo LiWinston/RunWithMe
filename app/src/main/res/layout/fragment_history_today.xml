@@ -124,7 +124,7 @@
                         android:id="@+id/tvTotalPace"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="5'42\" /km"
+                        android:text="5'42&quot; /km"
                         style="@style/StatsNumberText" />
 
                 </LinearLayout>

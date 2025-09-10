@@ -216,31 +216,6 @@ data class WorkoutCreateRequest(
     val workoutData: WorkoutDynamicData? = null // JSON动态数据
 )
 
-// 后端响应的Workout实体
-data class Workout(
-    val id: Long,
-    val userId: Long,
-    val workoutType: String,
-    val distance: Double?,
-    val duration: Int?,
-    val steps: Int?,
-    val calories: Double?,
-    val avgSpeed: Double?,
-    val avgPace: Int?,
-    val avgHeartRate: Int?,
-    val maxHeartRate: Int?,
-    val startTime: String,
-    val endTime: String?,
-    val status: String,
-    val visibility: String,
-    val goalAchieved: Boolean,
-    val groupId: Long?,
-    val notes: String?,
-    val weatherCondition: String?,
-    val temperature: Double?,
-    val createdAt: String,
-    val updatedAt: String
-)
 
 // API响应包装
 data class ApiResponse<T>(

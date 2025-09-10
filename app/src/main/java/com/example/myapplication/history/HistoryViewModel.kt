@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.record.RetrofitClient
+import com.example.myapplication.record.Workout
 import kotlinx.coroutines.launch
 
 /**
@@ -68,7 +69,7 @@ class HistoryViewModel : ViewModel() {
                 }
 
                 if (workoutsResponse.isSuccessful && workoutsResponse.body()?.code == 0) {
-                    _todayWorkouts.value = workoutsResponse.body()?.data ?: emptyList()
+                    _todayWorkouts.value = workoutsResponse.body()?.data ?: emptyList<Workout>()
                 } else {
                     _error.value = "获取今日运动记录失败"
                 }
@@ -100,7 +101,7 @@ class HistoryViewModel : ViewModel() {
                 }
 
                 if (workoutsResponse.isSuccessful && workoutsResponse.body()?.code == 0) {
-                    _weekWorkouts.value = workoutsResponse.body()?.data ?: emptyList()
+                    _weekWorkouts.value = workoutsResponse.body()?.data ?: emptyList<Workout>()
                 }
 
                 if (chartResponse.isSuccessful && chartResponse.body()?.code == 0) {
@@ -134,7 +135,7 @@ class HistoryViewModel : ViewModel() {
                 }
 
                 if (workoutsResponse.isSuccessful && workoutsResponse.body()?.code == 0) {
-                    _monthWorkouts.value = workoutsResponse.body()?.data ?: emptyList()
+                    _monthWorkouts.value = workoutsResponse.body()?.data ?: emptyList<Workout>()
                 }
 
                 if (chartResponse.isSuccessful && chartResponse.body()?.code == 0) {

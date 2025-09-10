@@ -96,7 +96,7 @@
                         android:id="@+id/tvWeekPace"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="5'30\" /km"
+                        android:text="5'30&quot; /km"
                         style="@style/StatsNumberText" />
 
                 </LinearLayout>
