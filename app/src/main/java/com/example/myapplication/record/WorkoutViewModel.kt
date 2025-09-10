@@ -160,43 +160,42 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val cal = maxOf(distanceBasedCalories, timeBasedCalories)
         _calories.value = String.format("%.0f kcal", cal)
 
-        // 模拟器模式 - 生成测试数据
-        if (isSimulatorMode && seconds > 0) {
-            simulateMovement(seconds)
-        }
-        
-        // GPS模式或传感器模式
-        if (now - lastGpsUpdateTime > 3000 || isSimulatorMode) {
+        // 始终生成运动数据，无论是否有GPS
+        // 计算基于步数的距离（如果没有GPS）
+        if (now - lastGpsUpdateTime > 3000) {
             useGps = false
             
-            // 使用步数或模拟数据计算距离
-            val sensorDistance = if (isSimulatorMode) simulatedDistance else stepCount * stepLength
+            // 使用步数计算距离
+            val sensorDistance = stepCount * stepLength
             if (totalDistance < sensorDistance) {
                 totalDistance = sensorDistance
                 _distance.value = String.format("%.2f miles", totalDistance / 1609.34)
             }
             
-            // 计算速度
-            if (seconds > 0) {
-                val speedMps = totalDistance / seconds
-                _speed.value = String.format("%.2f mph", speedMps * 2.23694)
-                
-                // 在非模拟器模式下也记录动态数据
-                if (!isSimulatorMode && seconds % 5 == 0) {
-                    val heartRate = _heartRate.value ?: 0
-                    recordDynamicData(speedMps * 3.6, heartRate, seconds)
-                }
+            _debugInfo.value = "Sensor Mode"
+        }
+        
+        // 计算速度和记录动态数据（无论有无GPS）
+        if (seconds > 0) {
+            val speedMps = totalDistance / seconds
+            _speed.value = String.format("%.2f mph", speedMps * 2.23694)
+            
+            // 模拟心率数据（如果没有真实的心率数据）
+            if (_heartRate.value == null || _heartRate.value == 0) {
+                val simulatedHeartRate = (120 + Math.sin(seconds * 0.05) * 20).toInt() // 120±20 bpm
+                _heartRate.value = simulatedHeartRate
             }
             
-            _debugInfo.value = if (isSimulatorMode) "Simulator Mode" else "Accelerometer Mode"
-            
-            // 生成路线点 (模拟器模式或传感器模式)
-            if (isSimulatorMode) {
-                generateSimulatedRoutePoint()
-            } else {
-                // 传感器模式下生成基于距离的模拟路线点
-                generateSensorBasedRoutePoint()
+            // 每5秒记录一次动态数据
+            if (seconds % 5 == 0) {
+                val heartRate = _heartRate.value ?: 0
+                recordDynamicData(speedMps * 3.6, heartRate, seconds)
             }
+        }
+        
+        // 生成基于传感器的路线点
+        if (!useGps) {
+            generateSensorBasedRoutePoint()
         }
     }
     
