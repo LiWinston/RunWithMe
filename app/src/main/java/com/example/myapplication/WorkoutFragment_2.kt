@@ -6,6 +6,8 @@ import android.view.View
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import android.widget.FrameLayout
+import android.content.Intent
+import com.example.myapplication.record.RecordingActivity
 
 class WorkoutFragment_2 : Fragment(R.layout.fragment_workout_2) {
 
@@ -27,15 +29,9 @@ class WorkoutFragment_2 : Fragment(R.layout.fragment_workout_2) {
             override fun onFinish() {
                 if (!hasNavigated) {
                     hasNavigated = true
-                    // 获取 MainActivity 的 FrameLayout 容器
-                    val container = (requireActivity() as MainActivity)
-                        .findViewById<FrameLayout>(R.id.main)
-                    container?.let {
-                        parentFragmentManager.beginTransaction()
-                            .replace(it.id, WorkoutFragment_3())
-                            .addToBackStack(null) // 可选：允许返回 WorkoutFragment_2
-                            .commit()
-                    }
+                    // 跳转到录制页面（Activity），避免进入占位Fragment
+                    val intent = Intent(requireContext(), RecordingActivity::class.java)
+                    startActivity(intent)
                 }
             }
         }.start()
