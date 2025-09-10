@@ -182,13 +182,22 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             if (seconds > 0) {
                 val speedMps = totalDistance / seconds
                 _speed.value = String.format("%.2f mph", speedMps * 2.23694)
+                
+                // 在非模拟器模式下也记录动态数据
+                if (!isSimulatorMode && seconds % 5 == 0) {
+                    val heartRate = _heartRate.value ?: 0
+                    recordDynamicData(speedMps * 3.6, heartRate, seconds)
+                }
             }
             
             _debugInfo.value = if (isSimulatorMode) "Simulator Mode" else "Accelerometer Mode"
             
-            // 在模拟器模式下生成路线点
+            // 生成路线点 (模拟器模式或传感器模式)
             if (isSimulatorMode) {
                 generateSimulatedRoutePoint()
+            } else {
+                // 传感器模式下生成基于距离的模拟路线点
+                generateSensorBasedRoutePoint()
             }
         }
     }
@@ -251,6 +260,29 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             
             // 调试信息
             _debugInfo.value = "Simulator Mode - ${routePoints.size} route points"
+        }
+    }
+    
+    // 传感器模式下生成基于距离的模拟路线点
+    private fun generateSensorBasedRoutePoint() {
+        if (totalDistance - lastRouteDistance >= minDistanceForRoute) {
+            // 在传感器模式下，基于步数生成模拟路线
+            val baseLat = 39.9042 + (routeSequence * 0.0001) // 每个点北移
+            val baseLng = 116.4074 + (routeSequence * 0.0001) // 每个点东移
+            
+            val routePoint = RoutePoint(
+                lat = baseLat,
+                lng = baseLng,
+                altitude = 50.0 + Math.sin(routeSequence * 0.1) * 3, // 较小的海拔变化
+                timestamp = Instant.now().toString(),
+                sequence = ++routeSequence
+            )
+            
+            routePoints.add(routePoint)
+            lastRouteDistance = totalDistance // 更新上次记录的距离
+            
+            // 调试信息
+            _debugInfo.value = "Accelerometer Mode - ${routePoints.size} route points"
         }
     }
 

@@ -97,6 +97,13 @@
             android:screenOrientation="portrait">
         </activity>
 
+        <!-- History Activity -->
+        <activity
+            android:name=".history.HistoryActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
+
     </application>
     <uses-permission android:name="android.permission.INTERNET"/>
 

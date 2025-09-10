@@ -179,7 +179,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     
     private fun fetchWeatherData(latitude: Double, longitude: Double) {
         Log.i(TAG, "正在获取天气数据 - 纬度: $latitude, 经度: $longitude")
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val (currentWeatherResult, hourlyForecastResult) = weatherRepository.getWeatherData(latitude, longitude)
                 
@@ -209,7 +209,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
     
     private fun showError(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+        // 检查Fragment是否还附着到Activity，避免crash
+        if (isAdded && context != null) {
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+        }
     }
     
     override fun onRequestPermissionsResult(

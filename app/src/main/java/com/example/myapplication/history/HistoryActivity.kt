@@ -1,6 +1,7 @@
 package com.example.myapplication.history
 
 import android.os.Bundle
+import android.widget.ImageButton
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -20,6 +21,7 @@ class HistoryActivity : AppCompatActivity() {
         setContentView(R.layout.activity_history)
 
         setupTabLayout()
+        setupBackButton()
         
         // 默认显示今日数据
         if (savedInstanceState == null) {
@@ -54,6 +56,13 @@ class HistoryActivity : AppCompatActivity() {
 
     private fun showMonthFragment() {
         replaceFragment(HistoryMonthFragment())
+    }
+
+    private fun setupBackButton() {
+        val btnBack = findViewById<ImageButton>(R.id.btnBack)
+        btnBack.setOnClickListener {
+            finish() // 关闭当前Activity，返回到MainActivity
+        }
     }
 
     private fun replaceFragment(fragment: Fragment) {
