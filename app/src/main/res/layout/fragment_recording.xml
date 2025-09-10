@@ -1,123 +1,183 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/record_background">
+    android:background="#1E1E1E">
 
-    <!-- Workout 标题 -->
+    <!-- 地图容器 - 全屏背景 -->
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/mapView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <!-- 顶部统计面板 - 半透明 -->
+    <LinearLayout
+        android:id="@+id/topStatsPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:orientation="horizontal"
+        android:background="#BB000000"
+        android:paddingTop="40dp"
+        android:paddingBottom="16dp"
+        android:paddingHorizontal="16dp">
+
+        <!-- 时间 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tvTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00:00:00"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="时间"
+                android:textColor="#CCFFFFFF"
+                android:textSize="10sp"/>
+
+        </LinearLayout>
+
+        <!-- 距离 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tvDistance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.00 miles"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="距离"
+                android:textColor="#CCFFFFFF"
+                android:textSize="10sp"/>
+
+        </LinearLayout>
+
+        <!-- 速度 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tvSpeed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.00 mph"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="速度"
+                android:textColor="#CCFFFFFF"
+                android:textSize="10sp"/>
+
+        </LinearLayout>
+
+        <!-- 卡路里 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tvCalories"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 kcal"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="卡路里"
+                android:textColor="#CCFFFFFF"
+                android:textSize="10sp"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- 底部控制按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:background="#CC000000"
+        android:paddingVertical="20dp"
+        android:paddingHorizontal="32dp"
+        android:gravity="center">
+
+        <!-- 暂停按钮 -->
+        <Button
+            android:id="@+id/btnPause"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:text="⏸"
+            android:textSize="28sp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#FF5722"
+            android:layout_marginEnd="24dp"/>
+
+        <!-- 停止按钮 -->
+        <Button
+            android:id="@+id/btnStop"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:text="⏹"
+            android:textSize="28sp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#424242"/>
+
+    </LinearLayout>
+
+    <!-- GPS状态指示器 -->
     <TextView
-        android:id="@+id/tvWorkoutTitle"
+        android:id="@+id/tvGpsStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        style="@style/WorkoutLabelText"
-        android:text="WORKOUT"
-        android:textSize="20sp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="40dp"/>
+        android:layout_alignParentEnd="true"
+        android:layout_below="@id/topStatsPanel"
+        android:text="GPS"
+        android:textColor="#4CAF50"
+        android:textSize="12sp"
+        android:background="#AA000000"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="4dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="8dp"/>
 
-    <!-- TIME -->
-    <TextView
-        android:id="@+id/tvLabelTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/WorkoutLabelText"
-        android:text="TIME"
-        app:layout_constraintTop_toBottomOf="@id/tvWorkoutTitle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="32dp"/>
-
-    <TextView
-        android:id="@+id/tvTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/WorkoutNumberText"
-        android:text="00:00:00"
-        app:layout_constraintTop_toBottomOf="@id/tvLabelTime"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-    <!-- SPEED -->
-    <TextView
-        android:id="@+id/tvLabelSpeed"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/WorkoutLabelText"
-        android:text="SPEED"
-        app:layout_constraintTop_toBottomOf="@id/tvTime"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="32dp"/>
-
-    <!-- gsh Number -->
-    <TextView
-        android:id="@+id/tvSpeed"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/WorkoutNumberText"
-        android:text="0.00 mph"
-        app:layout_constraintTop_toBottomOf="@id/tvLabelSpeed"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-    <!-- gsh LabelText -->
-    <TextView
-        android:id="@+id/tvLabelDistance"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/WorkoutLabelText"
-        android:text="DISTANCE"
-        app:layout_constraintTop_toBottomOf="@id/tvSpeed"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="32dp"/>
-
-    <TextView
-        android:id="@+id/tvDistance"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/WorkoutNumberText"
-        android:text="0.00 miles"
-        app:layout_constraintTop_toBottomOf="@id/tvLabelDistance"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-    <!-- CALORIES -->
-    <TextView
-        android:id="@+id/tvLabelCalories"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/WorkoutLabelText"
-        android:text="CALORIES"
-        app:layout_constraintTop_toBottomOf="@id/tvDistance"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="32dp"/>
-
-    <TextView
-        android:id="@+id/tvCalories"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/WorkoutNumberText"
-        android:text="0 kcal"
-        app:layout_constraintTop_toBottomOf="@id/tvLabelCalories"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-    <!-- 暂停按钮 -->
-    <Button
-        android:id="@+id/btnPause"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:text="⏸"
-        android:textSize="28sp"
-        android:backgroundTint="#88FFFFFF"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="60dp"/>
-</androidx.constraintlayout.widget.ConstraintLayout>
+</RelativeLayout>

@@ -9,8 +9,12 @@ import com.example.myapplication.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.activity.viewModels
+import com.example.myapplication.record.WorkoutViewModel
 
 class FinishActivity : AppCompatActivity() {
+    
+    private val workoutViewModel: WorkoutViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,18 +56,27 @@ class FinishActivity : AppCompatActivity() {
                 visibility = "PRIVATE",
                 goalAchieved = checkGoalAchievement(parseDistance(distance), parseDuration(duration)),
                 notes = null,
-                weatherCondition = null,
-                temperature = null
+                weatherCondition = "晴天", // 简单模拟天气
+                temperature = 25.0, // 简单模拟温度
+                latitude = 39.9042, // 模拟位置 - 北京
+                longitude = 116.4074
             )
 
-            // 调用 Retrofit 保存
+            // 调用 Retrofit 保存运动记录和路线
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     val response = RetrofitClient.api.createWorkout(workoutRequest)
                     runOnUiThread {
                         if (response.isSuccessful && response.body()?.code == 0) {
-                            Toast.makeText(this@FinishActivity, "保存成功！", Toast.LENGTH_SHORT).show()
-                            finish()
+                            val workoutId = response.body()?.data?.id
+                            
+                            // 保存路线数据
+                            if (workoutId != null) {
+                                saveRouteData(workoutId)
+                            } else {
+                                Toast.makeText(this@FinishActivity, "运动记录保存成功！", Toast.LENGTH_SHORT).show()
+                                finish()
+                            }
                         } else {
                             val errorMsg = response.body()?.message ?: "保存失败"
                             Toast.makeText(this@FinishActivity, errorMsg, Toast.LENGTH_SHORT).show()
@@ -154,6 +167,39 @@ class FinishActivity : AppCompatActivity() {
         val durationGoal = duration != null && duration >= 900 // 15分钟
         return distanceGoal || durationGoal
     }
+    
+    // 保存路线数据
+    private fun saveRouteData(workoutId: Long) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val routes = workoutViewModel.getRoutePoints()
+                if (routes.isNotEmpty()) {
+                    val routeResponse = RetrofitClient.api.saveWorkoutRoute(workoutId, routes)
+                    runOnUiThread {
+                        if (routeResponse.isSuccessful && routeResponse.body()?.code == 0) {
+                            Toast.makeText(this@FinishActivity, 
+                                "运动记录和路线保存成功！(${routes.size}个路点)", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this@FinishActivity, 
+                                "运动记录保存成功，路线保存失败", Toast.LENGTH_SHORT).show()
+                        }
+                        finish()
+                    }
+                } else {
+                    runOnUiThread {
+                        Toast.makeText(this@FinishActivity, "运动记录保存成功！", Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    Toast.makeText(this@FinishActivity, 
+                        "运动记录保存成功，路线保存失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+            }
+        }
+    }
 }
 
 // 前端用来传输数据的实体 - 适配新的后端结构
@@ -176,7 +222,9 @@ data class WorkoutCreateRequest(
     val groupId: Long? = null,
     val notes: String? = null,
     val weatherCondition: String? = null,
-    val temperature: Double? = null
+    val temperature: Double? = null,
+    val latitude: Double? = null, // 纬度
+    val longitude: Double? = null // 经度
 )
 
 // 后端响应的Workout实体
