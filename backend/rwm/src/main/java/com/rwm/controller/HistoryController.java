@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +77,9 @@ public class HistoryController {
     public Result<List<Workout>> getTodayWorkouts(@PathVariable Long userId) {
         log.info("获取用户{}今日运动记录", userId);
         try {
-            LocalDate today = LocalDate.now();
+            // 使用UTC时区保持与数据库一致
+            ZoneId utcZone = ZoneId.of("UTC");
+            LocalDate today = LocalDate.now(utcZone);
             List<Workout> workouts = workoutService.getUserWorkoutsByDateRange(userId, today, today);
             return Result.ok(workouts);
         } catch (Exception e) {
@@ -92,7 +95,9 @@ public class HistoryController {
     public Result<List<Workout>> getWeekWorkouts(@PathVariable Long userId) {
         log.info("获取用户{}本周运动记录", userId);
         try {
-            LocalDate today = LocalDate.now();
+            // 使用UTC时区保持与数据库一致
+            ZoneId utcZone = ZoneId.of("UTC");
+            LocalDate today = LocalDate.now(utcZone);
             LocalDate weekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
             List<Workout> workouts = workoutService.getUserWorkoutsByDateRange(userId, weekStart, today);
             return Result.ok(workouts);
@@ -109,7 +114,9 @@ public class HistoryController {
     public Result<List<Workout>> getMonthWorkouts(@PathVariable Long userId) {
         log.info("获取用户{}本月运动记录", userId);
         try {
-            LocalDate today = LocalDate.now();
+            // 使用UTC时区保持与数据库一致
+            ZoneId utcZone = ZoneId.of("UTC");
+            LocalDate today = LocalDate.now(utcZone);
             LocalDate monthStart = today.withDayOfMonth(1);
             List<Workout> workouts = workoutService.getUserWorkoutsByDateRange(userId, monthStart, today);
             return Result.ok(workouts);
