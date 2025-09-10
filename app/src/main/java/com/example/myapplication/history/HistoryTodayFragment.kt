@@ -100,6 +100,10 @@ class HistoryTodayFragment : Fragment() {
         val duration = stats["totalDuration"] as? Int ?: 0 // 秒
         val calories = stats["totalCalories"] as? Double ?: 0.0
         val workoutCount = stats["workoutCount"] as? Int ?: 0
+        
+        // 调试信息
+        android.util.Log.d("HistoryTodayFragment", "Stats received: $stats")
+        android.util.Log.d("HistoryTodayFragment", "Distance: $distance, Duration: $duration, Calories: $calories, WorkoutCount: $workoutCount")
 
         // 更新距离
         tvTotalDistance.text = String.format("%.2f km", distance)
