@@ -60,3 +60,29 @@ interface RecordApi {
     @GET("/api/history/chart/month/{userId}")
     suspend fun getMonthChart(@Path("userId") userId: Long): Response<ApiResponse<Map<String, Any>>>
 }
+
+// Workout数据类（与后端对应）
+data class Workout(
+    val id: Long,
+    val userId: Long,
+    val workoutType: String,
+    val distance: String?, // 对应BigDecimal
+    val duration: Int?,
+    val steps: Int?,
+    val calories: String?, // 对应BigDecimal
+    val avgSpeed: String?, // 对应BigDecimal
+    val avgPace: Int?,
+    val avgHeartRate: Int?,
+    val maxHeartRate: Int?,
+    val startTime: String,
+    val endTime: String?,
+    val status: String,
+    val visibility: String,
+    val goalAchieved: Boolean,
+    val groupId: Long?,
+    val notes: String?,
+    val weatherCondition: String?,
+    val temperature: String?, // 对应BigDecimal
+    val createdAt: String,
+    val updatedAt: String
+)
