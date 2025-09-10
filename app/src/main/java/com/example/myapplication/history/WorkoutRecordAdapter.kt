@@ -58,7 +58,12 @@ class WorkoutRecordAdapter(
             tvStartTime.text = startTime.format(DateTimeFormatter.ofPattern("HH:mm"))
 
             // 距离
-            tvDistance.text = String.format("%.2f km", workout.distance?.toDouble() ?: 0.0)
+            val distance = try {
+                workout.distance?.toDouble() ?: 0.0
+            } catch (e: NumberFormatException) {
+                0.0
+            }
+            tvDistance.text = String.format("%.2f km", distance)
 
             // 持续时间
             val duration = workout.duration ?: 0
@@ -72,7 +77,12 @@ class WorkoutRecordAdapter(
             tvDuration.text = durationText
 
             // 卡路里
-            tvCalories.text = "${workout.calories?.toInt() ?: 0} kcal"
+            val calories = try {
+                workout.calories?.toDouble()?.toInt() ?: 0
+            } catch (e: NumberFormatException) {
+                0
+            }
+            tvCalories.text = "${calories} kcal"
 
             // 配速
             val pace = workout.avgPace ?: 0
