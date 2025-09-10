@@ -28,28 +28,35 @@ interface RecordApi {
     @GET("/api/workouts/user/{userId}/today-goal")
     suspend fun getTodayGoalStatus(@Path("userId") userId: Long): Response<ApiResponse<Map<String, Any>>>
     
-    // 保存运动路线轨迹
-    @POST("/api/workouts/{workoutId}/route")
-    suspend fun saveWorkoutRoute(
-        @Path("workoutId") workoutId: Long,
-        @Body routes: List<WorkoutRoute>
-    ): Response<ApiResponse<String>>
+    // History API - 获取今日统计
+    @GET("/api/history/today/{userId}")
+    suspend fun getTodayStats(@Path("userId") userId: Long): Response<ApiResponse<Map<String, Any>>>
     
-    // 获取运动路线轨迹
-    @GET("/api/workouts/{workoutId}/route")
-    suspend fun getWorkoutRoute(@Path("workoutId") workoutId: Long): Response<ApiResponse<List<WorkoutRoute>>>
+    // History API - 获取本周统计
+    @GET("/api/history/week/{userId}")
+    suspend fun getWeekStats(@Path("userId") userId: Long): Response<ApiResponse<Map<String, Any>>>
+    
+    // History API - 获取本月统计
+    @GET("/api/history/month/{userId}")
+    suspend fun getMonthStats(@Path("userId") userId: Long): Response<ApiResponse<Map<String, Any>>>
+    
+    // History API - 获取今日运动记录
+    @GET("/api/history/workouts/today/{userId}")
+    suspend fun getTodayWorkouts(@Path("userId") userId: Long): Response<ApiResponse<List<Workout>>>
+    
+    // History API - 获取本周运动记录
+    @GET("/api/history/workouts/week/{userId}")
+    suspend fun getWeekWorkouts(@Path("userId") userId: Long): Response<ApiResponse<List<Workout>>>
+    
+    // History API - 获取本月运动记录
+    @GET("/api/history/workouts/month/{userId}")
+    suspend fun getMonthWorkouts(@Path("userId") userId: Long): Response<ApiResponse<List<Workout>>>
+    
+    // History API - 获取本周图表数据
+    @GET("/api/history/chart/week/{userId}")
+    suspend fun getWeekChart(@Path("userId") userId: Long): Response<ApiResponse<Map<String, Any>>>
+    
+    // History API - 获取本月图表数据
+    @GET("/api/history/chart/month/{userId}")
+    suspend fun getMonthChart(@Path("userId") userId: Long): Response<ApiResponse<Map<String, Any>>>
 }
-
-// 运动路线轨迹数据类
-data class WorkoutRoute(
-    val id: Long? = null,
-    val workoutId: Long? = null,
-    val latitude: Double,
-    val longitude: Double,
-    val altitude: Double? = null,
-    val accuracy: Double? = null,
-    val speed: Double? = null,
-    val heartRate: Int? = null,
-    val timestamp: String,
-    val sequenceOrder: Int
-)

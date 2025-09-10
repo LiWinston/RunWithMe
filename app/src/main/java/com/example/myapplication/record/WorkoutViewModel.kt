@@ -13,6 +13,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.*
+import java.time.Instant
 
 class WorkoutViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -77,8 +78,15 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     private var lastGpsUpdateTime: Long = 0L
     private var useGps = true
     
-    // 路线追踪 - 按距离取样
-    private val routePoints = mutableListOf<WorkoutRoute>()
+    // 动态数据采样 - 用于JSON存储
+    private val routePoints = mutableListOf<RoutePoint>()
+    private val speedSamples = mutableListOf<SpeedSample>()
+    private val heartRateSamples = mutableListOf<HeartRateSample>()
+    private val elevationSamples = mutableListOf<ElevationSample>()
+    private val paceSamples = mutableListOf<PaceSample>()
+    private val cadenceSamples = mutableListOf<CadenceSample>()
+    private val accuracySamples = mutableListOf<AccuracySample>()
+    
     private var routeSequence = 0
     private var lastRouteLocation: Location? = null
     private var lastRouteDistance = 0.0 // 上次记录路线点时的距离
@@ -214,6 +222,11 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val heartRate = (140 + Math.sin(seconds * 0.03) * 15).toInt()
         _heartRate.value = heartRate
         
+        // 采样动态数据（每5秒采样一次）
+        if (seconds % 5 == 0) {
+            recordDynamicData(speedMps * 3.6, heartRate, seconds)
+        }
+        
         // 调试信息包含更多详情
         _debugInfo.value = "Simulator Mode - ${routePoints.size} points, ${cadence} bpm"
     }
@@ -228,15 +241,12 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             val baseLat = 39.9042 + (routeSequence * 0.0001) // 每个点北移
             val baseLng = 116.4074 + (routeSequence * 0.0001) // 每个点东移
             
-            val routePoint = WorkoutRoute(
-                latitude = baseLat,
-                longitude = baseLng,
+            val routePoint = RoutePoint(
+                lat = baseLat,
+                lng = baseLng,
                 altitude = 50.0 + Math.sin(routeSequence * 0.1) * 5, // 模拟轻微海拔变化
-                accuracy = 5.0,
-                speed = if (seconds > 0) (totalDistance / seconds) * 3.6 else 0.0, // km/h
-                heartRate = _heartRate.value?.takeIf { it > 0 },
-                timestamp = java.time.Instant.now().toString(),
-                sequenceOrder = ++routeSequence
+                timestamp = Instant.now().toString(),
+                sequence = ++routeSequence
             )
             
             routePoints.add(routePoint)
@@ -471,34 +481,102 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         } ?: true // 第一个点总是记录
         
         if (shouldRecord) {
-            val routePoint = WorkoutRoute(
-                latitude = location.latitude,
-                longitude = location.longitude,
+            val routePoint = RoutePoint(
+                lat = location.latitude,
+                lng = location.longitude,
                 altitude = if (location.hasAltitude()) location.altitude else null,
-                accuracy = if (location.hasAccuracy()) location.accuracy.toDouble() else null,
-                speed = if (location.hasSpeed()) (location.speed * 3.6) else null, // m/s转km/h
-                heartRate = _heartRate.value?.takeIf { it > 0 },
-                timestamp = java.time.Instant.ofEpochMilli(location.time).toString(),
-                sequenceOrder = ++routeSequence
+                timestamp = Instant.ofEpochMilli(location.time).toString(),
+                sequence = ++routeSequence
             )
             
             routePoints.add(routePoint)
             lastRouteLocation = location
             lastRouteDistance = totalDistance // 同步更新距离记录
             
+            // 记录GPS精度
+            if (location.hasAccuracy()) {
+                accuracySamples.add(AccuracySample(
+                    accuracy = location.accuracy.toDouble(),
+                    timestamp = Instant.ofEpochMilli(location.time).toString()
+                ))
+            }
+            
+            // 记录海拔数据
+            if (location.hasAltitude()) {
+                elevationSamples.add(ElevationSample(
+                    elevation = location.altitude,
+                    timestamp = Instant.ofEpochMilli(location.time).toString()
+                ))
+            }
+            
             // 调试信息
             _debugInfo.value = "GPS Mode - ${routePoints.size} route points"
         }
     }
     
-    // 获取当前运动的路线数据
-    fun getRoutePoints(): List<WorkoutRoute> {
+    // 记录动态数据（定期采样）
+    private fun recordDynamicData(currentSpeed: Double, currentHeartRate: Int, elapsedSeconds: Int) {
+        val timestamp = Instant.now().toString()
+        
+        // 记录速度
+        speedSamples.add(SpeedSample(
+            speed = currentSpeed,
+            timestamp = timestamp
+        ))
+        
+        // 记录心率
+        if (currentHeartRate > 0) {
+            heartRateSamples.add(HeartRateSample(
+                heartRate = currentHeartRate,
+                timestamp = timestamp
+            ))
+        }
+        
+        // 记录配速
+        if (currentSpeed > 0) {
+            val pace = (3600 / currentSpeed).toInt() // 秒/公里
+            paceSamples.add(PaceSample(
+                pace = pace,
+                timestamp = timestamp
+            ))
+        }
+        
+        // 记录步频
+        if (cadence > 0) {
+            cadenceSamples.add(CadenceSample(
+                cadence = cadence,
+                timestamp = timestamp
+            ))
+        }
+    }
+    
+    // 获取完整的运动动态数据
+    fun getWorkoutDynamicData(): WorkoutDynamicData {
+        return WorkoutDynamicData(
+            route = routePoints.toList(),
+            speedSamples = speedSamples.toList(),
+            heartRateSamples = heartRateSamples.toList(),
+            elevationSamples = elevationSamples.toList(),
+            paceSamples = paceSamples.toList(),
+            cadenceSamples = cadenceSamples.toList(),
+            locationAccuracy = accuracySamples.toList()
+        )
+    }
+    
+    // 获取当前运动的路线数据（兼容性）
+    fun getRoutePoints(): List<RoutePoint> {
         return routePoints.toList()
     }
     
-    // 清除路线数据
-    fun clearRoutePoints() {
+    // 清除所有动态数据
+    fun clearWorkoutData() {
         routePoints.clear()
+        speedSamples.clear()
+        heartRateSamples.clear()
+        elevationSamples.clear()
+        paceSamples.clear()
+        cadenceSamples.clear()
+        accuracySamples.clear()
         routeSequence = 0
     }
     
@@ -578,3 +656,53 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         return distanceKm >= 1.0 || durationSeconds >= 900 // 1km或15分钟
     }
 }
+
+// 动态数据类定义 - 对应后端JSON结构
+data class RoutePoint(
+    val lat: Double,
+    val lng: Double,
+    val altitude: Double?,
+    val timestamp: String,
+    val sequence: Int
+)
+
+data class SpeedSample(
+    val speed: Double,
+    val timestamp: String
+)
+
+data class HeartRateSample(
+    val heartRate: Int,
+    val timestamp: String
+)
+
+data class ElevationSample(
+    val elevation: Double,
+    val timestamp: String
+)
+
+data class PaceSample(
+    val pace: Int,
+    val timestamp: String
+)
+
+data class CadenceSample(
+    val cadence: Int,
+    val timestamp: String
+)
+
+data class AccuracySample(
+    val accuracy: Double,
+    val timestamp: String
+)
+
+// 完整的运动动态数据结构
+data class WorkoutDynamicData(
+    val route: List<RoutePoint>,
+    val speedSamples: List<SpeedSample>,
+    val heartRateSamples: List<HeartRateSample>,
+    val elevationSamples: List<ElevationSample>,
+    val paceSamples: List<PaceSample>,
+    val cadenceSamples: List<CadenceSample>,
+    val locationAccuracy: List<AccuracySample>
+)

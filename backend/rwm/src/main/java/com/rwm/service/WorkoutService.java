@@ -1,13 +1,13 @@
 package com.rwm.service;
 
 import com.rwm.entity.Workout;
-import com.rwm.entity.WorkoutRoute;
 import com.rwm.dto.request.WorkoutCreateRequest;
 import com.rwm.dto.request.WorkoutUpdateRequest;
 import com.rwm.dto.response.WorkoutStatsResponse;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 运动记录服务接口
@@ -65,14 +65,34 @@ public interface WorkoutService {
     Workout updateWorkoutStatus(Long workoutId, String status);
     
     /**
-     * 保存运动路线轨迹
+     * 获取用户今日运动统计（总距离、总时长、总卡路里、运动次数）
      */
-    void saveWorkoutRoute(Long workoutId, List<WorkoutRoute> routes);
+    Map<String, Object> getUserTodayStats(Long userId);
     
     /**
-     * 获取运动路线轨迹
+     * 获取用户本周运动统计
      */
-    List<WorkoutRoute> getWorkoutRoute(Long workoutId);
+    Map<String, Object> getUserWeekStats(Long userId);
+    
+    /**
+     * 获取用户本月运动统计
+     */
+    Map<String, Object> getUserMonthStats(Long userId);
+    
+    /**
+     * 获取用户指定时间范围的运动记录（用于History展示）
+     */
+    List<Workout> getUserWorkoutsByDateRange(Long userId, LocalDate startDate, LocalDate endDate);
+    
+    /**
+     * 获取用户本周每日运动数据（用于周图表）
+     */
+    Map<String, Object> getUserWeeklyChart(Long userId);
+    
+    /**
+     * 获取用户本月运动趋势（用于月图表）
+     */
+    Map<String, Object> getUserMonthlyChart(Long userId);
     
     /**
      * 计算运动目标达成状态

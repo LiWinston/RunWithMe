@@ -1,6 +1,8 @@
 package com.rwm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.rwm.dto.WorkoutData;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -68,6 +70,9 @@ public class Workout {
 
     @TableField("temperature") // 温度(℃)
     private BigDecimal temperature;
+
+    @TableField(value = "workout_data", typeHandler = JacksonTypeHandler.class) // 运动动态数据(JSON)
+    private WorkoutData workoutData;
 
     @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;

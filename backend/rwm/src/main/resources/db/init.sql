@@ -24,7 +24,7 @@ CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_created_at ON users(created_at);
 
--- 创建运动记录表
+-- 创建运动记录表（重构版：使用JSON存储动态数据）
 CREATE TABLE IF NOT EXISTS workouts (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL COMMENT '用户ID（逻辑外键）',
@@ -46,10 +46,23 @@ CREATE TABLE IF NOT EXISTS workouts (
     notes TEXT COMMENT '运动备注',
     weather_condition VARCHAR(50) COMMENT '天气条件',
     temperature DECIMAL(4,1) COMMENT '温度(℃)',
+    
+    -- JSON动态数据列：存储运动过程中的所有时序数据
+    workout_data JSON COMMENT '运动动态数据: {
+        "route": [{"lat": 39.904, "lng": 116.407, "altitude": 50, "timestamp": "2025-01-01T10:00:00", "sequence": 1}],
+        "speed_samples": [{"speed": 10.5, "timestamp": "2025-01-01T10:00:00"}],
+        "heart_rate_samples": [{"heart_rate": 150, "timestamp": "2025-01-01T10:00:00"}],
+        "elevation_samples": [{"elevation": 50, "timestamp": "2025-01-01T10:00:00"}],
+        "pace_samples": [{"pace": 350, "timestamp": "2025-01-01T10:00:00"}],
+        "cadence_samples": [{"cadence": 180, "timestamp": "2025-01-01T10:00:00"}],
+        "location_accuracy": [{"accuracy": 5.0, "timestamp": "2025-01-01T10:00:00"}]
+    }',
+    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     deleted BOOLEAN DEFAULT FALSE COMMENT '是否删除',
     
+    -- 基础索引
     INDEX idx_workouts_user_id (user_id),
     INDEX idx_workouts_workout_type (workout_type),
     INDEX idx_workouts_start_time (start_time),
@@ -57,26 +70,14 @@ CREATE TABLE IF NOT EXISTS workouts (
     INDEX idx_workouts_visibility (visibility),
     INDEX idx_workouts_group_id (group_id),
     INDEX idx_workouts_goal_achieved (goal_achieved),
-    INDEX idx_workouts_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='运动记录表';
-
--- 创建运动路线轨迹表
-CREATE TABLE IF NOT EXISTS workout_routes (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    workout_id BIGINT NOT NULL COMMENT '运动记录ID（逻辑外键）',
-    latitude DECIMAL(10,8) NOT NULL COMMENT '纬度',
-    longitude DECIMAL(11,8) NOT NULL COMMENT '经度',
-    altitude DECIMAL(8,2) COMMENT '海拔(米)',
-    accuracy DECIMAL(6,2) COMMENT 'GPS精度(米)',
-    speed DECIMAL(6,2) COMMENT '当前速度(km/h)',
-    heart_rate INT COMMENT '当前心率(bpm)',
-    timestamp DATETIME NOT NULL COMMENT '记录时间戳',
-    sequence_order INT NOT NULL COMMENT '路线点顺序',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    deleted BOOLEAN DEFAULT FALSE COMMENT '是否删除',
+    INDEX idx_workouts_created_at (created_at),
+    INDEX idx_workouts_distance (distance),
+    INDEX idx_workouts_duration (duration),
     
-    INDEX idx_workout_routes_workout_id (workout_id),
-    INDEX idx_workout_routes_timestamp (timestamp),
-    INDEX idx_workout_routes_sequence (workout_id, sequence_order),
-    INDEX idx_workout_routes_location (latitude, longitude)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='运动路线轨迹表';
+    -- JSON列性能索引（MySQL 8.0+支持）
+    INDEX idx_workout_data_route_count ((JSON_LENGTH(workout_data->'$.route'))),
+    INDEX idx_workout_data_start_location ((CAST(workout_data->'$.route[0].lat' AS DECIMAL(10,8)), CAST(workout_data->'$.route[0].lng' AS DECIMAL(11,8))))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='运动记录表（JSON重构版）';
+
+-- 删除旧的路线轨迹表
+DROP TABLE IF EXISTS workout_routes;

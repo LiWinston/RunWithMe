@@ -38,18 +38,19 @@ class FinishActivity : AppCompatActivity() {
         tvSpeed.text = speed  // 直接显示速度
 
         btnDone.setOnClickListener {
-            // 构造 WorkoutCreateRequest 数据对象
+            // 构造 WorkoutCreateRequest 数据对象（包含动态数据）
+            val dynamicData = workoutViewModel.getWorkoutDynamicData()
             val workoutRequest = WorkoutCreateRequest(
                 userId = 1L, // TODO: 这里改成你实际登录用户的 ID
                 workoutType = "OUTDOOR_RUN", // 可以根据实际运动类型修改
                 distance = parseDistance(distance),
                 duration = parseDuration(duration),
-                steps = null, // 如果有步数数据可以传入
+                steps = workoutViewModel.steps.value, // 从ViewModel获取步数
                 calories = parseCalories(calories),
                 avgSpeed = parseSpeed(speed),
                 avgPace = null, // 可以根据速度和距离计算
-                avgHeartRate = null, // 如果有心率数据可以传入
-                maxHeartRate = null,
+                avgHeartRate = workoutViewModel.heartRate.value?.takeIf { it > 0 }, // 从ViewModel获取心率
+                maxHeartRate = workoutViewModel.heartRate.value?.takeIf { it > 0 },
                 startTime = java.time.LocalDateTime.now().minusSeconds(parseDuration(duration)?.toLong() ?: 0L).toString(), // 估算开始时间
                 endTime = java.time.LocalDateTime.now().toString(),
                 status = "COMPLETED",
@@ -58,8 +59,9 @@ class FinishActivity : AppCompatActivity() {
                 notes = null,
                 weatherCondition = "晴天", // 简单模拟天气
                 temperature = 25.0, // 简单模拟温度
-                latitude = 39.9042, // 模拟位置 - 北京
-                longitude = 116.4074
+                latitude = if (dynamicData.route.isNotEmpty()) dynamicData.route.first().lat else 39.9042,
+                longitude = if (dynamicData.route.isNotEmpty()) dynamicData.route.first().lng else 116.4074,
+                workoutData = dynamicData // 包含完整的动态数据
             )
 
             // 调用 Retrofit 保存运动记录和路线
@@ -168,36 +170,21 @@ class FinishActivity : AppCompatActivity() {
         return distanceGoal || durationGoal
     }
     
-    // 保存路线数据
+    // 检查动态数据并完成保存
     private fun saveRouteData(workoutId: Long) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val routes = workoutViewModel.getRoutePoints()
-                if (routes.isNotEmpty()) {
-                    val routeResponse = RetrofitClient.api.saveWorkoutRoute(workoutId, routes)
-                    runOnUiThread {
-                        if (routeResponse.isSuccessful && routeResponse.body()?.code == 0) {
-                            Toast.makeText(this@FinishActivity, 
-                                "运动记录和路线保存成功！(${routes.size}个路点)", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(this@FinishActivity, 
-                                "运动记录保存成功，路线保存失败", Toast.LENGTH_SHORT).show()
-                        }
-                        finish()
-                    }
-                } else {
-                    runOnUiThread {
-                        Toast.makeText(this@FinishActivity, "运动记录保存成功！", Toast.LENGTH_SHORT).show()
-                        finish()
-                    }
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    Toast.makeText(this@FinishActivity, 
-                        "运动记录保存成功，路线保存失败: ${e.message}", Toast.LENGTH_SHORT).show()
-                    finish()
-                }
+        runOnUiThread {
+            val dynamicData = workoutViewModel.getWorkoutDynamicData()
+            val totalDataPoints = dynamicData.route.size + 
+                                dynamicData.speedSamples.size + 
+                                dynamicData.heartRateSamples.size
+            
+            if (totalDataPoints > 0) {
+                Toast.makeText(this@FinishActivity, 
+                    "运动记录保存成功！包含${totalDataPoints}个数据点", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this@FinishActivity, "运动记录保存成功！", Toast.LENGTH_SHORT).show()
             }
+            finish()
         }
     }
 }
@@ -224,7 +211,8 @@ data class WorkoutCreateRequest(
     val weatherCondition: String? = null,
     val temperature: Double? = null,
     val latitude: Double? = null, // 纬度
-    val longitude: Double? = null // 经度
+    val longitude: Double? = null, // 经度
+    val workoutData: WorkoutDynamicData? = null // JSON动态数据
 )
 
 // 后端响应的Workout实体
