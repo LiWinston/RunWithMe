@@ -5,7 +5,6 @@ import com.rwm.dto.request.WorkoutUpdateRequest;
 import com.rwm.dto.response.Result;
 import com.rwm.dto.response.WorkoutStatsResponse;
 import com.rwm.entity.Workout;
-import com.rwm.entity.WorkoutRoute;
 import com.rwm.service.WorkoutService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -192,33 +191,4 @@ public class WorkoutController {
         }
     }
     
-    /**
-     * 保存运动路线轨迹
-     */
-    @PostMapping("/{workoutId}/route")
-    public ResponseEntity<Result<String>> saveWorkoutRoute(
-            @PathVariable Long workoutId, 
-            @RequestBody List<WorkoutRoute> routes) {
-        try {
-            workoutService.saveWorkoutRoute(workoutId, routes);
-            return ResponseEntity.ok(Result.ok("路线轨迹保存成功", "保存了 " + routes.size() + " 个路点"));
-        } catch (Exception e) {
-            log.error("保存运动路线失败: {}", e.getMessage(), e);
-            return ResponseEntity.ok(Result.error(e.getMessage()));
-        }
-    }
-    
-    /**
-     * 获取运动路线轨迹
-     */
-    @GetMapping("/{workoutId}/route")
-    public ResponseEntity<Result<List<WorkoutRoute>>> getWorkoutRoute(@PathVariable Long workoutId) {
-        try {
-            List<WorkoutRoute> routes = workoutService.getWorkoutRoute(workoutId);
-            return ResponseEntity.ok(Result.ok("获取路线成功", routes));
-        } catch (Exception e) {
-            log.error("获取运动路线失败: {}", e.getMessage(), e);
-            return ResponseEntity.ok(Result.error(e.getMessage()));
-        }
-    }
 }

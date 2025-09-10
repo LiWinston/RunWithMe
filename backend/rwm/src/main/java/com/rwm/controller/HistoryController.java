@@ -32,7 +32,7 @@ public class HistoryController {
         log.info("获取用户{}今日运动统计", userId);
         try {
             Map<String, Object> stats = workoutService.getUserTodayStats(userId);
-            return Result.success(stats);
+            return Result.ok(stats);
         } catch (Exception e) {
             log.error("获取今日统计失败", e);
             return Result.error("获取今日统计失败: " + e.getMessage());
@@ -47,7 +47,7 @@ public class HistoryController {
         log.info("获取用户{}本周运动统计", userId);
         try {
             Map<String, Object> stats = workoutService.getUserWeekStats(userId);
-            return Result.success(stats);
+            return Result.ok(stats);
         } catch (Exception e) {
             log.error("获取本周统计失败", e);
             return Result.error("获取本周统计失败: " + e.getMessage());
@@ -62,7 +62,7 @@ public class HistoryController {
         log.info("获取用户{}本月运动统计", userId);
         try {
             Map<String, Object> stats = workoutService.getUserMonthStats(userId);
-            return Result.success(stats);
+            return Result.ok(stats);
         } catch (Exception e) {
             log.error("获取本月统计失败", e);
             return Result.error("获取本月统计失败: " + e.getMessage());
@@ -78,7 +78,7 @@ public class HistoryController {
         try {
             LocalDate today = LocalDate.now();
             List<Workout> workouts = workoutService.getUserWorkoutsByDateRange(userId, today, today);
-            return Result.success(workouts);
+            return Result.ok(workouts);
         } catch (Exception e) {
             log.error("获取今日运动记录失败", e);
             return Result.error("获取今日运动记录失败: " + e.getMessage());
@@ -95,7 +95,7 @@ public class HistoryController {
             LocalDate today = LocalDate.now();
             LocalDate weekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
             List<Workout> workouts = workoutService.getUserWorkoutsByDateRange(userId, weekStart, today);
-            return Result.success(workouts);
+            return Result.ok(workouts);
         } catch (Exception e) {
             log.error("获取本周运动记录失败", e);
             return Result.error("获取本周运动记录失败: " + e.getMessage());
@@ -112,7 +112,7 @@ public class HistoryController {
             LocalDate today = LocalDate.now();
             LocalDate monthStart = today.withDayOfMonth(1);
             List<Workout> workouts = workoutService.getUserWorkoutsByDateRange(userId, monthStart, today);
-            return Result.success(workouts);
+            return Result.ok(workouts);
         } catch (Exception e) {
             log.error("获取本月运动记录失败", e);
             return Result.error("获取本月运动记录失败: " + e.getMessage());
@@ -127,7 +127,7 @@ public class HistoryController {
         log.info("获取用户{}本周图表数据", userId);
         try {
             Map<String, Object> chartData = workoutService.getUserWeeklyChart(userId);
-            return Result.success(chartData);
+            return Result.ok(chartData);
         } catch (Exception e) {
             log.error("获取本周图表数据失败", e);
             return Result.error("获取本周图表数据失败: " + e.getMessage());
@@ -142,7 +142,7 @@ public class HistoryController {
         log.info("获取用户{}本月图表数据", userId);
         try {
             Map<String, Object> chartData = workoutService.getUserMonthlyChart(userId);
-            return Result.success(chartData);
+            return Result.ok(chartData);
         } catch (Exception e) {
             log.error("获取本月图表数据失败", e);
             return Result.error("获取本月图表数据失败: " + e.getMessage());
@@ -162,7 +162,7 @@ public class HistoryController {
             LocalDate start = LocalDate.parse(startDate, DateTimeFormatter.ISO_LOCAL_DATE);
             LocalDate end = LocalDate.parse(endDate, DateTimeFormatter.ISO_LOCAL_DATE);
             List<Workout> workouts = workoutService.getUserWorkoutsByDateRange(userId, start, end);
-            return Result.success(workouts);
+            return Result.ok(workouts);
         } catch (Exception e) {
             log.error("获取指定日期范围运动记录失败", e);
             return Result.error("获取运动记录失败: " + e.getMessage());

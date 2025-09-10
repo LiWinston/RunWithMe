@@ -6,9 +6,7 @@ import com.rwm.dto.request.WorkoutCreateRequest;
 import com.rwm.dto.request.WorkoutUpdateRequest;
 import com.rwm.dto.response.WorkoutStatsResponse;
 import com.rwm.entity.Workout;
-import com.rwm.entity.WorkoutRoute;
 import com.rwm.mapper.WorkoutMapper;
-import com.rwm.mapper.WorkoutRouteMapper;
 import com.rwm.service.WorkoutService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 运动记录服务实现类
@@ -30,7 +31,6 @@ import java.util.List;
 public class WorkoutServiceImpl implements WorkoutService {
     
     private final WorkoutMapper workoutMapper;
-    private final WorkoutRouteMapper workoutRouteMapper;
     
     @Override
     @Transactional
@@ -255,28 +255,192 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
     
     @Override
-    @Transactional
-    public void saveWorkoutRoute(Long workoutId, List<WorkoutRoute> routes) {
-        log.info("保存运动路线，workoutId: {}, 路点数量: {}", workoutId, routes.size());
+    public Map<String, Object> getUserTodayStats(Long userId) {
+        log.info("获取用户今日统计，用户ID: {}", userId);
         
-        if (routes == null || routes.isEmpty()) {
-            return;
-        }
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(23, 59, 59);
         
-        // 设置workout_id和顺序
-        for (int i = 0; i < routes.size(); i++) {
-            WorkoutRoute route = routes.get(i);
-            route.setWorkoutId(workoutId);
-            route.setSequenceOrder(i + 1);
-            workoutRouteMapper.insert(route);
-        }
+        QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", userId)
+                   .between("start_time", startOfDay, endOfDay)
+                   .eq("status", "COMPLETED");
         
-        log.info("运动路线保存成功，workoutId: {}", workoutId);
+        List<Workout> workouts = workoutMapper.selectList(queryWrapper);
+        
+        return aggregateWorkoutStats(workouts);
     }
     
     @Override
-    public List<WorkoutRoute> getWorkoutRoute(Long workoutId) {
-        return workoutRouteMapper.selectRouteByWorkoutId(workoutId);
+    public Map<String, Object> getUserWeekStats(Long userId) {
+        log.info("获取用户本周统计，用户ID: {}", userId);
+        
+        LocalDate today = LocalDate.now();
+        LocalDate weekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
+        LocalDateTime startOfWeek = weekStart.atStartOfDay();
+        LocalDateTime endOfWeek = today.atTime(23, 59, 59);
+        
+        QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", userId)
+                   .between("start_time", startOfWeek, endOfWeek)
+                   .eq("status", "COMPLETED");
+        
+        List<Workout> workouts = workoutMapper.selectList(queryWrapper);
+        
+        return aggregateWorkoutStats(workouts);
+    }
+    
+    @Override
+    public Map<String, Object> getUserMonthStats(Long userId) {
+        log.info("获取用户本月统计，用户ID: {}", userId);
+        
+        LocalDate today = LocalDate.now();
+        LocalDate monthStart = today.withDayOfMonth(1);
+        LocalDateTime startOfMonth = monthStart.atStartOfDay();
+        LocalDateTime endOfMonth = today.atTime(23, 59, 59);
+        
+        QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", userId)
+                   .between("start_time", startOfMonth, endOfMonth)
+                   .eq("status", "COMPLETED");
+        
+        List<Workout> workouts = workoutMapper.selectList(queryWrapper);
+        
+        return aggregateWorkoutStats(workouts);
+    }
+    
+    @Override
+    public List<Workout> getUserWorkoutsByDateRange(Long userId, LocalDate startDate, LocalDate endDate) {
+        log.info("获取用户指定日期范围运动记录，用户ID: {}, 开始: {}, 结束: {}", userId, startDate, endDate);
+        
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+        
+        QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", userId)
+                   .between("start_time", startDateTime, endDateTime)
+                   .orderByDesc("start_time");
+        
+        return workoutMapper.selectList(queryWrapper);
+    }
+    
+    @Override
+    public Map<String, Object> getUserWeeklyChart(Long userId) {
+        log.info("获取用户本周图表数据，用户ID: {}", userId);
+        
+        LocalDate today = LocalDate.now();
+        LocalDate weekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
+        
+        Map<String, Object> chartData = new HashMap<>();
+        Map<String, Double> dailyDistance = new HashMap<>();
+        Map<String, Integer> dailyDuration = new HashMap<>();
+        
+        // 获取本周每一天的数据
+        for (int i = 0; i < 7; i++) {
+            LocalDate date = weekStart.plusDays(i);
+            List<Workout> dayWorkouts = getUserWorkoutsByDate(userId, date);
+            
+            double totalDistance = dayWorkouts.stream()
+                    .filter(w -> w.getDistance() != null)
+                    .mapToDouble(w -> w.getDistance().doubleValue())
+                    .sum();
+            
+            int totalDuration = dayWorkouts.stream()
+                    .filter(w -> w.getDuration() != null)
+                    .mapToInt(Workout::getDuration)
+                    .sum();
+            
+            String dayName = getDayName(date.getDayOfWeek().getValue());
+            dailyDistance.put(dayName, totalDistance);
+            dailyDuration.put(dayName, totalDuration);
+        }
+        
+        chartData.put("dailyDistance", dailyDistance);
+        chartData.put("dailyDuration", dailyDuration);
+        chartData.put("labels", new String[]{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"});
+        
+        return chartData;
+    }
+    
+    @Override
+    public Map<String, Object> getUserMonthlyChart(Long userId) {
+        log.info("获取用户本月图表数据，用户ID: {}", userId);
+        
+        LocalDate today = LocalDate.now();
+        LocalDate monthStart = today.withDayOfMonth(1);
+        
+        Map<String, Object> chartData = new HashMap<>();
+        Map<String, Double> weeklyDistance = new HashMap<>();
+        
+        // 按周统计本月数据
+        LocalDate currentWeekStart = monthStart;
+        int weekNumber = 1;
+        
+        while (currentWeekStart.isBefore(today) || currentWeekStart.isEqual(today)) {
+            LocalDate weekEnd = currentWeekStart.plusDays(6);
+            if (weekEnd.isAfter(today)) {
+                weekEnd = today;
+            }
+            
+            List<Workout> weekWorkouts = getUserWorkoutsByDateRange(userId, currentWeekStart, weekEnd);
+            double totalDistance = weekWorkouts.stream()
+                    .filter(w -> w.getDistance() != null)
+                    .mapToDouble(w -> w.getDistance().doubleValue())
+                    .sum();
+            
+            weeklyDistance.put("Week " + weekNumber, totalDistance);
+            
+            currentWeekStart = currentWeekStart.plusDays(7);
+            weekNumber++;
+        }
+        
+        chartData.put("weeklyDistance", weeklyDistance);
+        chartData.put("period", today.getMonth().toString() + " " + today.getYear());
+        
+        return chartData;
+    }
+    
+    /**
+     * 聚合运动统计数据
+     */
+    private Map<String, Object> aggregateWorkoutStats(List<Workout> workouts) {
+        Map<String, Object> stats = new HashMap<>();
+        
+        double totalDistance = workouts.stream()
+                .filter(w -> w.getDistance() != null)
+                .mapToDouble(w -> w.getDistance().doubleValue())
+                .sum();
+        
+        int totalDuration = workouts.stream()
+                .filter(w -> w.getDuration() != null)
+                .mapToInt(Workout::getDuration)
+                .sum();
+        
+        double totalCalories = workouts.stream()
+                .filter(w -> w.getCalories() != null)
+                .mapToDouble(w -> w.getCalories().doubleValue())
+                .sum();
+        
+        int totalSteps = workouts.stream()
+                .filter(w -> w.getSteps() != null)
+                .mapToInt(Workout::getSteps)
+                .sum();
+        
+        stats.put("totalDistance", totalDistance);
+        stats.put("totalDuration", totalDuration);
+        stats.put("totalCalories", totalCalories);
+        stats.put("totalSteps", totalSteps);
+        stats.put("workoutCount", workouts.size());
+        
+        return stats;
+    }
+    
+    /**
+     * 获取星期名称
+     */
+    private String getDayName(int dayOfWeek) {
+        String[] days = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+        return days[dayOfWeek - 1];
     }
     
     @Override

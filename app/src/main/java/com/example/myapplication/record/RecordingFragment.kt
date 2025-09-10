@@ -192,7 +192,7 @@ class RecordingFragment : Fragment(), OnMapReadyCallback {
     private fun updateMapRoute() {
         val routes = workoutViewModel.getRoutePoints()
         if (routes.isNotEmpty() && googleMap != null) {
-            val newRoutePoints = routes.map { LatLng(it.latitude, it.longitude) }
+            val newRoutePoints = routes.map { LatLng(it.lat, it.lng) }
             
             // 更新路线
             routePolyline?.remove()

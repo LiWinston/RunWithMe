@@ -1,5 +1,6 @@
 package com.rwm.dto.request;
 
+import com.rwm.dto.WorkoutData;
 import lombok.Data;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
@@ -66,4 +67,7 @@ public class WorkoutCreateRequest {
     private String weatherCondition;
     
     private BigDecimal temperature;
+    
+    // JSON动态数据：路线轨迹、速度样本、心率样本等
+    private WorkoutData workoutData;
 }

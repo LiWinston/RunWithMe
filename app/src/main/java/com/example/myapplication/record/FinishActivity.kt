@@ -72,9 +72,9 @@ class FinishActivity : AppCompatActivity() {
                         if (response.isSuccessful && response.body()?.code == 0) {
                             val workoutId = response.body()?.data?.id
                             
-                            // 保存路线数据
+                            // 显示保存成功信息（JSON数据已经一次性保存）
                             if (workoutId != null) {
-                                saveRouteData(workoutId)
+                                showSaveSuccess(workoutId)
                             } else {
                                 Toast.makeText(this@FinishActivity, "运动记录保存成功！", Toast.LENGTH_SHORT).show()
                                 finish()
@@ -170,22 +170,23 @@ class FinishActivity : AppCompatActivity() {
         return distanceGoal || durationGoal
     }
     
-    // 检查动态数据并完成保存
-    private fun saveRouteData(workoutId: Long) {
-        runOnUiThread {
-            val dynamicData = workoutViewModel.getWorkoutDynamicData()
-            val totalDataPoints = dynamicData.route.size + 
-                                dynamicData.speedSamples.size + 
-                                dynamicData.heartRateSamples.size
-            
-            if (totalDataPoints > 0) {
-                Toast.makeText(this@FinishActivity, 
-                    "运动记录保存成功！包含${totalDataPoints}个数据点", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this@FinishActivity, "运动记录保存成功！", Toast.LENGTH_SHORT).show()
-            }
-            finish()
+    // 显示保存成功信息
+    private fun showSaveSuccess(workoutId: Long) {
+        val dynamicData = workoutViewModel.getWorkoutDynamicData()
+        val totalDataPoints = dynamicData.route.size + 
+                            dynamicData.speedSamples.size + 
+                            dynamicData.heartRateSamples.size +
+                            dynamicData.elevationSamples.size +
+                            dynamicData.paceSamples.size +
+                            dynamicData.cadenceSamples.size
+        
+        if (totalDataPoints > 0) {
+            Toast.makeText(this@FinishActivity, 
+                "运动记录保存成功！包含${totalDataPoints}个数据点", Toast.LENGTH_LONG).show()
+        } else {
+            Toast.makeText(this@FinishActivity, "运动记录保存成功！", Toast.LENGTH_SHORT).show()
         }
+        finish()
     }
 }
 

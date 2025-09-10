@@ -122,10 +122,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         simulatedDistance = 0.0
         
         // 重置路线追踪相关变量
-        routePoints.clear()
-        routeSequence = 0
-        lastRouteLocation = null
-        lastRouteDistance = 0.0
+        clearWorkoutData()
         
         // 重置传感器数据
         stepTimestamps.clear()
