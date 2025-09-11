@@ -43,6 +43,9 @@ class WorkoutRecordAdapter(
         private val tvPace: TextView = itemView.findViewById(R.id.tvPace)
 
         fun bind(workout: Workout) {
+            // 调试信息 - 打印每个workout的信息
+            android.util.Log.d("WorkoutRecordAdapter", "绑定Workout ID: ${workout.id}, 类型: ${workout.workoutType}, 开始时间: ${workout.startTime}")
+            
             // 运动类型
             tvWorkoutType.text = when (workout.workoutType) {
                 "OUTDOOR_RUN" -> "户外跑步"
@@ -54,15 +57,20 @@ class WorkoutRecordAdapter(
             }
 
             // 开始时间 - 将UTC时间转换为本地时间
-            val utcTime = LocalDateTime.parse(workout.startTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            val localTime = utcTime.atZone(java.time.ZoneId.of("UTC"))
-                .withZoneSameInstant(java.time.ZoneId.systemDefault())
-                .toLocalDateTime()
-            
-            // 调试信息
-            android.util.Log.d("WorkoutRecordAdapter", "原始UTC时间: ${workout.startTime}, 转换后本地时间: $localTime, 系统时区: ${java.time.ZoneId.systemDefault()}")
-            
-            tvStartTime.text = localTime.format(DateTimeFormatter.ofPattern("HH:mm"))
+            try {
+                val utcTime = LocalDateTime.parse(workout.startTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                val localTime = utcTime.atZone(java.time.ZoneId.of("UTC"))
+                    .withZoneSameInstant(java.time.ZoneId.systemDefault())
+                    .toLocalDateTime()
+                
+                // 调试信息
+                android.util.Log.d("WorkoutRecordAdapter", "原始UTC时间: ${workout.startTime}, 转换后本地时间: $localTime, 系统时区: ${java.time.ZoneId.systemDefault()}")
+                
+                tvStartTime.text = localTime.format(DateTimeFormatter.ofPattern("HH:mm"))
+            } catch (e: Exception) {
+                android.util.Log.e("WorkoutRecordAdapter", "时间解析失败: ${workout.startTime}", e)
+                tvStartTime.text = "时间错误"
+            }
 
             // 距离
             val distance = try {

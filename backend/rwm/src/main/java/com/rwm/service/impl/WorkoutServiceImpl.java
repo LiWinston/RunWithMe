@@ -378,29 +378,46 @@ public class WorkoutServiceImpl implements WorkoutService {
         ZoneId utcZone = ZoneId.of("UTC");
         LocalDate today = LocalDate.now(utcZone);
         LocalDate weekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
+        LocalDate weekEnd = weekStart.plusDays(6);
+        
+        // 一次性查询整周的数据，避免7次单独查询
+        LocalDateTime startDateTime = weekStart.atStartOfDay();
+        LocalDateTime endDateTime = weekEnd.atTime(23, 59, 59);
+        
+        log.info("本周图表数据查询范围: {} 到 {}", startDateTime, endDateTime);
+        
+        QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", userId)
+                   .between("start_time", startDateTime, endDateTime)
+                   .orderByAsc("start_time");
+        
+        List<Workout> weekWorkouts = workoutMapper.selectList(queryWrapper);
+        log.info("本周图表数据查询到{}条记录", weekWorkouts.size());
         
         Map<String, Object> chartData = new HashMap<>();
         Map<String, Double> dailyDistance = new HashMap<>();
         Map<String, Integer> dailyDuration = new HashMap<>();
         
-        // 获取本周每一天的数据
+        // 初始化所有日期为0
         for (int i = 0; i < 7; i++) {
             LocalDate date = weekStart.plusDays(i);
-            List<Workout> dayWorkouts = getUserWorkoutsByDate(userId, date);
-            
-            double totalDistance = dayWorkouts.stream()
-                    .filter(w -> w.getDistance() != null)
-                    .mapToDouble(w -> w.getDistance().doubleValue())
-                    .sum();
-            
-            int totalDuration = dayWorkouts.stream()
-                    .filter(w -> w.getDuration() != null)
-                    .mapToInt(Workout::getDuration)
-                    .sum();
-            
             String dayName = getDayName(date.getDayOfWeek().getValue());
-            dailyDistance.put(dayName, totalDistance);
-            dailyDuration.put(dayName, totalDuration);
+            dailyDistance.put(dayName, 0.0);
+            dailyDuration.put(dayName, 0);
+        }
+        
+        // 按日期分组统计
+        for (Workout workout : weekWorkouts) {
+            LocalDate workoutDate = workout.getStartTime().toLocalDate();
+            String dayName = getDayName(workoutDate.getDayOfWeek().getValue());
+            
+            if (workout.getDistance() != null) {
+                dailyDistance.put(dayName, dailyDistance.get(dayName) + workout.getDistance().doubleValue());
+            }
+            
+            if (workout.getDuration() != null) {
+                dailyDuration.put(dayName, dailyDuration.get(dayName) + workout.getDuration());
+            }
         }
         
         chartData.put("dailyDistance", dailyDistance);

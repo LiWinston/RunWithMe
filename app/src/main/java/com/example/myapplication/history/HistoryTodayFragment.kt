@@ -80,6 +80,10 @@ class HistoryTodayFragment : Fragment() {
 
         // 观察运动记录列表
         historyViewModel.todayWorkouts.observe(viewLifecycleOwner) { workouts ->
+            android.util.Log.d("HistoryTodayFragment", "接收到${workouts.size}条运动记录")
+            workouts.forEach { workout ->
+                android.util.Log.d("HistoryTodayFragment", "Workout ID: ${workout.id}, 类型: ${workout.workoutType}, 开始时间: ${workout.startTime}")
+            }
             workoutAdapter.submitList(workouts)
         }
 
