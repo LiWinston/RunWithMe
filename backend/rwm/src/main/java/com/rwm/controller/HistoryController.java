@@ -77,9 +77,9 @@ public class HistoryController {
     public Result<List<Workout>> getTodayWorkouts(@PathVariable Long userId) {
         log.info("获取用户{}今日运动记录", userId);
         try {
-            // 使用UTC时区保持与数据库一致
-            ZoneId utcZone = ZoneId.of("UTC");
-            LocalDate today = LocalDate.now(utcZone);
+            // 使用墨尔本时区（用户实际时区）
+            ZoneId melbourneZone = ZoneId.of("Australia/Melbourne");
+            LocalDate today = LocalDate.now(melbourneZone);
             List<Workout> workouts = workoutService.getUserWorkoutsByDateRange(userId, today, today);
             return Result.ok(workouts);
         } catch (Exception e) {
