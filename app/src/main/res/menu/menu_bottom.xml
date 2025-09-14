@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/tab_home"
+        android:title=" "
+        android:icon="@drawable/home"/>
+    <item
+        android:id="@+id/tab_goals"
+        android:title="Goals"
+        android:icon="@drawable/goals"/>
+    <item
+        android:id="@+id/tab_record"
+        android:title="Record"
+        android:icon="@drawable/record"/>
+    <item
+        android:id="@+id/tab_logs"
+        android:title="Logs"
+        android:icon="@drawable/logs"/>
+    <item
+        android:id="@+id/tab_me"
+        android:title="Me"
+        android:icon="@drawable/me"/>
+</menu>

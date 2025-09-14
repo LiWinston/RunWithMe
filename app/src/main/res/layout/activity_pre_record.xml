@@ -4,7 +4,7 @@
     android:id="@+id/pre_record_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/record_background">
+    android:background="@drawable/bg_home_gradient">
 
     <!-- 顶部返回按钮 -->
     <ImageButton

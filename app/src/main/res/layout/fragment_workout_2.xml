@@ -5,7 +5,7 @@
     android:id="@+id/countdown_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/home_page_background"
+    android:background="@drawable/bg_home_gradient"
     android:fillViewport="true">
 
     <!-- 倒计时数字 -->
