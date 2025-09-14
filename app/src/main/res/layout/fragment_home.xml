@@ -416,7 +416,7 @@
                                 android:layout_marginTop="6dp"
                                 android:gravity="center_vertical">
                                 <TextView
-                                    android:id="@+id/"
+                                    android:id="@+id/tvLabelCalories"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="🔥--"
