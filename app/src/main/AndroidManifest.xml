@@ -27,18 +27,18 @@
             android:value="YOUR_GOOGLE_MAPS_API_KEY_HERE" />
         
         <!-- Splash Activity - 启动页面 -->
-        <activity
-            android:name=".SplashActivity"
-            android:exported="true"
-            android:theme="@style/SplashTheme"
-            android:screenOrientation="portrait">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+<!--        <activity-->
+<!--            android:name=".SplashActivity"-->
+<!--            android:exported="true"-->
+<!--            android:theme="@style/SplashTheme"-->
+<!--            android:screenOrientation="portrait">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+<!--        </activity>-->
 
-        <!--<activity
+        <activity
             android:name=".record.StartRecordActivity"
             android:exported="true"
             android:screenOrientation="portrait">
@@ -46,7 +46,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>-->
+        </activity>
         
         <!-- Login Activity -->
         <activity
@@ -91,11 +91,11 @@
         </activity>
 
         <!-- gsh FinishActivity -->
-        <activity
-            android:name=".record.StartRecordActivity"
-            android:exported="true"
-            android:screenOrientation="portrait">
-        </activity>
+<!--        <activity-->
+<!--            android:name=".record.StartRecordActivity"-->
+<!--            android:exported="true"-->
+<!--            android:screenOrientation="portrait">-->
+<!--        </activity>-->
 
         <!-- History Activity -->
         <activity
