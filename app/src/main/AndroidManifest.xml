@@ -83,19 +83,24 @@
             android:screenOrientation="portrait">
         </activity>
 
-        <!-- gsh StartActivity -->
+        <!-- gsh FinishActivity -->
         <activity
             android:name=".record.FinishActivity"
             android:exported="true"
             android:screenOrientation="portrait">
         </activity>
 
+<<<<<<< Updated upstream
         <!-- gsh FinishActivity -->
+=======
+        <!-- gsh StartActivity -->
+>>>>>>> Stashed changes
 <!--        <activity-->
 <!--            android:name=".record.StartRecordActivity"-->
 <!--            android:exported="true"-->
 <!--            android:screenOrientation="portrait">-->
 <!--        </activity>-->
+<<<<<<< Updated upstream
 
         <!-- History Activity -->
         <activity
@@ -103,6 +108,8 @@
             android:exported="false"
             android:screenOrientation="portrait">
         </activity>
+=======
+>>>>>>> Stashed changes
 
     </application>
     <uses-permission android:name="android.permission.INTERNET"/>
