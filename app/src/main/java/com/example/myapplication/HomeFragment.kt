@@ -47,7 +47,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
     
     private fun initializeComponents() {
-        weatherWidget = requireView().findViewById(R.id.weather_widget)
+        weatherWidget = requireView().findViewById(R.id.weather_card)
         
         // 初始化Retrofit和API服务
         val retrofit = Retrofit.Builder()
