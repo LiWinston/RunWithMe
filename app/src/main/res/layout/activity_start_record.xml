@@ -32,15 +32,15 @@
 
     <!-- 地图占位 -->
     <ImageView
-        android:id="@+id/iv_map"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@id/tv_title"
-        android:layout_marginTop="40dp"
-        android:background="@android:color/darker_gray"
-        android:scaleType="centerCrop"
-        android:contentDescription="Map placeholder" />
+            android:id="@+id/iv_map"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/tv_title"
+            android:layout_marginTop="40dp"
+            android:src="@drawable/map"
+            android:scaleType="centerCrop"
+            android:contentDescription="Map placeholder" />
 
     <Button
         android:id="@+id/btn_record"

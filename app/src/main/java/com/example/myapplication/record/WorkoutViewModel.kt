@@ -66,7 +66,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     private var startTime: Long = 0L
     private var pauseOffset: Long = 0L
 
-    // 用户参数
+    // 用户参数 hardcoding
     private val userWeightKg = 65.0
     private val metValue = 8.0
     private val stepLength = 0.75  // 平均步幅（米）
