@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/record_page"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_home_gradient"
+        android:clipToOutline="true">
+
+    <!-- 顶部标题栏 -->
+    <RelativeLayout
+            android:id="@+id/top_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp">
+
+        <TextView
+                android:id="@+id/tv_history_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Workout"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:layout_centerInParent="true" />
+
+    </RelativeLayout>
+
+    <!-- 地图占位 -->
+    <ImageView
+            android:id="@+id/iv_map"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/tv_title"
+            android:layout_marginTop="40dp"
+            android:src="@drawable/map"
+            android:scaleType="centerCrop"
+            android:contentDescription="Map placeholder" />
+
+    <!-- 开始按钮 - 使用 ImageButton -->
+    <ImageButton
+            android:id="@+id/btn_record"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/iv_map"
+            android:layout_marginTop="120dp"
+            android:src="@drawable/start_record"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:backgroundTint="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:contentDescription="Start Record Button" />
+
+</RelativeLayout>

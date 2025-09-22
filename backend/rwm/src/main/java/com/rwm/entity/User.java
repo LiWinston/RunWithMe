@@ -46,7 +46,7 @@ public class User {
     
     @TableField("height")
     private Double height;
-    
+
     @TableField("weight")
     private Double weight;
     
