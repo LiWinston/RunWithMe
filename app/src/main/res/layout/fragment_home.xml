@@ -18,7 +18,6 @@
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:layout_marginTop="10dp"
-            app:navigationIcon="@android:drawable/ic_media_previous"
             app:title="Run With Me"
             app:titleCentered="true"/>
     </com.google.android.material.appbar.AppBarLayout>
