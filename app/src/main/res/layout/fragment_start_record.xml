@@ -30,17 +30,18 @@
             android:scaleType="centerCrop"
             android:contentDescription="Map placeholder" />
 
-    <!-- 开始按钮 -->
-    <Button
+    <!-- 开始按钮 - 使用 ImageButton -->
+    <ImageButton
             android:id="@+id/btn_record"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
             android:layout_centerHorizontal="true"
             android:layout_below="@id/iv_map"
-            android:layout_marginTop="50dp"
-            android:text="▶️"
-            android:textSize="36sp"
-            android:backgroundTint="#88FFFFFF"
-            android:contentDescription="Record Button" />
+            android:layout_marginTop="120dp"
+            android:src="@drawable/start_record"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:backgroundTint="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:contentDescription="Start Record Button" />
 
 </RelativeLayout>
