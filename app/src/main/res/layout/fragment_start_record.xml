@@ -4,19 +4,30 @@
         android:id="@+id/record_page"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/bg_home_gradient">
+        android:background="@drawable/bg_home_gradient"
+        android:clipToOutline="true">
 
-    <!-- 标题 -->
-    <TextView
-            android:id="@+id/tv_title"
-            android:layout_width="wrap_content"
+    <!-- 顶部标题栏 -->
+    <RelativeLayout
+            android:id="@+id/top_bar"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Workout"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="10dp" />
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp">
+
+        <TextView
+                android:id="@+id/tv_history_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Workout"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:layout_centerInParent="true" />
+
+    </RelativeLayout>
 
     <!-- 地图占位 -->
     <ImageView
