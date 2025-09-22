@@ -15,12 +15,6 @@ class StartRecordFragment : Fragment(R.layout.fragment_start_record) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 返回按钮
-        val btnBack = view.findViewById<ImageButton>(R.id.btn_back)
-        btnBack.setOnClickListener {
-            requireActivity().onBackPressedDispatcher.onBackPressed()
-        }
-
         // 开始按钮 → 跳到 PreRecordActivity（倒计时）
         val btnRecord = view.findViewById<Button>(R.id.btn_record)
         btnRecord.setOnClickListener {

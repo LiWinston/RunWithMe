@@ -130,15 +130,6 @@ class GroupFragment : Fragment() {
     private fun setupTopBar(view: View) {
         // 设置标题
         view.findViewById<TextView>(R.id.tv_group_name)?.text = groupInfo.name
-
-        // 返回按钮
-        view.findViewById<ImageButton>(R.id.btn_back)?.setOnClickListener {
-            // 返回 Home 或上一个页面
-            requireActivity().supportFragmentManager.beginTransaction()
-                .replace(R.id.main, HomeFragment())
-                .commit()
-        }
-
         // Hamburger 菜单
         view.findViewById<ImageButton>(R.id.btn_menu)?.setOnClickListener { v ->
             showGroupMenu(v)

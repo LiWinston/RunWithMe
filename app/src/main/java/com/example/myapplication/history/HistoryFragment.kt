@@ -27,7 +27,6 @@ class HistoryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupTabLayout(view)
-        setupBackButton(view)
 
         // 默认显示今日数据
         if (savedInstanceState == null) {
@@ -49,13 +48,6 @@ class HistoryFragment : Fragment() {
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {}
         })
-    }
-
-    private fun setupBackButton(rootView: View) {
-        val btnBack = rootView.findViewById<ImageButton>(R.id.btnBack)
-        btnBack.setOnClickListener {
-            requireActivity().supportFragmentManager.popBackStack() // 返回上一层Fragment
-        }
     }
 
     private fun showTodayFragment() {

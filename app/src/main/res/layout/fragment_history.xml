@@ -14,17 +14,6 @@
         android:paddingHorizontal="16dp"
         android:paddingVertical="20dp">
 
-        <!-- 返回按钮 -->
-        <ImageButton
-            android:id="@+id/btnBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_revert"
-            android:contentDescription="返回" />
-
         <!-- 标题 -->
         <TextView
             android:layout_width="wrap_content"
