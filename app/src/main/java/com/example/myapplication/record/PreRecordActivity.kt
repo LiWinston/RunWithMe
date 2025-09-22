@@ -19,10 +19,6 @@ class PreRecordActivity : AppCompatActivity() {
         setContentView(R.layout.activity_pre_record)
 
         tvCountdown = findViewById<TextView?>(R.id.tv_countdown)
-        val btnBack = findViewById<ImageButton?>(R.id.btn_back)
-
-        // 返回按钮
-        btnBack.setOnClickListener(View.OnClickListener { v: View? -> finish() })
 
         // 倒计时 3 -> 1
         countDownTimer = object : CountDownTimer(3000, 1000) {

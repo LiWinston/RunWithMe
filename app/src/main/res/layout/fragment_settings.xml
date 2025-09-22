@@ -1,33 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/settings_pa"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:clipToOutline="true"
     android:background="@drawable/bg_home_gradient">
 
-    <!-- Settings Header -->
-    <TextView
-        android:id="@+id/settings_title"
-        android:layout_width="wrap_content"
+    <!-- 顶部导航栏 -->
+    <RelativeLayout
+        android:id="@+id/top_bar"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="60dp"
-        android:text="Settings"
-        android:textColor="@android:color/white"
-        android:textSize="28sp"
-        android:textStyle="bold" />
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp">
+
+        <!-- 标题 -->
+        <TextView
+            android:id="@+id/settings_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_centerInParent="true" />
+
+        <!-- 可选菜单按钮 -->
+        <ImageButton
+            android:id="@+id/btn_menu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_menu"
+            app:tint="@android:color/black"
+            android:visibility="gone" /> <!-- 如果不需要显示，可隐藏 -->
+
+    </RelativeLayout>
 
     <!-- Settings Content Container -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/settings_title"
-        android:layout_marginTop="40dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="20dp">
+        android:layout_below="@id/top_bar"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -47,7 +70,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Account"
-                    android:textColor="@android:color/white"
+                    android:textColor="@android:color/black"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="12dp" />
@@ -55,7 +78,7 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="@android:color/white"
+                    android:background="@android:color/black"
                     android:alpha="0.3"
                     android:layout_marginBottom="12dp" />
 
@@ -65,7 +88,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:text="Edit Profile"
-                    android:textColor="@android:color/white"
+                    android:textColor="@android:color/black"
                     android:textSize="16sp"
                     android:gravity="center_vertical"
                     android:paddingStart="8dp"
@@ -79,7 +102,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:text="Change Password"
-                    android:textColor="@android:color/white"
+                    android:textColor="@android:color/black"
                     android:textSize="16sp"
                     android:gravity="center_vertical"
                     android:paddingStart="8dp"
@@ -102,7 +125,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="App Settings"
-                    android:textColor="@android:color/white"
+                    android:textColor="@android:color/black"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="12dp" />
@@ -110,7 +133,7 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="@android:color/white"
+                    android:background="@android:color/black"
                     android:alpha="0.3"
                     android:layout_marginBottom="12dp" />
 
@@ -126,7 +149,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Notifications"
-                        android:textColor="@android:color/white"
+                        android:textColor="@android:color/black"
                         android:textSize="16sp"
                         android:paddingStart="8dp" />
 
@@ -150,7 +173,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Dark Mode"
-                        android:textColor="@android:color/white"
+                        android:textColor="@android:color/black"
                         android:textSize="16sp"
                         android:paddingStart="8dp" />
 
@@ -168,7 +191,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:text="Measurement Units"
-                    android:textColor="@android:color/white"
+                    android:textColor="@android:color/black"
                     android:textSize="16sp"
                     android:gravity="center_vertical"
                     android:paddingStart="8dp"
@@ -191,7 +214,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Privacy &amp; Support"
-                    android:textColor="@android:color/white"
+                    android:textColor="@android:color/black"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="12dp" />
@@ -199,7 +222,7 @@
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="@android:color/white"
+                    android:background="@android:color/black"
                     android:alpha="0.3"
                     android:layout_marginBottom="12dp" />
 
@@ -209,7 +232,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:text="Privacy Policy"
-                    android:textColor="@android:color/white"
+                    android:textColor="@android:color/black"
                     android:textSize="16sp"
                     android:gravity="center_vertical"
                     android:paddingStart="8dp"
@@ -223,7 +246,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:text="Terms of Service"
-                    android:textColor="@android:color/white"
+                    android:textColor="@android:color/black"
                     android:textSize="16sp"
                     android:gravity="center_vertical"
                     android:paddingStart="8dp"
@@ -237,7 +260,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:text="Help &amp; Support"
-                    android:textColor="@android:color/white"
+                    android:textColor="@android:color/black"
                     android:textSize="16sp"
                     android:gravity="center_vertical"
                     android:paddingStart="8dp"
@@ -251,7 +274,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:text="About"
-                    android:textColor="@android:color/white"
+                    android:textColor="@android:color/black"
                     android:textSize="16sp"
                     android:gravity="center_vertical"
                     android:paddingStart="8dp"
@@ -269,7 +292,7 @@
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="40dp"
                 android:text="Logout"
-                android:textColor="@android:color/white"
+                android:textColor="@android:color/black"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:background="@drawable/logout_button_background"

@@ -1,68 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@drawable/bg_home_gradient">
+    android:background="@drawable/bg_home_gradient"
+    android:clipToOutline="true">
 
     <!-- 顶部标题栏 -->
     <RelativeLayout
+        android:id="@+id/top_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="20dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp">
 
-        <!-- 标题 -->
         <TextView
+            android:id="@+id/tv_history_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
             android:text="History"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="#000000" />
+            android:textColor="@android:color/black"
+            android:layout_centerInParent="true" />
 
     </RelativeLayout>
 
-    <!-- Tab切换器 -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabLayout"
+    <!-- 内容区域 -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/tab_background"
-        app:tabMode="fixed"
-        app:tabGravity="fill"
-        app:tabIndicatorHeight="0dp"
-        app:tabSelectedTextColor="#000000"
-        app:tabTextColor="#666666"
-        app:tabTextAppearance="@style/TabTextStyle">
+        android:layout_height="match_parent"
+        android:layout_below="@id/top_bar"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp">
 
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Today" />
+            android:orientation="vertical">
 
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Week" />
+            <!-- Tab切换器 -->
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/tab_background"
+                app:tabMode="fixed"
+                app:tabGravity="fill"
+                app:tabIndicatorHeight="0dp"
+                app:tabSelectedTextColor="@android:color/black"
+                app:tabTextColor="#666666"
+                app:tabTextAppearance="@style/TabTextStyle">
 
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Month" />
+                <com.google.android.material.tabs.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Today" />
 
-    </com.google.android.material.tabs.TabLayout>
+                <com.google.android.material.tabs.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Week" />
 
-    <!-- Fragment容器 -->
-    <FrameLayout
-        android:id="@+id/historyContainer"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+                <com.google.android.material.tabs.TabItem
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Month" />
 
-</LinearLayout>
+            </com.google.android.material.tabs.TabLayout>
+
+            <!-- Fragment容器 -->
+            <FrameLayout
+                android:id="@+id/historyContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</RelativeLayout>
