@@ -1,37 +1,42 @@
 package com.example.myapplication.history
 
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageButton
-import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.example.myapplication.R
 import com.google.android.material.tabs.TabLayout
 
 /**
- * 运动历史记录Activity
+ * 运动历史记录Fragment
  * 包含Today/Week/Month三个Tab
  */
-class HistoryActivity : AppCompatActivity() {
+class HistoryFragment : Fragment() {
 
-    private val historyViewModel: HistoryViewModel by viewModels()
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        // 加载布局
+        return inflater.inflate(R.layout.fragment_history, container, false)
+    }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_history)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        setupTabLayout()
-        setupBackButton()
-        
+        setupTabLayout(view)
+        setupBackButton(view)
+
         // 默认显示今日数据
         if (savedInstanceState == null) {
             showTodayFragment()
         }
     }
 
-    private fun setupTabLayout() {
-        val tabLayout = findViewById<TabLayout>(R.id.tabLayout)
-        
+    private fun setupTabLayout(rootView: View) {
+        val tabLayout = rootView.findViewById<TabLayout>(R.id.tabLayout)
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 when (tab?.position) {
@@ -46,6 +51,13 @@ class HistoryActivity : AppCompatActivity() {
         })
     }
 
+    private fun setupBackButton(rootView: View) {
+        val btnBack = rootView.findViewById<ImageButton>(R.id.btnBack)
+        btnBack.setOnClickListener {
+            requireActivity().supportFragmentManager.popBackStack() // 返回上一层Fragment
+        }
+    }
+
     private fun showTodayFragment() {
         replaceFragment(HistoryTodayFragment())
     }
@@ -58,15 +70,8 @@ class HistoryActivity : AppCompatActivity() {
         replaceFragment(HistoryMonthFragment())
     }
 
-    private fun setupBackButton() {
-        val btnBack = findViewById<ImageButton>(R.id.btnBack)
-        btnBack.setOnClickListener {
-            finish() // 关闭当前Activity，返回到MainActivity
-        }
-    }
-
     private fun replaceFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction()
+        childFragmentManager.beginTransaction()
             .replace(R.id.historyContainer, fragment)
             .commit()
     }
