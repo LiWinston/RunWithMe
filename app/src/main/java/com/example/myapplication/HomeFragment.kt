@@ -121,28 +121,40 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         
         return locationAge <= maxAge && location.accuracy <= 100
     }
-    
+
     private fun requestNewLocation() {
+        // 添加检查
+        if (!isAdded || view == null) {
+            useDefaultLocation()
+            return
+        }
+
         if (!checkLocationPermission()) {
             useDefaultLocation()
             return
         }
-        
+
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
             .setMaxUpdateDelayMillis(5000)
             .build()
-        
+
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
+
+                // 添加检查 - 关键修复！
+                if (!isAdded || view == null) {
+                    return
+                }
+
                 val location = locationResult.lastLocation
                 if (location != null) {
                     Log.i(TAG, "成功获取新位置: 纬度=${location.latitude}, 经度=${location.longitude}")
                     Log.i(TAG, "位置精度: ${location.accuracy}米")
-                    
+
                     // 停止位置更新
                     fusedLocationClient.removeLocationUpdates(locationCallback!!)
-                    
+
                     fetchWeatherData(location.latitude, location.longitude)
                 } else {
                     Log.w(TAG, "获取新位置失败，使用默认位置")
@@ -150,39 +162,53 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 }
             }
         }
-        
+
         try {
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
                 locationCallback!!,
                 Looper.getMainLooper()
             )
-            
-            // 5秒后如果还没有获取到位置，就使用默认位置
-            requireView().postDelayed({
+
+            // 使用 Handler 替代 requireView().postDelayed() - 关键修复！
+            android.os.Handler(Looper.getMainLooper()).postDelayed({
+                // 添加检查 - 关键修复！
+                if (!isAdded || view == null) {
+                    return@postDelayed
+                }
+
                 if (locationCallback != null) {
                     Log.w(TAG, "位置请求超时，使用默认位置")
                     fusedLocationClient.removeLocationUpdates(locationCallback!!)
                     useDefaultLocation()
                 }
             }, 5000)
-            
+
         } catch (e: SecurityException) {
             Log.e(TAG, "位置权限被拒绝", e)
             useDefaultLocation()
         }
     }
-    
+
     private fun useDefaultLocation() {
+        // 添加检查
+        if (!isAdded || view == null) {
+            return
+        }
         fetchWeatherData(DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
     }
-    
+
     private fun fetchWeatherData(latitude: Double, longitude: Double) {
+        // 添加检查
+        if (!isAdded || view == null) {
+            return
+        }
+
         Log.i(TAG, "正在获取天气数据 - 纬度: $latitude, 经度: $longitude")
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val (currentWeatherResult, hourlyForecastResult) = weatherRepository.getWeatherData(latitude, longitude)
-                
+
                 when {
                     currentWeatherResult.isSuccess && hourlyForecastResult.isSuccess -> {
                         val currentWeather = currentWeatherResult.getOrNull()!!
@@ -237,8 +263,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
     }
     
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
+        super.onDestroyView()
         // 清理位置回调
         locationCallback?.let {
             fusedLocationClient.removeLocationUpdates(it)
