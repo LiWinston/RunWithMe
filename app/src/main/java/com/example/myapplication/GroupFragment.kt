@@ -1,5 +1,248 @@
 package com.example.myapplication
 
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.ProgressBar
+import android.widget.TextView
+import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
-class GroupFragment : Fragment(R.layout.fragment_group)
+
+class GroupFragment : Fragment() {
+
+    // Mock data models
+    data class GroupInfo(
+        val name: String,
+        val week: Int,
+        val score: Int,
+        val weeklyProgress: Int,
+        val weeklyGoal: Int,
+        val waterDrops: Int
+    )
+
+    data class Member(
+        val id: Int,
+        val name: String,
+        val avatarRes: Int,
+        val distance: Double,
+        val percentage: Int,
+        val actionType: ActionType,
+        val actionCount: Int = 0
+    )
+
+    enum class ActionType {
+        REMIND, LIKE
+    }
+
+    // Mock data
+    private lateinit var groupInfo: GroupInfo
+    private lateinit var members: List<Member>
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.fragment_group, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // 初始化 mock data
+        initMockData()
+
+        // 设置进度卡片
+        setupProgressCard(view)
+
+        // 设置成员列表
+        setupMembersList(view)
+
+        // 更新 Activity 的标题（如果需要）
+        updateActivityTitle()
+    }
+
+    private fun initMockData() {
+        // Mock group info
+        groupInfo = GroupInfo(
+            name = "Group Name",
+            week = 12,
+            score = 120,
+            weeklyProgress = 2,
+            weeklyGoal = 5,
+            waterDrops = 40
+        )
+
+        // Mock members
+        members = listOf(
+            Member(
+                id = 1,
+                name = "Siyu",
+                avatarRes = R.drawable.ic_profile, // 使用默认头像
+                distance = 8.9,
+                percentage = 60,
+                actionType = ActionType.REMIND
+            ),
+            Member(
+                id = 2,
+                name = "Michelle",
+                avatarRes = R.drawable.ic_profile,
+                distance = 18.0,
+                percentage = 100,
+                actionType = ActionType.LIKE,
+                actionCount = 3
+            ),
+            Member(
+                id = 3,
+                name = "Yongchun",
+                avatarRes = R.drawable.ic_profile,
+                distance = 20.1,
+                percentage = 100,
+                actionType = ActionType.LIKE,
+                actionCount = 4
+            ),
+            Member(
+                id = 4,
+                name = "Wenji",
+                avatarRes = R.drawable.ic_profile,
+                distance = 18.6,
+                percentage = 90,
+                actionType = ActionType.REMIND
+            ),
+            Member(
+                id = 5,
+                name = "Xiang",
+                avatarRes = R.drawable.ic_profile,
+                distance = 15.3,
+                percentage = 85,
+                actionType = ActionType.LIKE,
+                actionCount = 2
+            )
+        )
+    }
+
+    private fun setupProgressCard(view: View) {
+        // Week
+        view.findViewById<TextView>(R.id.tv_week)?.text = "Week ${groupInfo.week}"
+
+        // Score
+        view.findViewById<TextView>(R.id.tv_score)?.text = groupInfo.score.toString()
+
+        // Progress text
+        val progressText = "Weekly Progress ${groupInfo.weeklyProgress}/${groupInfo.weeklyGoal} · +${groupInfo.waterDrops}💧"
+        view.findViewById<TextView>(R.id.tv_progress)?.text = progressText
+
+        // Progress bar
+        val progressPercentage = (groupInfo.weeklyProgress * 100) / groupInfo.weeklyGoal
+        view.findViewById<ProgressBar>(R.id.progress_bar)?.progress = progressPercentage
+
+        // Plant image (暂时使用占位图)
+        view.findViewById<ImageView>(R.id.iv_plant)?.setImageResource(R.drawable.ic_launcher_foreground)
+    }
+
+    private fun setupMembersList(view: View) {
+        val recyclerView = view.findViewById<RecyclerView>(R.id.members_recycler)
+        recyclerView?.layoutManager = LinearLayoutManager(context)
+        recyclerView?.adapter = MembersAdapter(members) { member, action ->
+            handleMemberAction(member, action)
+        }
+    }
+
+    private fun handleMemberAction(member: Member, action: ActionType) {
+        // 处理成员操作（Remind 或 Like）
+        when (action) {
+            ActionType.REMIND -> {
+                // TODO: 发送提醒
+                // 可以显示 Toast 或其他反馈
+                android.widget.Toast.makeText(
+                    context,
+                    "Reminded ${member.name}",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+            ActionType.LIKE -> {
+                // TODO: 点赞
+                android.widget.Toast.makeText(
+                    context,
+                    "Liked ${member.name}'s progress",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    private fun updateActivityTitle() {
+        // 如果需要更新 Activity 的标题
+        activity?.findViewById<TextView>(R.id.tv_title)?.text = groupInfo.name
+    }
+
+    // RecyclerView Adapter
+    inner class MembersAdapter(
+        private val members: List<Member>,
+        private val onActionClick: (Member, ActionType) -> Unit
+    ) : RecyclerView.Adapter<MembersAdapter.MemberViewHolder>() {
+
+        inner class MemberViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+            val avatar: ImageView = view.findViewById(R.id.iv_avatar)
+            val name: TextView = view.findViewById(R.id.tv_name)
+            val stats: TextView = view.findViewById(R.id.tv_stats)
+            val actionButton: LinearLayout = view.findViewById(R.id.btn_action)
+            val actionIcon: ImageView = view.findViewById(R.id.iv_action_icon)
+            val actionText: TextView = view.findViewById(R.id.tv_action_text)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MemberViewHolder {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_member, parent, false)
+            return MemberViewHolder(view)
+        }
+
+        override fun onBindViewHolder(holder: MemberViewHolder, position: Int) {
+            val member = members[position]
+
+            // 设置头像
+            holder.avatar.setImageResource(member.avatarRes)
+
+            // 设置名字
+            holder.name.text = member.name
+
+            // 设置统计信息
+            holder.stats.text = "${member.distance}km / ${member.percentage}%"
+
+            // 设置操作按钮
+            when (member.actionType) {
+                ActionType.REMIND -> {
+                    holder.actionIcon.setImageResource(R.drawable.group_remind)
+                    holder.actionText.text = "Remind"
+                    holder.actionButton.setBackgroundResource(R.drawable.btn_remind_like)
+                }
+                ActionType.LIKE -> {
+                    holder.actionIcon.setImageResource(R.drawable.group_like)
+                    val likeText = if (member.actionCount > 0) {
+                        "Like ${member.actionCount}"
+                    } else {
+                        "Like"
+                    }
+                    holder.actionText.text = likeText
+                    holder.actionButton.setBackgroundResource(R.drawable.btn_remind_like)
+                }
+            }
+
+            // 点击事件
+            holder.actionButton.setOnClickListener {
+                onActionClick(member, member.actionType)
+            }
+        }
+
+        override fun getItemCount() = members.size
+    }
+
+    companion object {
+        fun newInstance() = GroupFragment()
+    }
+}
