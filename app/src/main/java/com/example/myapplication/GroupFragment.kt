@@ -4,14 +4,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-
 
 class GroupFragment : Fragment() {
 
@@ -57,14 +58,14 @@ class GroupFragment : Fragment() {
         // 初始化 mock data
         initMockData()
 
+        // 设置顶部导航栏
+        setupTopBar(view)
+
         // 设置进度卡片
         setupProgressCard(view)
 
         // 设置成员列表
         setupMembersList(view)
-
-        // 更新 Activity 的标题（如果需要）
-        updateActivityTitle()
     }
 
     private fun initMockData() {
@@ -83,7 +84,7 @@ class GroupFragment : Fragment() {
             Member(
                 id = 1,
                 name = "Siyu",
-                avatarRes = R.drawable.ic_profile, // 使用默认头像
+                avatarRes = R.drawable.ic_profile,
                 distance = 8.9,
                 percentage = 60,
                 actionType = ActionType.REMIND
@@ -126,6 +127,54 @@ class GroupFragment : Fragment() {
         )
     }
 
+    private fun setupTopBar(view: View) {
+        // 设置标题
+        view.findViewById<TextView>(R.id.tv_group_name)?.text = groupInfo.name
+
+        // 返回按钮
+        view.findViewById<ImageButton>(R.id.btn_back)?.setOnClickListener {
+            // 返回 Home 或上一个页面
+            requireActivity().supportFragmentManager.beginTransaction()
+                .replace(R.id.main, HomeFragment())
+                .commit()
+        }
+
+        // Hamburger 菜单
+        view.findViewById<ImageButton>(R.id.btn_menu)?.setOnClickListener { v ->
+            showGroupMenu(v)
+        }
+    }
+
+    private fun showGroupMenu(anchor: View) {
+        val popup = PopupMenu(requireContext(), anchor)
+        popup.menuInflater.inflate(R.menu.group_menu, popup.menu)
+
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.action_leave_group -> {
+                    // TODO: 处理退出小组
+                    android.widget.Toast.makeText(
+                        context,
+                        "Leave Group",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                    true
+                }
+                R.id.action_invite -> {
+                    // TODO: 处理邀请队友
+                    android.widget.Toast.makeText(
+                        context,
+                        "Invite Teammate",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                    true
+                }
+                else -> false
+            }
+        }
+        popup.show()
+    }
+
     private fun setupProgressCard(view: View) {
         // Week
         view.findViewById<TextView>(R.id.tv_week)?.text = "Week ${groupInfo.week}"
@@ -141,7 +190,7 @@ class GroupFragment : Fragment() {
         val progressPercentage = (groupInfo.weeklyProgress * 100) / groupInfo.weeklyGoal
         view.findViewById<ProgressBar>(R.id.progress_bar)?.progress = progressPercentage
 
-        // Plant image (暂时使用占位图)
+        // Plant image
         view.findViewById<ImageView>(R.id.iv_plant)?.setImageResource(R.drawable.ic_launcher_foreground)
     }
 
@@ -154,11 +203,8 @@ class GroupFragment : Fragment() {
     }
 
     private fun handleMemberAction(member: Member, action: ActionType) {
-        // 处理成员操作（Remind 或 Like）
         when (action) {
             ActionType.REMIND -> {
-                // TODO: 发送提醒
-                // 可以显示 Toast 或其他反馈
                 android.widget.Toast.makeText(
                     context,
                     "Reminded ${member.name}",
@@ -166,7 +212,6 @@ class GroupFragment : Fragment() {
                 ).show()
             }
             ActionType.LIKE -> {
-                // TODO: 点赞
                 android.widget.Toast.makeText(
                     context,
                     "Liked ${member.name}'s progress",
@@ -174,11 +219,6 @@ class GroupFragment : Fragment() {
                 ).show()
             }
         }
-    }
-
-    private fun updateActivityTitle() {
-        // 如果需要更新 Activity 的标题
-        activity?.findViewById<TextView>(R.id.tv_title)?.text = groupInfo.name
     }
 
     // RecyclerView Adapter
@@ -205,16 +245,10 @@ class GroupFragment : Fragment() {
         override fun onBindViewHolder(holder: MemberViewHolder, position: Int) {
             val member = members[position]
 
-            // 设置头像
             holder.avatar.setImageResource(member.avatarRes)
-
-            // 设置名字
             holder.name.text = member.name
-
-            // 设置统计信息
             holder.stats.text = "${member.distance}km / ${member.percentage}%"
 
-            // 设置操作按钮
             when (member.actionType) {
                 ActionType.REMIND -> {
                     holder.actionIcon.setImageResource(R.drawable.group_remind)
@@ -233,7 +267,6 @@ class GroupFragment : Fragment() {
                 }
             }
 
-            // 点击事件
             holder.actionButton.setOnClickListener {
                 onActionClick(member, member.actionType)
             }

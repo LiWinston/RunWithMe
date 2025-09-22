@@ -1,95 +1,146 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@drawable/bg_home_gradient">
 
-    <LinearLayout
+    <!-- 顶部导航栏 -->
+    <RelativeLayout
+            android:id="@+id/top_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:padding="16dp">
 
-        <!-- 小组进度卡片 -->
-        <androidx.cardview.widget.CardView
-                android:id="@+id/progress_card"
+        <!-- 返回按钮 -->
+        <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:background="@android:color/transparent"
+                android:src="@android:drawable/ic_menu_revert"
+                app:tint="@android:color/black" />
+
+        <!-- 标题 -->
+        <TextView
+                android:id="@+id/tv_group_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Group Name"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:layout_centerInParent="true" />
+
+        <!-- Hamburger 菜单按钮 -->
+        <ImageButton
+                android:id="@+id/btn_menu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_menu"
+                app:tint="@android:color/black" />
+
+    </RelativeLayout>
+
+    <!-- 内容区域 -->
+    <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp"
-                app:cardBackgroundColor="#E0F2F1">
+                android:orientation="vertical"
+                android:padding="16dp">
 
-            <LinearLayout
+            <!-- 小组进度卡片 -->
+            <androidx.cardview.widget.CardView
+                    android:id="@+id/progress_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="4dp"
+                    app:cardBackgroundColor="#E0F2F1">
 
-                <!-- Week 和分数 -->
-                <RelativeLayout
+                <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                    <TextView
-                            android:id="@+id/tv_week"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Week 12"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:textColor="@android:color/black" />
-
-                    <TextView
-                            android:id="@+id/tv_score"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:text="120"
-                            android:textSize="24sp"
-                            android:textStyle="bold"
-                            android:textColor="@android:color/black" />
-                </RelativeLayout>
-
-                <!-- 植物图片占位 -->
-                <ImageView
-                        android:id="@+id/iv_plant"
-                        android:layout_width="150dp"
-                        android:layout_height="150dp"
-                        android:layout_gravity="center"
-                        android:layout_marginVertical="16dp"
-                        android:src="@drawable/ic_launcher_foreground"
-                        android:contentDescription="Plant growth" />
-
-                <!-- 进度文本 -->
-                <TextView
-                        android:id="@+id/tv_progress"
-                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="Weekly Progress 2/5 · +40💧"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black" />
+                        android:orientation="vertical"
+                        android:padding="16dp">
 
-                <!-- 进度条 -->
-                <ProgressBar
-                        android:id="@+id/progress_bar"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="8dp"
-                        android:layout_marginTop="8dp"
-                        android:progress="40"
-                        android:progressTint="#4DB6AC" />
+                    <!-- Week 和分数 -->
+                    <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
 
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+                        <TextView
+                                android:id="@+id/tv_week"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Week 12"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="@android:color/black" />
 
-        <!-- 成员列表 -->
-        <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/members_recycler"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                        <TextView
+                                android:id="@+id/tv_score"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:text="120"
+                                android:textSize="24sp"
+                                android:textStyle="bold"
+                                android:textColor="@android:color/black" />
+                    </RelativeLayout>
 
-    </LinearLayout>
-</ScrollView>
+                    <!-- 植物图片占位 -->
+                    <ImageView
+                            android:id="@+id/iv_plant"
+                            android:layout_width="150dp"
+                            android:layout_height="150dp"
+                            android:layout_gravity="center"
+                            android:layout_marginVertical="16dp"
+                            android:src="@drawable/plant"
+                            android:contentDescription="Plant growth" />
+
+                    <!-- 进度文本 -->
+                    <TextView
+                            android:id="@+id/tv_progress"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="Weekly Progress 2/5 · +40💧"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black" />
+
+                    <!-- 进度条 -->
+                    <ProgressBar
+                            android:id="@+id/progress_bar"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="8dp"
+                            android:layout_marginTop="8dp"
+                            android:progress="40"
+                            android:progressTint="#4DB6AC" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 成员列表 -->
+            <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/members_recycler"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>
