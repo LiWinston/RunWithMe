@@ -11,26 +11,30 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.myapplication.landr.RetrofitClient
 import com.example.myapplication.landr.TokenManager
 import com.example.myapplication.landr.loginapp.LoginActivity
+import com.example.myapplication.record.StartRecordFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.example.myapplication.history.HistoryFragment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var tokenManager: TokenManager
+//    TODO: change this back before launch
+//    private lateinit var tokenManager: TokenManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+// TODO: change this back before launch
         // 初始化
-        RetrofitClient.init(this)
-        tokenManager = TokenManager.getInstance(this)
-
-        // 检查登录状态
-        if (!tokenManager.isLoggedIn()) {
-            navigateToLogin()
-            return
-        }
+//        RetrofitClient.init(this)
+//        tokenManager = TokenManager.getInstance(this)
+//
+//        // 检查登录状态
+//        if (!tokenManager.isLoggedIn()) {
+//            navigateToLogin()
+//            return
+//        }
 
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
@@ -52,7 +56,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_group -> GroupFragment()
                 R.id.nav_settings -> SettingsFragment()
                 R.id.nav_history -> HistoryFragment()
-                R.id.nav_workout -> WorkoutFragment_1()
+                R.id.nav_workout -> StartRecordFragment()
                 else -> null
             }
             fragment?.let {
@@ -68,39 +72,40 @@ class MainActivity : AppCompatActivity() {
         menuInflater.inflate(R.menu.main_menu, menu)
         return true
     }
+//    TODO: change this back before launch
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_logout -> {
-                logout()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-
-    private fun logout() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val accessToken = tokenManager.getAccessToken()
-                if (accessToken != null) {
-                    RetrofitClient.api.logout("Bearer $accessToken")
-                }
-            } catch (e: Exception) {
-                // 忽略网络错误，直接清除本地token
-            } finally {
-                tokenManager.clearTokens()
-                runOnUiThread {
-                    navigateToLogin()
-                }
-            }
-        }
-    }
-
-    private fun navigateToLogin() {
-        val intent = Intent(this, LoginActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
-    }
+//    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+//        return when (item.itemId) {
+//            R.id.action_logout -> {
+//                logout()
+//                true
+//            }
+//            else -> super.onOptionsItemSelected(item)
+//        }
+//    }
+//
+//    private fun logout() {
+//        CoroutineScope(Dispatchers.IO).launch {
+//            try {
+//                val accessToken = tokenManager.getAccessToken()
+//                if (accessToken != null) {
+//                    RetrofitClient.api.logout("Bearer $accessToken")
+//                }
+//            } catch (e: Exception) {
+//                // 忽略网络错误，直接清除本地token
+//            } finally {
+//                tokenManager.clearTokens()
+//                runOnUiThread {
+//                    navigateToLogin()
+//                }
+//            }
+//        }
+//    }
+//
+//    private fun navigateToLogin() {
+//        val intent = Intent(this, LoginActivity::class.java)
+//        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+//        startActivity(intent)
+//        finish()
+//    }
 }
