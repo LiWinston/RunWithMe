@@ -16,7 +16,6 @@
             android:textStyle="bold"
             android:textColor="@android:color/black"
             android:layout_centerHorizontal="true"
-            android:layout_alignTop="@id/btn_back"
             android:layout_marginTop="10dp" />
 
     <!-- 地图占位 -->
