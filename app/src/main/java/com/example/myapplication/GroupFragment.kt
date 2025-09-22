@@ -192,6 +192,19 @@ class GroupFragment : Fragment() {
 
         // Plant image
         view.findViewById<ImageView>(R.id.iv_plant)?.setImageResource(R.drawable.ic_launcher_foreground)
+        try {
+            val plantImageView = view.findViewById<ImageView>(R.id.iv_plant)
+            if (plantImageView != null) {
+                plantImageView.setImageResource(R.drawable.plant)
+                android.util.Log.d("GroupFragment", "Plant image loaded successfully")
+            } else {
+                android.util.Log.e("GroupFragment", "iv_plant ImageView not found")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("GroupFragment", "Error loading plant image", e)
+            // 使用默认图片作为后备
+            view.findViewById<ImageView>(R.id.iv_plant)?.setImageResource(android.R.drawable.ic_menu_gallery)
+        }
     }
 
     private fun setupMembersList(view: View) {
