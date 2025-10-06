@@ -188,8 +188,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     currentWeatherResult.isSuccess && hourlyForecastResult.isSuccess -> {
                         val currentWeather = currentWeatherResult.getOrNull()
                         val hourlyForecast = hourlyForecastResult.getOrNull()
-<<<<<<< Updated upstream
-
                         Log.d(TAG, "成功获取两项数据 - 当前天气: ${currentWeather?.temperature?.degrees ?: "N/A"}°, 每小时预报数量: ${hourlyForecast?.forecasts?.size ?: 0}")
 
                         // 使用可空安全调用
@@ -201,23 +199,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     currentWeatherResult.isSuccess -> {
                         val currentWeather = currentWeatherResult.getOrNull()
                         Log.d(TAG, "只获取到当前天气数据 - 温度: ${currentWeather?.temperature?.degrees ?: "N/A"}°")
-
                         currentWeather?.let { cw ->
                             weatherWidget?.updateWeatherData(cw)
                         }
-=======
-                        Log.d(TAG, "成功获取两项数据 - 当前天气: ${currentWeather.temperature.degrees}°, 每小时预报数量: ${hourlyForecast?.forecasts?.size ?: 0}")
-
-                        // ✅ 使用可空安全调用，防止 view 未创建时崩溃
-                        weatherWidget?.updateWeatherData(currentWeather, hourlyForecast)
-                    }
-
-                    currentWeatherResult.isSuccess -> {
-                        val currentWeather = currentWeatherResult.getOrNull()!!
-                        Log.d(TAG, "只获取到当前天气数据 - 温度: ${currentWeather.temperature.degrees}°")
-
-                        weatherWidget?.updateWeatherData(currentWeather)
->>>>>>> Stashed changes
 
                         Log.w(TAG, "每小时预报获取失败", hourlyForecastResult.exceptionOrNull())
                     }
