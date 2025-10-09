@@ -27,7 +27,7 @@
     <LinearLayout
         android:id="@+id/well_done_container"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
+        android:layout_height="wrap_content"
         android:layout_below="@id/tv_title"
         android:layout_margin="20dp"
         android:orientation="horizontal"
@@ -35,14 +35,29 @@
         android:padding="16dp"
         android:gravity="center_vertical">
 
-        <TextView
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Well Done!"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/holo_green_dark" />
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Well Done!"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/holo_green_dark" />
+
+            <TextView
+                android:id="@+id/tvWorkoutType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Running"
+                android:textSize="16sp"
+                android:textColor="@android:color/darker_gray" />
+        </LinearLayout>
 
         <ImageView
                 android:layout_width="40dp"

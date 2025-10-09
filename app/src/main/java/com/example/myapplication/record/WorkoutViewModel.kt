@@ -23,6 +23,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     private val _distance = MutableLiveData("0.00 miles")
     private val _calories = MutableLiveData("0 kcal")
     private val _debugInfo = MutableLiveData("Idle")
+    private val _workoutType = MutableLiveData("Running")
 
     // 新增数据
     private val _steps = MutableLiveData(0)
@@ -34,6 +35,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     val distance: LiveData<String> = _distance
     val calories: LiveData<String> = _calories
     val debugInfo: LiveData<String> = _debugInfo
+    val workoutType: LiveData<String> = _workoutType
     val steps: LiveData<Int> = _steps
     val heartRate: LiveData<Int> = _heartRate
     val currentWorkoutId: LiveData<Long?> = _currentWorkoutId
@@ -47,6 +49,20 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val hasGyro = gyroscope != null
         val hasStepDetector = stepDetector != null
         return "传感器: 加速度计($hasAccel) 陀螺仪($hasGyro) 步数检测器($hasStepDetector)"
+    }
+
+    // 根据速度判断运动类型
+    // 参考研究:
+    // Walking: ~90 m/min (1.5 m/s), Brisk Walking: ~112 m/min (1.87 m/s)
+    // Jogging: >134 m/min (2.23 m/s), Running: 2.5-4.5 m/s
+    private fun determineWorkoutType(speedMps: Double): String {
+        return when {
+            speedMps < 1.5 -> "Walking"           // < 1.5 m/s (~5.4 km/h)
+            speedMps < 2.23 -> "Brisk Walking"    // 1.5-2.23 m/s (~5.4-8.0 km/h)
+            speedMps < 2.5 -> "Jogging"           // 2.23-2.5 m/s (~8.0-9.0 km/h)
+            speedMps < 3.5 -> "Running"           // 2.5-3.5 m/s (~9.0-12.6 km/h)
+            else -> "Fast Running"                // > 3.5 m/s (>12.6 km/h)
+        }
     }
 
     // 状态
@@ -293,6 +309,9 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                             } else {
                                 String.format("%.2f mph", speedMph)
                             }
+
+                            // 更新运动类型
+                            _workoutType.value = determineWorkoutType(speedMps)
                         }
                     } else {
                         // 第一次定位没有 lastLocation

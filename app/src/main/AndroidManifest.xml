@@ -81,6 +81,12 @@
             android:screenOrientation="portrait">
         </activity>
 
+        <!-- Weather Expanded Activity -->
+        <activity
+            android:name=".weather.ui.WeatherExpandedActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
 
         <!-- gsh StartActivity -->
 <!--        <activity-->

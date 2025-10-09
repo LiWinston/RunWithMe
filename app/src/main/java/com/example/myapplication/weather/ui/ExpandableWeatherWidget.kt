@@ -70,6 +70,8 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
         setupViews()
         setupClickListeners()
     }
+
+
     
     private fun setupViews() {
         // 添加简化视图
@@ -218,11 +220,11 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
                 .into(compactWeatherIcon)
             
             // 更新文本信息
-            compactLocationText.text = "墨尔本, 卡尔顿" // 可以根据实际位置获取
+            compactLocationText.text = "Melbourne, Carlton" // 可以根据实际位置获取
             compactWeatherDescription.text = WeatherIconUtils.getWeatherDescription(weather.condition.type)
-            compactTemperatureText.text = "${weather.temperature.degrees.toInt()}°"
+            compactTemperatureText.text = "T = ${weather.temperature.degrees.toInt()}°C"
             compactHumidityText.text = "湿度 ${weather.humidity}%"
-            compactWindText.text = "风速 ${weather.wind.speed.value.toInt()}${weather.wind.speed.unit}"
+            compactWindText.text = "W: ${weather.wind.speed.value.toInt()} ${weather.wind.speed.unit}"
             compactFeelsLikeText.text = "体感 ${weather.feelsLikeTemperature.degrees.toInt()}°"
             compactPressureText.text = "气压 ${weather.pressure.meanSeaLevelMillibars.toInt()} hPa"
             compactUvText.text = "UV ${weather.uvIndex}"
