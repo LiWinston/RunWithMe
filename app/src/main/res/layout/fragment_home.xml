@@ -132,10 +132,14 @@
 <!--            </com.google.android.material.card.MaterialCardView>-->
 
             <!-- 天气卡片 - 使用 weather_card_compact -->
-            <include
+            <com.example.myapplication.weather.ui.ExpandableWeatherWidget
+                android:id="@+id/weather_card"
                 layout="@layout/weather_card_compact"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="#E8F6F1"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="1dp" />/>
 
             <!-- 跑步建议卡片 -->
             <com.google.android.material.card.MaterialCardView
