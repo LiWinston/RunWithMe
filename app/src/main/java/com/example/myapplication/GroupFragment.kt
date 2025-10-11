@@ -1,5 +1,8 @@
 package com.example.myapplication
 
+import android.app.Activity
+import android.app.AlertDialog
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +13,7 @@ import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -18,12 +22,16 @@ class GroupFragment : Fragment() {
 
     // Mock data models
     data class GroupInfo(
+        val id: String,          // Group ID
         val name: String,
         val week: Int,
         val score: Int,
         val weeklyProgress: Int,
         val weeklyGoal: Int,
-        val waterDrops: Int
+        val waterDrops: Int,
+        var progressScore: Int,  // 从数据库获取的进度分数 (0-100)
+        var couponCount: Int,    // 获得的咖啡优惠券数量，TODO: 从数据库获取
+        val memberCount: Int = 1 // 当前成员数量
     )
 
     data class Member(
@@ -41,8 +49,54 @@ class GroupFragment : Fragment() {
     }
 
     // Mock data
-    private lateinit var groupInfo: GroupInfo
+    private var groupInfo: GroupInfo? = null
     private lateinit var members: List<Member>
+    private var hasGroup: Boolean = false // 用户是否已有group
+    
+    // Activity result launchers
+    private val createGroupLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            val groupId = data?.getStringExtra("group_id")
+            val groupName = data?.getStringExtra("group_name")
+            
+            // 创建group成功，更新UI
+            if (groupId != null && groupName != null) {
+                hasGroup = true
+                groupInfo = GroupInfo(
+                    id = groupId,
+                    name = groupName,
+                    week = 1,
+                    score = 0,
+                    weeklyProgress = 0,
+                    weeklyGoal = 5,
+                    waterDrops = 0,
+                    progressScore = 0,
+                    couponCount = 0,
+                    memberCount = 1
+                )
+                view?.let { setupUI(it) }
+            }
+        }
+    }
+    
+    private val qrCodeLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            val joinRequestedGroupId = data?.getStringExtra("join_requested_group_id")
+            if (joinRequestedGroupId != null) {
+                android.widget.Toast.makeText(
+                    context,
+                    "Join request sent!",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,25 +112,46 @@ class GroupFragment : Fragment() {
         // 初始化 mock data
         initMockData()
 
+        // 设置UI
+        setupUI(view)
+    }
+    
+    private fun setupUI(view: View) {
         // 设置顶部导航栏
         setupTopBar(view)
 
-        // 设置进度卡片
-        setupProgressCard(view)
+        if (hasGroup && groupInfo != null) {
+            // 有group，显示正常内容
+            // 设置进度卡片
+            setupProgressCard(view)
 
-        // 设置成员列表
-        setupMembersList(view)
+            // 设置成员列表
+            setupMembersList(view)
+        } else {
+            // 没有group，显示创建提示
+            showNoGroupView(view)
+        }
     }
 
     private fun initMockData() {
+        // TODO: 从数据库检查用户是否已有group
+        // hasGroup = checkUserHasGroup()
+        
+        // Mock: 假设用户已有group
+        hasGroup = true
+        
         // Mock group info
         groupInfo = GroupInfo(
+            id = "group_mock_123",
             name = "Group Name",
             week = 12,
             score = 120,
             weeklyProgress = 2,
             weeklyGoal = 5,
-            waterDrops = 40
+            waterDrops = 40,
+            progressScore = 95,  // TODO: 从数据库获取，范围 0-100
+            couponCount = 2,     // TODO: 从数据库获取
+            memberCount = 5      // 当前有5个成员
         )
 
         // Mock members
@@ -129,35 +204,68 @@ class GroupFragment : Fragment() {
 
     private fun setupTopBar(view: View) {
         // 设置标题
-        view.findViewById<TextView>(R.id.tv_group_name)?.text = groupInfo.name
+        view.findViewById<TextView>(R.id.tv_group_name)?.text = groupInfo?.name ?: "Group"
+        
         // Hamburger 菜单
         view.findViewById<ImageButton>(R.id.btn_menu)?.setOnClickListener { v ->
             showGroupMenu(v)
         }
     }
+    
+    private fun showNoGroupView(view: View) {
+        // 隐藏进度卡片和成员列表
+        view.findViewById<androidx.cardview.widget.CardView>(R.id.progress_card)?.visibility = View.GONE
+        view.findViewById<androidx.cardview.widget.CardView>(R.id.members_card)?.visibility = View.GONE
+        
+        // TODO: 添加一个"创建或加入Group"的提示视图
+        android.widget.Toast.makeText(
+            context,
+            "You don't have a group yet. Please create or join one!",
+            android.widget.Toast.LENGTH_LONG
+        ).show()
+    }
 
     private fun showGroupMenu(anchor: View) {
         val popup = PopupMenu(requireContext(), anchor)
         popup.menuInflater.inflate(R.menu.group_menu, popup.menu)
+        
+        // 一个人只能有一个group
+        // 没有group时：显示 Create Group 和 Join a Group
+        // 有group时：显示 Invite Teammate, View Applications, Leave Group
+        popup.menu.findItem(R.id.action_create_group)?.isVisible = !hasGroup
+        popup.menu.findItem(R.id.action_scan_qrcode)?.isVisible = !hasGroup
+        popup.menu.findItem(R.id.action_show_qrcode)?.isVisible = hasGroup
+        popup.menu.findItem(R.id.action_view_applications)?.isVisible = hasGroup
+        popup.menu.findItem(R.id.action_leave_group)?.isVisible = hasGroup
+        
+        // 检查group是否已满（最多6人）
+        if (hasGroup) {
+            val isGroupFull = groupInfo?.memberCount ?: 0 >= 6
+            if (isGroupFull) {
+                popup.menu.findItem(R.id.action_show_qrcode)?.isEnabled = false
+            }
+        }
 
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
-                R.id.action_leave_group -> {
-                    // TODO: 处理退出小组
-                    android.widget.Toast.makeText(
-                        context,
-                        "Leave Group",
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
+                R.id.action_create_group -> {
+                    openCreateGroup()
                     true
                 }
-                R.id.action_invite -> {
-                    // TODO: 处理邀请队友
-                    android.widget.Toast.makeText(
-                        context,
-                        "Invite Teammate",
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
+                R.id.action_show_qrcode -> {
+                    showGroupQRCode()
+                    true
+                }
+                R.id.action_scan_qrcode -> {
+                    scanQRCode()
+                    true
+                }
+                R.id.action_view_applications -> {
+                    viewApplications()
+                    true
+                }
+                R.id.action_leave_group -> {
+                    leaveGroup()
                     true
                 }
                 else -> false
@@ -165,37 +273,209 @@ class GroupFragment : Fragment() {
         }
         popup.show()
     }
+    
+    private fun openCreateGroup() {
+        // 检查是否已有group
+        if (hasGroup) {
+            android.widget.Toast.makeText(
+                context,
+                "You already have a group. Leave it first to create a new one.",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+        
+        val intent = Intent(requireContext(), CreateGroupActivity::class.java)
+        createGroupLauncher.launch(intent)
+    }
+    
+    private fun showGroupQRCode() {
+        groupInfo?.let { info ->
+            if (info.memberCount >= 6) {
+                android.widget.Toast.makeText(
+                    context,
+                    "Group is full (max 6 members)",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+                return
+            }
+            
+            val intent = Intent(requireContext(), QRCodeActivity::class.java)
+            intent.putExtra(QRCodeActivity.EXTRA_MODE, QRCodeActivity.MODE_SHOW)
+            intent.putExtra(QRCodeActivity.EXTRA_GROUP_ID, info.id)
+            intent.putExtra(QRCodeActivity.EXTRA_GROUP_NAME, info.name)
+            startActivity(intent)
+        } ?: run {
+            android.widget.Toast.makeText(
+                context,
+                "Please create a group first",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+    
+    private fun scanQRCode() {
+        // 检查是否已有group
+        if (hasGroup) {
+            android.widget.Toast.makeText(
+                context,
+                "You already have a group. Leave it first to join another.",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+        
+        val intent = Intent(requireContext(), QRCodeActivity::class.java)
+        intent.putExtra(QRCodeActivity.EXTRA_MODE, QRCodeActivity.MODE_SCAN)
+        qrCodeLauncher.launch(intent)
+    }
+    
+    private fun viewApplications() {
+        val intent = Intent(requireContext(), GroupApplicationActivity::class.java)
+        startActivity(intent)
+    }
+    
+    private fun leaveGroup() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Leave Group")
+            .setMessage("Are you sure you want to leave this group?")
+            .setPositiveButton("Yes") { dialog, _ ->
+                // TODO: 调用数据库API离开group
+                hasGroup = false
+                groupInfo = null
+                view?.let { setupUI(it) }
+                android.widget.Toast.makeText(
+                    context,
+                    "Left group successfully",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+                dialog.dismiss()
+            }
+            .setNegativeButton("No") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
 
     private fun setupProgressCard(view: View) {
+        val info = groupInfo ?: return
+        
         // Week
-        view.findViewById<TextView>(R.id.tv_week)?.text = "Week ${groupInfo.week}"
+        view.findViewById<TextView>(R.id.tv_week)?.text = "Week ${info.week}"
 
         // Score
-        view.findViewById<TextView>(R.id.tv_score)?.text = groupInfo.score.toString()
+        view.findViewById<TextView>(R.id.tv_score)?.text = info.score.toString()
 
-        // Progress text
-        val progressText = "Weekly Progress ${groupInfo.weeklyProgress}/${groupInfo.weeklyGoal} · +${groupInfo.waterDrops}💧"
+        // 检查是否达到100，如果达到则清零并增加优惠券
+        checkProgressMilestone()
+
+        // Progress text - 显示 "Weekly Progress" + progressScore
+        val progressText = "Weekly Progress ${info.progressScore}"
         view.findViewById<TextView>(R.id.tv_progress)?.text = progressText
 
-        // Progress bar
-        val progressPercentage = (groupInfo.weeklyProgress * 100) / groupInfo.weeklyGoal
-        view.findViewById<ProgressBar>(R.id.progress_bar)?.progress = progressPercentage
+        // Progress bar - 显示 progressScore/100 的比例
+        view.findViewById<ProgressBar>(R.id.progress_bar)?.progress = info.progressScore
 
-        // Plant image
-        view.findViewById<ImageView>(R.id.iv_plant)?.setImageResource(R.drawable.ic_launcher_foreground)
+        // Coupon count - 显示优惠券数量
+        view.findViewById<TextView>(R.id.tv_coupon_count)?.text = info.couponCount.toString()
+
+        // Coffee image
+        view.findViewById<ImageView>(R.id.iv_coffee)?.setImageResource(R.drawable.ic_launcher_foreground)
         try {
-            val plantImageView = view.findViewById<ImageView>(R.id.iv_plant)
-            if (plantImageView != null) {
-                plantImageView.setImageResource(R.drawable.plant)
-                android.util.Log.d("GroupFragment", "Plant image loaded successfully")
+            val coffeeImageView = view.findViewById<ImageView>(R.id.iv_coffee)
+            if (coffeeImageView != null) {
+                coffeeImageView.setImageResource(R.drawable.coffee_cup)
+                android.util.Log.d("GroupFragment", "Coffee image loaded successfully")
             } else {
-                android.util.Log.e("GroupFragment", "iv_plant ImageView not found")
+                android.util.Log.e("GroupFragment", "iv_coffee ImageView not found")
             }
         } catch (e: Exception) {
-            android.util.Log.e("GroupFragment", "Error loading plant image", e)
+            android.util.Log.e("GroupFragment", "Error loading coffee image", e)
             // 使用默认图片作为后备
-            view.findViewById<ImageView>(R.id.iv_plant)?.setImageResource(android.R.drawable.ic_menu_gallery)
+            view.findViewById<ImageView>(R.id.iv_coffee)?.setImageResource(android.R.drawable.ic_menu_gallery)
         }
+
+        // 添加测试功能：点击进度卡片增加进度（用于测试优惠券功能）
+        // TODO: 在实际应用中删除此测试代码
+        view.findViewById<androidx.cardview.widget.CardView>(R.id.progress_card)?.setOnClickListener {
+            updateProgress(10) // 每次点击增加10进度
+            android.widget.Toast.makeText(context, "Progress +10 (Test Mode)", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * 检查进度是否达到100
+     * 如果达到100，则：
+     * 1. 重置progressScore为0
+     * 2. couponCount增加1
+     * 3. 显示提示信息
+     * 4. TODO: 保存到数据库
+     */
+    private fun checkProgressMilestone() {
+        val info = groupInfo ?: return
+        
+        if (info.progressScore >= 100) {
+            // 计算可以获得多少个优惠券（如果进度超过100）
+            val couponsEarned = info.progressScore / 100
+            val remainingProgress = info.progressScore % 100
+            
+            // 更新数据
+            info.couponCount += couponsEarned
+            info.progressScore = remainingProgress
+            
+            // TODO: 保存到数据库
+            // saveToDatabase(groupInfo)
+            
+            // 显示恭喜对话框
+            showCouponEarnedDialog(couponsEarned)
+            
+            android.util.Log.d("GroupFragment", 
+                "Progress reached 100! Earned $couponsEarned coupon(s). " +
+                "Total coupons: ${info.couponCount}, Remaining progress: ${info.progressScore}")
+        }
+    }
+    
+    /**
+     * 显示获得优惠券的对话框
+     */
+    private fun showCouponEarnedDialog(couponsEarned: Int) {
+        val info = groupInfo ?: return
+        
+        context?.let {
+            AlertDialog.Builder(it)
+                .setTitle("🎉 Congratulations!")
+                .setMessage("Your group won $couponsEarned free coffee coupon${if (couponsEarned > 1) "s" else ""}! ☕\n\nTotal coupons: ${info.couponCount}")
+                .setPositiveButton("Awesome, we'll keep going!") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .setCancelable(false)
+                .show()
+        }
+    }
+    
+    /**
+     * 模拟更新进度的函数（用于测试）
+     * TODO: 实际应用中，这应该从数据库或API获取
+     */
+    private fun updateProgress(incrementBy: Int) {
+        val info = groupInfo ?: return
+        
+        info.progressScore += incrementBy
+        
+        // 检查是否达到100
+        if (info.progressScore >= 100) {
+            checkProgressMilestone()
+        }
+        
+        // 更新UI
+        view?.let { v ->
+            v.findViewById<TextView>(R.id.tv_progress)?.text = "Weekly Progress ${info.progressScore}"
+            v.findViewById<ProgressBar>(R.id.progress_bar)?.progress = info.progressScore
+            v.findViewById<TextView>(R.id.tv_coupon_count)?.text = info.couponCount.toString()
+        }
+        
+        // TODO: 保存到数据库
+        // saveToDatabase(groupInfo)
     }
 
     private fun setupMembersList(view: View) {
@@ -207,21 +487,41 @@ class GroupFragment : Fragment() {
     }
 
     private fun handleMemberAction(member: Member, action: ActionType) {
-        when (action) {
-            ActionType.REMIND -> {
-                android.widget.Toast.makeText(
-                    context,
-                    "Reminded ${member.name}",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
-            }
-            ActionType.LIKE -> {
-                android.widget.Toast.makeText(
-                    context,
-                    "Liked ${member.name}'s progress",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
-            }
+        val (title, message) = when (action) {
+            ActionType.REMIND -> Pair(
+                "Remind ${member.name}",
+                "Send a reminder to ${member.name} to go running?"
+            )
+            ActionType.LIKE -> Pair(
+                "Like ${member.name}",
+                "Like ${member.name}'s running progress?"
+            )
+        }
+        
+        // 显示确认弹框
+        context?.let {
+            AlertDialog.Builder(it)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("Send") { dialog, _ ->
+                    // TODO: 调用后端API发送通知
+                    // sendNotification(member.id, action)
+                    
+                    val successMsg = when (action) {
+                        ActionType.REMIND -> "Reminder sent to ${member.name}!"
+                        ActionType.LIKE -> "Liked ${member.name}'s progress!"
+                    }
+                    android.widget.Toast.makeText(
+                        context,
+                        successMsg,
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                    dialog.dismiss()
+                }
+                .setNegativeButton("Cancel") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
         }
     }
 

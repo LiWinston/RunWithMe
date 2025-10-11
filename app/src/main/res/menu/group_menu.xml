@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-            android:id="@+id/action_leave_group"
-            android:title="Leave Group" />
+        android:id="@+id/action_create_group"
+        android:title="Create a Group" />
     <item
-            android:id="@+id/action_invite"
-            android:title="Invite Teammate" />
+        android:id="@+id/action_show_qrcode"
+        android:title="Group QR Code" />
+    <item
+        android:id="@+id/action_scan_qrcode"
+        android:title="Join a Group" />
+    <item
+        android:id="@+id/action_view_applications"
+        android:title="View Applications" />
+    <item
+        android:id="@+id/action_leave_group"
+        android:title="Leave Group" />
 </menu>
