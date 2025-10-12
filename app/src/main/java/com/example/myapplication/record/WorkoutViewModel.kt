@@ -13,7 +13,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.*
+import java.text.SimpleDateFormat
 import java.time.Instant
+import java.util.Date
+import java.util.Locale
 
 class WorkoutViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -241,11 +244,14 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             val baseLat = 39.9042 + (routeSequence * 0.0001) // 每个点北移
             val baseLng = 116.4074 + (routeSequence * 0.0001) // 每个点东移
 
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+            val timestamp = sdf.format(java.util.Date())
+
             val routePoint = RoutePoint(
                 lat = baseLat,
                 lng = baseLng,
                 altitude = 50.0 + Math.sin(routeSequence * 0.1) * 5, // 模拟轻微海拔变化
-                timestamp = Instant.now().toString(),
+                timestamp = timestamp,
                 sequence = ++routeSequence
             )
 
@@ -264,11 +270,14 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             val baseLat = 39.9042 + (routeSequence * 0.0001) // 每个点北移
             val baseLng = 116.4074 + (routeSequence * 0.0001) // 每个点东移
 
+            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+            val timestamp = sdf.format(Date())
+
             val routePoint = RoutePoint(
                 lat = baseLat,
                 lng = baseLng,
                 altitude = 50.0 + Math.sin(routeSequence * 0.1) * 3, // 较小的海拔变化
-                timestamp = Instant.now().toString(),
+                timestamp = timestamp,
                 sequence = ++routeSequence
             )
 
@@ -518,11 +527,13 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         } ?: true // 第一个点总是记录
 
         if (shouldRecord) {
+            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+
             val routePoint = RoutePoint(
                 lat = location.latitude,
                 lng = location.longitude,
                 altitude = if (location.hasAltitude()) location.altitude else null,
-                timestamp = Instant.ofEpochMilli(location.time).toString(),
+                timestamp = sdf.format(Date(location.time)), // 兼容 API 24
                 sequence = ++routeSequence
             )
 
@@ -531,19 +542,24 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             lastRouteDistance = totalDistance // 同步更新距离记录
 
             // 记录GPS精度
+
             if (location.hasAccuracy()) {
-                accuracySamples.add(AccuracySample(
-                    accuracy = location.accuracy.toDouble(),
-                    timestamp = Instant.ofEpochMilli(location.time).toString()
-                ))
+                accuracySamples.add(
+                    AccuracySample(
+                        accuracy = location.accuracy.toDouble(),
+                        timestamp = sdf.format(Date(location.time)) // 兼容 API 24
+                    )
+                )
             }
 
-            // 记录海拔数据
+
             if (location.hasAltitude()) {
-                elevationSamples.add(ElevationSample(
-                    elevation = location.altitude,
-                    timestamp = Instant.ofEpochMilli(location.time).toString()
-                ))
+                elevationSamples.add(
+                    ElevationSample(
+                        elevation = location.altitude,
+                        timestamp = sdf.format(Date(location.time)) // 兼容 API 24
+                    )
+                )
             }
 
             // 调试信息
@@ -553,7 +569,8 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     // 记录动态数据（定期采样）
     private fun recordDynamicData(currentSpeed: Double, currentHeartRate: Int, elapsedSeconds: Int) {
-        val timestamp = Instant.now().toString()
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        val timestamp = sdf.format(Date())
 
         // 记录速度
         speedSamples.add(SpeedSample(
@@ -627,25 +644,30 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val currentLat = if (isSimulatorMode) 39.9042 else lastLocation?.latitude
         val currentLng = if (isSimulatorMode) 116.4074 else lastLocation?.longitude
 
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+
+        val startTimeStr = sdf.format(Date(startTime))   // startTime 是 Long
+        val endTimeStr = sdf.format(Date())              // 当前时间
+
         return WorkoutCreateRequest(
-            userId = 1L, // TODO: 从用户会话获取真实用户ID
+            userId = 1L,
             workoutType = "OUTDOOR_RUN",
-            distance = totalDistance / 1000, // 米转公里
+            distance = totalDistance / 1000.0,
             duration = durationSeconds,
             steps = stepCount,
             calories = calculateCalories(durationSeconds),
             avgSpeed = calculateAvgSpeed(),
             avgPace = calculateAvgPace(),
             avgHeartRate = _heartRate.value?.takeIf { it > 0 },
-            maxHeartRate = _heartRate.value?.takeIf { it > 0 }, // 简化处理，实际应记录最大值
-            startTime = java.time.Instant.ofEpochMilli(startTime).toString(),
-            endTime = java.time.Instant.now().toString(),
+            maxHeartRate = _heartRate.value?.takeIf { it > 0 },
+            startTime = startTimeStr,
+            endTime = endTimeStr,
             status = "COMPLETED",
             visibility = "PRIVATE",
             goalAchieved = checkGoalAchievement(totalDistance / 1000, durationSeconds),
             notes = null,
-            weatherCondition = generateWeatherCondition(), // 模拟天气条件
-            temperature = generateTemperature(), // 模拟温度
+            weatherCondition = generateWeatherCondition(),
+            temperature = generateTemperature(),
             latitude = currentLat,
             longitude = currentLng
         )
