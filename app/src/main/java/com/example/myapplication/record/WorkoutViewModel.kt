@@ -367,7 +367,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             sensorManager.registerListener(gyroListener, it, SensorManager.SENSOR_DELAY_GAME)
         }
 
-        // 步数检测器（如果设备支持）
+        // 步数检测器
         stepDetector = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
         stepDetector?.let {
             sensorManager.registerListener(stepListener, it, SensorManager.SENSOR_DELAY_FASTEST)
@@ -381,6 +381,8 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
         override fun onSensorChanged(event: SensorEvent) {
             if (!running) return
+            // 🚫 如果有硬件步数传感器，则跳过加速度计逻辑，防止双计数
+            if (stepDetector != null) return
             val x = event.values[0]
             val y = event.values[1]
             val z = event.values[2]
