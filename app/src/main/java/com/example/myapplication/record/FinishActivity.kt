@@ -26,6 +26,7 @@ class FinishActivity : AppCompatActivity() {
         val tvDuration = findViewById<TextView>(R.id.tvDuration)
         val tvCalories = findViewById<TextView>(R.id.tvCalories)
         val tvSpeed = findViewById<TextView>(R.id.tvPace)  // 用 speed 填 pace 的格子
+        val tvWorkoutType = findViewById<TextView>(R.id.tvWorkoutType)
         val btnDone = findViewById<Button>(R.id.btnDone)
 
         // 取出传递过来的数据
@@ -33,11 +34,13 @@ class FinishActivity : AppCompatActivity() {
         val duration = intent.getStringExtra("duration") ?: "00:00:00"
         val calories = intent.getStringExtra("calories") ?: "0 kcal"
         val speed = intent.getStringExtra("speed") ?: "0.00 mph"
+        val workoutType = intent.getStringExtra("workoutType") ?: "Running"
 
         tvDistance.text = distance
         tvDuration.text = duration
         tvCalories.text = calories
         tvSpeed.text = speed  // 直接显示速度
+        tvWorkoutType.text = workoutType
 
         btnDone.setOnClickListener {
             // 暂时注释掉数据库操作，待异步处理
