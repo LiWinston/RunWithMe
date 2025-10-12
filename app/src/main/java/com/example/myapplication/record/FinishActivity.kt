@@ -58,28 +58,33 @@ class FinishActivity : AppCompatActivity() {
         val speed = intent.getStringExtra("speed") ?: "0.00 mph"
 
         val dynamicData = workoutViewModel.getWorkoutDynamicData()
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+        val endTimeStr = sdf.format(java.util.Date())
+        val durationSeconds = parseDuration(duration)?.toLong() ?: 0L
+        val startTimeStr = sdf.format(java.util.Date(System.currentTimeMillis() - durationSeconds * 1000))
+
         val workoutRequest = WorkoutCreateRequest(
-            userId = 1L, // TODO: 这里改成你实际登录用户的 ID
-            workoutType = "OUTDOOR_RUN", // 可以根据实际运动类型修改
+            userId = 1L,
+            workoutType = "OUTDOOR_RUN",
             distance = parseDistance(distance),
             duration = parseDuration(duration),
-            steps = workoutViewModel.steps.value, // 从ViewModel获取步数
+            steps = workoutViewModel.steps.value,
             calories = parseCalories(calories),
             avgSpeed = parseSpeed(speed),
             avgPace = calculateAvgPace(parseDistance(distance), parseDuration(duration)),
-            avgHeartRate = workoutViewModel.heartRate.value?.takeIf { it > 0 }, // 从ViewModel获取心率
+            avgHeartRate = workoutViewModel.heartRate.value?.takeIf { it > 0 },
             maxHeartRate = workoutViewModel.heartRate.value?.takeIf { it > 0 },
-            startTime = java.time.LocalDateTime.now().minusSeconds(parseDuration(duration)?.toLong() ?: 0L).toString(), // 估算开始时间
-            endTime = java.time.LocalDateTime.now().toString(),
+            startTime = startTimeStr,
+            endTime = endTimeStr,
             status = "COMPLETED",
             visibility = "PRIVATE",
             goalAchieved = checkGoalAchievement(parseDistance(distance), parseDuration(duration)),
             notes = null,
-            weatherCondition = "晴天", // 简单模拟天气
-            temperature = 25.0, // 简单模拟温度
+            weatherCondition = "晴天",
+            temperature = 25.0,
             latitude = if (dynamicData.route.isNotEmpty()) dynamicData.route.first().lat else 39.9042,
             longitude = if (dynamicData.route.isNotEmpty()) dynamicData.route.first().lng else 116.4074,
-            workoutData = dynamicData // 包含完整的动态数据
+            workoutData = dynamicData
         )
 
         CoroutineScope(Dispatchers.IO).launch {

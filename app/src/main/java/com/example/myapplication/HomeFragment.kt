@@ -25,44 +25,45 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
-    
-    private lateinit var weatherWidget: ExpandableWeatherWidget
+
+    private var weatherWidget: ExpandableWeatherWidget? = null
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var weatherRepository: WeatherRepository
     private var locationCallback: LocationCallback? = null
-    
+
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
         private const val TAG = "HomeFragment"
         private const val DEFAULT_LATITUDE = -33.768796
         private const val DEFAULT_LONGITUDE = 151.015735
     }
-    
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+
+
         initializeComponents()
         setupLocationServices()
         loadWeatherData()
     }
-    
+
     private fun initializeComponents() {
         weatherWidget = requireView().findViewById(R.id.weather_card)
-        
+
         // 初始化Retrofit和API服务
         val retrofit = Retrofit.Builder()
             .baseUrl("http://10.0.2.2:8080/") // 开发环境使用模拟器默认IP
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-        
+
         val apiService = retrofit.create(WeatherApiService::class.java)
         weatherRepository = WeatherRepository(apiService)
     }
-    
+
     private fun setupLocationServices() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
     }
-    
+
     private fun loadWeatherData() {
         if (checkLocationPermission()) {
             getCurrentLocationAndLoadWeather()
@@ -70,14 +71,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             requestLocationPermission()
         }
     }
-    
+
     private fun checkLocationPermission(): Boolean {
         return ActivityCompat.checkSelfPermission(
             requireContext(),
             Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
     }
-    
+
     private fun requestLocationPermission() {
         ActivityCompat.requestPermissions(
             requireActivity(),
@@ -85,15 +86,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             LOCATION_PERMISSION_REQUEST_CODE
         )
     }
-    
+
     private fun getCurrentLocationAndLoadWeather() {
         if (!checkLocationPermission()) {
             Log.w(TAG, "位置权限未授权，使用默认位置")
             return
         }
-        
+
         Log.d(TAG, "开始获取当前位置...")
-        
+
         // 首先尝试获取最后已知位置
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location: Location? ->
@@ -112,23 +113,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 requestNewLocation()
             }
     }
-    
+
     private fun isLocationValid(location: Location): Boolean {
         // 检查位置是否有效（不是模拟器的默认位置，且时间不太旧）
         val currentTime = System.currentTimeMillis()
         val locationAge = currentTime - location.time
         val maxAge = 5 * 60 * 1000 // 5分钟
-        
+
         return locationAge <= maxAge && location.accuracy <= 100
     }
 
     private fun requestNewLocation() {
-        // 添加检查
-        if (!isAdded || view == null) {
-            useDefaultLocation()
-            return
-        }
-
         if (!checkLocationPermission()) {
             useDefaultLocation()
             return
@@ -141,12 +136,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
-
-                // 添加检查 - 关键修复！
-                if (!isAdded || view == null) {
-                    return
-                }
-
                 val location = locationResult.lastLocation
                 if (location != null) {
                     Log.i(TAG, "成功获取新位置: 纬度=${location.latitude}, 经度=${location.longitude}")
@@ -170,13 +159,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 Looper.getMainLooper()
             )
 
-            // 使用 Handler 替代 requireView().postDelayed() - 关键修复！
-            android.os.Handler(Looper.getMainLooper()).postDelayed({
-                // 添加检查 - 关键修复！
-                if (!isAdded || view == null) {
-                    return@postDelayed
-                }
-
+            // 5秒后如果还没有获取到位置，就使用默认位置
+            requireView().postDelayed({
                 if (locationCallback != null) {
                     Log.w(TAG, "位置请求超时，使用默认位置")
                     fusedLocationClient.removeLocationUpdates(locationCallback!!)
@@ -191,37 +175,37 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
     private fun useDefaultLocation() {
-        // 添加检查
-        if (!isAdded || view == null) {
-            return
-        }
         fetchWeatherData(DEFAULT_LATITUDE, DEFAULT_LONGITUDE)
     }
 
     private fun fetchWeatherData(latitude: Double, longitude: Double) {
-        // 添加检查
-        if (!isAdded || view == null) {
-            return
-        }
-
         Log.i(TAG, "正在获取天气数据 - 纬度: $latitude, 经度: $longitude")
-        viewLifecycleOwner.lifecycleScope.launch {
+        lifecycleScope.launch {
             try {
                 val (currentWeatherResult, hourlyForecastResult) = weatherRepository.getWeatherData(latitude, longitude)
 
                 when {
                     currentWeatherResult.isSuccess && hourlyForecastResult.isSuccess -> {
-                        val currentWeather = currentWeatherResult.getOrNull()!!
+                        val currentWeather = currentWeatherResult.getOrNull()
                         val hourlyForecast = hourlyForecastResult.getOrNull()
-                        Log.d(TAG, "成功获取两项数据 - 当前天气: ${currentWeather.temperature.degrees}°, 每小时预报数量: ${hourlyForecast?.forecasts?.size ?: 0}")
-                        weatherWidget.updateWeatherData(currentWeather, hourlyForecast)
+                        Log.d(TAG, "成功获取两项数据 - 当前天气: ${currentWeather?.temperature?.degrees ?: "N/A"}°, 每小时预报数量: ${hourlyForecast?.forecasts?.size ?: 0}")
+
+                        // 使用可空安全调用
+                        currentWeather?.let { cw ->
+                            weatherWidget?.updateWeatherData(cw, hourlyForecast)
+                        }
                     }
+
                     currentWeatherResult.isSuccess -> {
-                        val currentWeather = currentWeatherResult.getOrNull()!!
-                        Log.d(TAG, "只获取到当前天气数据 - 温度: ${currentWeather.temperature.degrees}°")
-                        weatherWidget.updateWeatherData(currentWeather)
+                        val currentWeather = currentWeatherResult.getOrNull()
+                        Log.d(TAG, "只获取到当前天气数据 - 温度: ${currentWeather?.temperature?.degrees ?: "N/A"}°")
+                        currentWeather?.let { cw ->
+                            weatherWidget?.updateWeatherData(cw)
+                        }
+
                         Log.w(TAG, "每小时预报获取失败", hourlyForecastResult.exceptionOrNull())
                     }
+
                     else -> {
                         showError("获取天气数据失败")
                         Log.e(TAG, "获取天气数据失败", currentWeatherResult.exceptionOrNull())
@@ -233,21 +217,18 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             }
         }
     }
-    
+
     private fun showError(message: String) {
-        // 检查Fragment是否还附着到Activity，避免crash
-        if (isAdded && context != null) {
-            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-        }
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
-    
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        
+
         when (requestCode) {
             LOCATION_PERMISSION_REQUEST_CODE -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -262,9 +243,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             }
         }
     }
-    
-    override fun onDestroyView() {
-        super.onDestroyView()
+
+    override fun onDestroy() {
+        super.onDestroy()
         // 清理位置回调
         locationCallback?.let {
             fusedLocationClient.removeLocationUpdates(it)
