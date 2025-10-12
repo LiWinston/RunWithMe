@@ -224,10 +224,10 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
             compactLocationText.text = "Melbourne, Carlton" // 可以根据实际位置获取
             compactWeatherDescription.text = WeatherIconUtils.getWeatherDescription(weather.condition.type)
             compactTemperatureText.text = "T = ${weather.temperature.degrees.toInt()}°C"
-            compactHumidityText.text = "湿度 ${weather.humidity}%"
+            compactHumidityText.text = "H: ${weather.humidity}%"
             compactWindText.text = "W: ${weather.wind.speed.value.toInt()} ${weather.wind.speed.unit}"
-            compactFeelsLikeText.text = "体感 ${weather.feelsLikeTemperature.degrees.toInt()}°"
-            compactPressureText.text = "气压 ${weather.pressure.meanSeaLevelMillibars.toInt()} hPa"
+            compactFeelsLikeText.text = "Feels Like ${weather.feelsLikeTemperature.degrees.toInt()}°"
+            compactPressureText.text = "P: ${weather.pressure.meanSeaLevelMillibars.toInt()} hPa"
             compactUvText.text = "UV ${weather.uvIndex}"
         }
     }
@@ -241,15 +241,15 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
                 .into(expandedWeatherIcon)
 
             // 更新主要信息
-            expandedLocationText.text = "墨尔本, 卡尔顿"
-            expandedWeatherDescription.text = "${WeatherIconUtils.getWeatherDescription(weather.condition.type)}，适合户外运动"
+            expandedLocationText.text = "Melbourne, Carlton"
+            expandedWeatherDescription.text = "${WeatherIconUtils.getWeatherDescription(weather.condition.type)}, perfect for outdoor activities"
             expandedTemperatureText.text = "${weather.temperature.degrees.toInt()}°"
 
             // 更新详细信息
             expandedHumidityValue.text = "${weather.humidity}%"
             expandedFeelsLikeValue.text = "${weather.feelsLikeTemperature.degrees.toInt()}°C"
             expandedWindValue.text = "${weather.wind.speed.value.toInt()} ${weather.wind.speed.unit} ${weather.wind.direction.cardinal}"
-            expandedWindGustValue.text = weather.wind.gust?.let { "${it.value.toInt()} ${it.unit}" } ?: "无"
+            expandedWindGustValue.text = weather.wind.gust?.let { "${it.value.toInt()} ${it.unit}" } ?: "N/A"
             expandedPressureValue.text = "${weather.pressure.meanSeaLevelMillibars.toInt()} hPa"
             expandedVisibilityValue.text = "${weather.visibility.distance.toInt()} ${weather.visibility.unit}"
             expandedUvIndexValue.text = "${weather.uvIndex} ${getUvDescription(weather.uvIndex)}"
@@ -281,11 +281,11 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
 
     private fun getUvDescription(uvIndex: Int): String {
         return when {
-            uvIndex <= 2 -> "低"
-            uvIndex <= 5 -> "中等"
-            uvIndex <= 7 -> "高"
-            uvIndex <= 10 -> "很高"
-            else -> "极高"
+            uvIndex <= 2 -> "Low"
+            uvIndex <= 5 -> "Moderate"
+            uvIndex <= 7 -> "High"
+            uvIndex <= 10 -> "Very High"
+            else -> "Extreme"
         }
     }
 
