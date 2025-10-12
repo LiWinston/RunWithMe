@@ -381,7 +381,6 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
         override fun onSensorChanged(event: SensorEvent) {
             if (!running) return
-            // 🚫 如果有硬件步数传感器，则跳过加速度计逻辑，防止双计数
             if (stepDetector != null) return
             val x = event.values[0]
             val y = event.values[1]
