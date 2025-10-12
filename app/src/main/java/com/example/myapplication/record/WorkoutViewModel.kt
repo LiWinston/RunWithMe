@@ -22,8 +22,8 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     // LiveData
     private val _time = MutableLiveData("00:00:00")
-    private val _speed = MutableLiveData("0.00 mph")
-    private val _distance = MutableLiveData("0.00 miles")
+    private val _speed = MutableLiveData("0.00 m/s")
+    private val _distance = MutableLiveData("0.00 m")
     private val _calories = MutableLiveData("0 kcal")
     private val _debugInfo = MutableLiveData("Idle")
     private val _workoutType = MutableLiveData("Running")
@@ -109,7 +109,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     private var routeSequence = 0
     private var lastRouteLocation: Location? = null
     private var lastRouteDistance = 0.0 // 上次记录路线点时的距离
-    private val minDistanceForRoute = 10.0 // 最小10米间隔记录路线点
+    private val minDistanceForRoute = 2.0 // 最小10米间隔记录路线点
 
     // 改进的传感器数据
     private var lastAcceleration = 0.0
@@ -304,19 +304,18 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                     if (lastLocation != null) {
                         val distance = lastLocation!!.distanceTo(location) // 米
                         totalDistance += distance
-                        _distance.value = String.format("%.2f miles", totalDistance / 1609.34)
+                        _distance.value = String.format("%.2f m", totalDistance)
 
                         // 用距离差和时间差计算速度，避免跳值
                         val timeDiff = (location.time - lastLocation!!.time) / 1000.0 // 秒
                         if (timeDiff > 0) {
                             val speedMps = distance / timeDiff  // 米/秒
-                            val speedMph = speedMps * 2.23694   // 转 mph
 
                             // 平滑处理：速度<0.5当作静止
-                            _speed.value = if (speedMph < 0.5) {
-                                "0.00 mph"
+                            _speed.value = if (speedMps < 0.5) {
+                                "0.00 m/s"
                             } else {
-                                String.format("%.2f mph", speedMph)
+                                String.format("%.2f m/s", speedMps)
                             }
 
                             // 更新运动类型
@@ -324,7 +323,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                         }
                     } else {
                         // 第一次定位没有 lastLocation
-                        _speed.value = "0.00 mph"
+                        _speed.value = "0.00 m/s"
                     }
 
                     // 更新状态（只保留一次）
@@ -436,7 +435,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             // 基于运动状态调整步长
             if (totalRotation > 1.0) {
                 // 不稳定运动，可能在快速跑步
-                // 可以调整步长或其他参数
+                // 可以调整步长或其他参数，目前没有用到
             }
         }
 
@@ -509,8 +508,8 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         cadence = 0
 
         _time.value = "00:00:00"
-        _speed.value = "0.00 mph"
-        _distance.value = "0.00 miles"
+        _speed.value = "0.00 m/s"
+        _distance.value = "0.00 m"
         _calories.value = "0 kcal"
         _steps.value = 0
         _heartRate.value = 0
@@ -697,23 +696,23 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         } else 0
 
         return if (durationSeconds > 0 && totalDistance > 0) {
-            (totalDistance / 1000) / (durationSeconds / 3600.0) // km/h
+            totalDistance / durationSeconds // m/s
         } else null
     }
 
     private fun calculateAvgPace(): Int? {
-        val distanceKm = totalDistance / 1000
+        val distanceM = totalDistance
         val durationSeconds = if (startTime > 0) {
             ((System.currentTimeMillis() - startTime + pauseOffset) / 1000).toInt()
         } else 0
 
-        return if (distanceKm > 0) {
-            (durationSeconds / distanceKm).toInt() // 秒/公里
+        return if (distanceM > 0) {
+            (durationSeconds / distanceM).toInt() // 秒/米
         } else null
     }
 
-    private fun checkGoalAchievement(distanceKm: Double, durationSeconds: Int): Boolean {
-        return distanceKm >= 1.0 || durationSeconds >= 900 // 1km或15分钟
+    private fun checkGoalAchievement(distanceM: Double, durationSeconds: Int): Boolean {
+        return distanceM >= 1000 || durationSeconds >= 900 // 1km或15分钟
     }
 }
 

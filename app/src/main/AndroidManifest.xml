@@ -31,7 +31,7 @@
         <!-- Google Maps API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="YOUR_GOOGLE_MAPS_API_KEY_HERE" />
+            android:value="AIzaSyBs4su0Iu5SNESKwRavqaMD4CEqSnI5O-Q" />
 
 <!--        TODO: change it to login before launch-->
         <!-- Splash Activity - 启动页面 -->

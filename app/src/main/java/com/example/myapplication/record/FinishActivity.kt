@@ -30,10 +30,10 @@ class FinishActivity : AppCompatActivity() {
         val btnDone = findViewById<Button>(R.id.btnDone)
 
         // 取出传递过来的数据
-        val distance = intent.getStringExtra("distance") ?: "0.00 miles"
+        val distance = intent.getStringExtra("distance") ?: "0.00 m"
         val duration = intent.getStringExtra("duration") ?: "00:00:00"
         val calories = intent.getStringExtra("calories") ?: "0 kcal"
-        val speed = intent.getStringExtra("speed") ?: "0.00 mph"
+        val speed = intent.getStringExtra("speed") ?: "0.00 m/s"
         val workoutType = intent.getStringExtra("workoutType") ?: "Running"
 
         tvDistance.text = distance
@@ -55,10 +55,10 @@ class FinishActivity : AppCompatActivity() {
      * 保存运动记录到数据库（暂时 mute，待异步处理）
      */
     private fun saveWorkoutToDatabase() {
-        val distance = intent.getStringExtra("distance") ?: "0.00 miles"
+        val distance = intent.getStringExtra("distance") ?: "0.00 m"
         val duration = intent.getStringExtra("duration") ?: "00:00:00"
         val calories = intent.getStringExtra("calories") ?: "0 kcal"
-        val speed = intent.getStringExtra("speed") ?: "0.00 mph"
+        val speed = intent.getStringExtra("speed") ?: "0.00 m/s"
 
         val dynamicData = workoutViewModel.getWorkoutDynamicData()
         val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
@@ -128,17 +128,17 @@ class FinishActivity : AppCompatActivity() {
         finish()
     }
 
-    // 辅助函数 - 解析距离字符串 (如 "2.5 miles" -> 4.023 km)
+    // 辅助函数 - 解析距离字符串
     private fun parseDistance(distanceStr: String): Double? {
         return try {
-            val regex = Regex("""(\d+\.?\d*)\s*(miles|km)""")
+            val regex = Regex("""(\d+\.?\d*)\s*(m|km)""")
             val matchResult = regex.find(distanceStr)
             if (matchResult != null) {
                 val value = matchResult.groupValues[1].toDouble()
                 val unit = matchResult.groupValues[2]
                 when (unit) {
-                    "miles" -> value * 1.609344 // 转换为公里
-                    "km" -> value
+                    "km" -> value * 1000.0   // km 转换为 m
+                    "m" -> value
                     else -> value
                 }
             } else {
@@ -148,6 +148,7 @@ class FinishActivity : AppCompatActivity() {
             null
         }
     }
+
 
     // 辅助函数 - 解析时长字符串 (如 "01:23:45" -> 5025 秒)
     private fun parseDuration(durationStr: String): Int? {
@@ -177,19 +178,14 @@ class FinishActivity : AppCompatActivity() {
         }
     }
 
-    // 辅助函数 - 解析速度字符串 (如 "5.2 mph" -> 8.369 km/h)
+    // 辅助函数 - 解析速度字符串 (如 "5.2 mph" -> m/s)
     private fun parseSpeed(speedStr: String): Double? {
         return try {
-            val regex = Regex("""(\d+\.?\d*)\s*(mph|kmh|km/h)""")
+            val regex = Regex("""(\d+\.?\d*)\s*(m/s|mps)""")
             val matchResult = regex.find(speedStr)
             if (matchResult != null) {
                 val value = matchResult.groupValues[1].toDouble()
-                val unit = matchResult.groupValues[2]
-                when (unit) {
-                    "mph" -> value * 1.609344 // 转换为 km/h
-                    "kmh", "km/h" -> value
-                    else -> value
-                }
+                value
             } else {
                 null
             }
@@ -198,7 +194,8 @@ class FinishActivity : AppCompatActivity() {
         }
     }
 
-    // 辅助函数 - 计算平均配速 (秒/公里)
+
+    // 辅助函数 - 计算平均配速 (秒/米)
     private fun calculateAvgPace(distance: Double?, duration: Int?): Int? {
         return if (distance != null && duration != null && distance > 0) {
             (duration / distance).toInt()
@@ -209,10 +206,11 @@ class FinishActivity : AppCompatActivity() {
 
     // 辅助函数 - 检查目标达成 (距离>=1km 或 时长>=15分钟)
     private fun checkGoalAchievement(distance: Double?, duration: Int?): Boolean {
-        val distanceGoal = distance != null && distance >= 1.0
+        val distanceGoal = distance != null && distance >= 1000.0 // 1000米 = 1km
         val durationGoal = duration != null && duration >= 900 // 15分钟
         return distanceGoal || durationGoal
     }
+
 
     // 显示保存成功信息
     private fun showSaveSuccess(workoutId: Long) {

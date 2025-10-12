@@ -185,10 +185,10 @@ class RecordingFragment : Fragment(), OnMapReadyCallback {
 
         // 跳转到完成页面，传递数据
         val intent = Intent(requireContext(), FinishActivity::class.java).apply {
-            putExtra("distance", workoutViewModel.distance.value ?: "0.00 miles")
+            putExtra("distance", workoutViewModel.distance.value ?: "0.00 m")
             putExtra("duration", workoutViewModel.time.value ?: "00:00:00")
             putExtra("calories", workoutViewModel.calories.value ?: "0 kcal")
-            putExtra("speed", workoutViewModel.speed.value ?: "0.00 mph")
+            putExtra("speed", workoutViewModel.speed.value ?: "0.00 m/s")
             putExtra("workoutType", workoutViewModel.workoutType.value ?: "Running")
         }
         startActivity(intent)
