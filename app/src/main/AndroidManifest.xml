@@ -9,6 +9,10 @@
     <!-- 位置权限 -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    
+    <!-- 相机权限 (用于扫描二维码) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -81,6 +85,27 @@
             android:screenOrientation="portrait">
         </activity>
 
+        <!-- Group related activities -->
+        <!-- CreateGroupActivity - 创建Group -->
+        <activity
+            android:name=".CreateGroupActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
+        
+        <!-- QRCodeActivity - 二维码显示和扫描 -->
+        <activity
+            android:name=".QRCodeActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
+        
+        <!-- GroupApplicationActivity - 查看申请记录 -->
+        <activity
+            android:name=".GroupApplicationActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
 
         <!-- gsh StartActivity -->
 <!--        <activity-->
