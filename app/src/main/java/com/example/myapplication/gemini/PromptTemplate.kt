@@ -76,6 +76,39 @@ object PromptTemplate {
             Be genuine, specific, and motivating.
         """.trimIndent()
     }
+    
+    /**
+     * Generate personalized advice based on workout data in a specific period
+     * @param periodData Workout data summary for today/week/month
+     */
+    fun getPeriodBasedAdvice(periodData: PeriodWorkoutData): String {
+        return """
+            You are a professional fitness coach. Analyze the user's workout performance and provide personalized advice.
+            
+            User Profile:
+            - Fitness Goal: ${periodData.userFitnessGoal ?: "Not specified"}
+            - Fitness Level: ${periodData.userFitnessLevel ?: "Not specified"}
+            - Age: ${periodData.userAge ?: "Not specified"}
+            - Gender: ${periodData.userGender ?: "Not specified"}
+            - Height: ${periodData.userHeight?.let { "%.1f cm".format(it) } ?: "Not specified"}
+            - Weight: ${periodData.userWeight?.let { "%.1f kg".format(it) } ?: "Not specified"}
+            
+            ${periodData.periodName} Performance:
+            - Total Distance: ${periodData.totalDistance} km
+            - Total Duration: ${periodData.totalDuration} minutes
+            - Total Workouts: ${periodData.totalWorkouts}
+            - Calories Burned: ${periodData.totalCalories} kcal
+            - Average Pace: ${if (periodData.avgPace > 0) "%.2f".format(periodData.avgPace) + " min/km" else "N/A"}
+            
+            Requirements:
+            1. Consider their fitness goal and current fitness level
+            2. Analyze if their ${periodData.periodName.lowercase()} performance aligns with their goals
+            3. Provide 2-3 specific, actionable recommendations for improvement
+            4. Be encouraging and motivating
+            
+            Keep the response concise (3-4 sentences maximum) and supportive.
+        """.trimIndent()
+    }
 }
 
 /**
@@ -88,5 +121,25 @@ data class WorkoutHistorySummary(
     val totalWorkouts: Int,
     val averageDuration: Int,
     val frequency: Int
+)
+
+/**
+ * Data class for period-based workout data (today/week/month)
+ * Used for generating personalized advice
+ */
+data class PeriodWorkoutData(
+    val periodName: String, // "Today", "This Week", "This Month"
+    val totalDistance: Double, // km
+    val totalDuration: Int, // minutes
+    val totalWorkouts: Int,
+    val totalCalories: Double, // kcal
+    val avgPace: Double, // min/km
+    // User personal information
+    val userFitnessGoal: String?,
+    val userFitnessLevel: String?,
+    val userAge: Int?,
+    val userGender: String?,
+    val userHeight: Double?,
+    val userWeight: Double?
 )
 

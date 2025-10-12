@@ -66,4 +66,11 @@ class GeminiApiService(private val apiKey: String) {
         val prompt = PromptTemplate.getWorkoutHistoryAdvice(workoutData)
         return generateContent(prompt)
     }
+    
+    suspend fun getPeriodBasedAdvice(
+        periodData: PeriodWorkoutData
+    ): Result<String> {
+        val prompt = PromptTemplate.getPeriodBasedAdvice(periodData)
+        return generateContent(prompt)
+    }
 }

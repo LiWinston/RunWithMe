@@ -1,9 +1,14 @@
 package com.example.myapplication.history
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.gemini.GeminiApiService
+import com.example.myapplication.gemini.GeminiConfig
+import com.example.myapplication.gemini.PeriodWorkoutData
+import com.example.myapplication.landr.loginapp.models.User
 import com.example.myapplication.record.RetrofitClient
 import com.example.myapplication.record.Workout
 import kotlinx.coroutines.launch
@@ -14,6 +19,15 @@ import kotlinx.coroutines.launch
  */
 class HistoryViewModel : ViewModel() {
 
+    companion object {
+        private const val TAG = "HistoryViewModel"
+    }
+
+    // Gemini AI service
+    private val geminiService: GeminiApiService by lazy {
+        GeminiApiService(GeminiConfig.API_KEY)
+    }
+
     // 加载状态
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean> = _isLoading
@@ -21,6 +35,10 @@ class HistoryViewModel : ViewModel() {
     // 错误信息
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
+    
+    // 用户信息
+    private val _userProfile = MutableLiveData<User?>()
+    val userProfile: LiveData<User?> = _userProfile
 
     // 今日数据
     private val _todayStats = MutableLiveData<Map<String, Any>>()
@@ -48,6 +66,20 @@ class HistoryViewModel : ViewModel() {
 
     private val _monthChart = MutableLiveData<Map<String, Any>>()
     val monthChart: LiveData<Map<String, Any>> = _monthChart
+    
+    // AI建议
+    private val _todayAdvice = MutableLiveData<String?>()
+    val todayAdvice: LiveData<String?> = _todayAdvice
+    
+    private val _weekAdvice = MutableLiveData<String?>()
+    val weekAdvice: LiveData<String?> = _weekAdvice
+    
+    private val _monthAdvice = MutableLiveData<String?>()
+    val monthAdvice: LiveData<String?> = _monthAdvice
+    
+    // AI加载状态
+    private val _isLoadingAdvice = MutableLiveData(false)
+    val isLoadingAdvice: LiveData<Boolean> = _isLoadingAdvice
 
     /**
      * 加载今日数据
@@ -155,5 +187,196 @@ class HistoryViewModel : ViewModel() {
      */
     fun clearError() {
         _error.value = null
+    }
+    
+    /**
+     * 加载用户信息
+     */
+    fun loadUserProfile() {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.api.getUserProfile()
+                if (response.isSuccessful && response.body()?.code == 0) {
+                    _userProfile.value = response.body()?.data
+                    Log.d(TAG, "User profile loaded successfully")
+                } else {
+                    Log.e(TAG, "Failed to load user profile: ${response.body()?.message}")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading user profile", e)
+            }
+        }
+    }
+    
+    /**
+     * 生成今日运动建议
+     */
+    fun generateTodayAdvice() {
+        viewModelScope.launch {
+            val stats = _todayStats.value
+            val workouts = _todayWorkouts.value ?: emptyList()
+            val user = _userProfile.value
+            
+            // 如果没有数据，直接显示鼓励信息
+            if (workouts.isEmpty() || stats == null) {
+                _todayAdvice.value = "Looks like you haven’t been working out today, don’t forget your goal! Getting started is always the hardest part, you’ve got this! 💪"
+                return@launch
+            }
+            
+            _isLoadingAdvice.value = true
+            
+            try {
+                val totalDistance = stats["totalDistance"] as? Double ?: 0.0
+                val totalDuration = (stats["totalDuration"] as? Number)?.toInt() ?: 0
+                val totalCalories = stats["totalCalories"] as? Double ?: 0.0
+                val workoutCount = (stats["workoutCount"] as? Number)?.toInt() ?: 0
+                
+                // 计算平均配速 (min/km)
+                val avgPace = if (totalDistance > 0 && totalDuration > 0) {
+                    (totalDuration / 60.0) / totalDistance
+                } else {
+                    0.0
+                }
+                
+                val periodData = PeriodWorkoutData(
+                    periodName = "Today",
+                    totalDistance = totalDistance,
+                    totalDuration = totalDuration / 60, // convert to minutes
+                    totalWorkouts = workoutCount,
+                    totalCalories = totalCalories,
+                    avgPace = avgPace,
+                    userFitnessGoal = user?.fitnessGoal,
+                    userFitnessLevel = user?.fitnessLevel,
+                    userAge = user?.age,
+                    userGender = user?.gender,
+                    userHeight = user?.height,
+                    userWeight = user?.weight
+                )
+                
+                val result = geminiService.getPeriodBasedAdvice(periodData)
+                _todayAdvice.value = result.getOrElse { 
+                    "Failed to generate advice: ${it.message}"
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error generating today advice", e)
+                _todayAdvice.value = "Failed to generate advice"
+            } finally {
+                _isLoadingAdvice.value = false
+            }
+        }
+    }
+    
+    /**
+     * 生成本周运动建议
+     */
+    fun generateWeekAdvice() {
+        viewModelScope.launch {
+            val stats = _weekStats.value
+            val workouts = _weekWorkouts.value ?: emptyList()
+            val user = _userProfile.value
+            
+            // 如果没有数据，直接显示鼓励信息
+            if (workouts.isEmpty() || stats == null) {
+                _weekAdvice.value = "Looks like you haven’t been working out this week, don’t forget your goal! Getting started is always the hardest part, you’ve got this! 💪"
+                return@launch
+            }
+            
+            _isLoadingAdvice.value = true
+            
+            try {
+                val totalDistance = stats["totalDistance"] as? Double ?: 0.0
+                val totalDuration = (stats["totalDuration"] as? Number)?.toInt() ?: 0
+                val totalCalories = stats["totalCalories"] as? Double ?: 0.0
+                val workoutCount = (stats["workoutCount"] as? Number)?.toInt() ?: 0
+                
+                val avgPace = if (totalDistance > 0 && totalDuration > 0) {
+                    (totalDuration / 60.0) / totalDistance
+                } else {
+                    0.0
+                }
+                
+                val periodData = PeriodWorkoutData(
+                    periodName = "This Week",
+                    totalDistance = totalDistance,
+                    totalDuration = totalDuration / 60,
+                    totalWorkouts = workoutCount,
+                    totalCalories = totalCalories,
+                    avgPace = avgPace,
+                    userFitnessGoal = user?.fitnessGoal,
+                    userFitnessLevel = user?.fitnessLevel,
+                    userAge = user?.age,
+                    userGender = user?.gender,
+                    userHeight = user?.height,
+                    userWeight = user?.weight
+                )
+                
+                val result = geminiService.getPeriodBasedAdvice(periodData)
+                _weekAdvice.value = result.getOrElse { 
+                    "Failed to generate advice: ${it.message}"
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error generating week advice", e)
+                _weekAdvice.value = "Failed to generate advice"
+            } finally {
+                _isLoadingAdvice.value = false
+            }
+        }
+    }
+    
+    /**
+     * 生成本月运动建议
+     */
+    fun generateMonthAdvice() {
+        viewModelScope.launch {
+            val stats = _monthStats.value
+            val workouts = _monthWorkouts.value ?: emptyList()
+            val user = _userProfile.value
+            
+            // 如果没有数据，直接显示鼓励信息
+            if (workouts.isEmpty() || stats == null) {
+                _monthAdvice.value = "Looks like you haven’t been working out this month, don’t forget your goal! Getting started is always the hardest part, you’ve got this! 💪"
+                return@launch
+            }
+            
+            _isLoadingAdvice.value = true
+            
+            try {
+                val totalDistance = stats["totalDistance"] as? Double ?: 0.0
+                val totalDuration = (stats["totalDuration"] as? Number)?.toInt() ?: 0
+                val totalCalories = stats["totalCalories"] as? Double ?: 0.0
+                val workoutCount = (stats["workoutCount"] as? Number)?.toInt() ?: 0
+                
+                val avgPace = if (totalDistance > 0 && totalDuration > 0) {
+                    (totalDuration / 60.0) / totalDistance
+                } else {
+                    0.0
+                }
+                
+                val periodData = PeriodWorkoutData(
+                    periodName = "This Month",
+                    totalDistance = totalDistance,
+                    totalDuration = totalDuration / 60,
+                    totalWorkouts = workoutCount,
+                    totalCalories = totalCalories,
+                    avgPace = avgPace,
+                    userFitnessGoal = user?.fitnessGoal,
+                    userFitnessLevel = user?.fitnessLevel,
+                    userAge = user?.age,
+                    userGender = user?.gender,
+                    userHeight = user?.height,
+                    userWeight = user?.weight
+                )
+                
+                val result = geminiService.getPeriodBasedAdvice(periodData)
+                _monthAdvice.value = result.getOrElse { 
+                    "Failed to generate advice: ${it.message}"
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error generating month advice", e)
+                _monthAdvice.value = "Failed to generate advice"
+            } finally {
+                _isLoadingAdvice.value = false
+            }
+        }
     }
 }
