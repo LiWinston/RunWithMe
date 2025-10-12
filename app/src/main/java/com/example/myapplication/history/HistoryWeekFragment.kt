@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -31,6 +33,11 @@ class HistoryWeekFragment : Fragment() {
 
     // 运动记录列表
     private lateinit var rvWeekWorkouts: RecyclerView
+    
+    // AI建议相关UI
+    private lateinit var btnGenerateWeekAdvice: Button
+    private lateinit var tvWeekAdvice: TextView
+    private lateinit var pbAdviceLoading: ProgressBar
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,6 +62,16 @@ class HistoryWeekFragment : Fragment() {
         tvWeekPace = view.findViewById(R.id.tvWeekPace)
         tvWeekCalories = view.findViewById(R.id.tvWeekCalories)
         rvWeekWorkouts = view.findViewById(R.id.rvWeekWorkouts)
+        
+        // AI建议相关
+        btnGenerateWeekAdvice = view.findViewById(R.id.btnGenerateWeekAdvice)
+        tvWeekAdvice = view.findViewById(R.id.tvWeekAdvice)
+        pbAdviceLoading = view.findViewById(R.id.pbAdviceLoading)
+        
+        // 设置按钮点击事件
+        btnGenerateWeekAdvice.setOnClickListener {
+            historyViewModel.generateWeekAdvice()
+        }
     }
 
     private fun setupRecyclerView() {
@@ -80,10 +97,33 @@ class HistoryWeekFragment : Fragment() {
         historyViewModel.weekChart.observe(viewLifecycleOwner) { chartData ->
             // TODO: 显示周图表（柱状图）
         }
+        
+        // 观察AI建议
+        historyViewModel.weekAdvice.observe(viewLifecycleOwner) { advice ->
+            advice?.let {
+                tvWeekAdvice.text = it
+            }
+        }
+        
+        // 观察AI加载状态
+        historyViewModel.isLoadingAdvice.observe(viewLifecycleOwner) { isLoading ->
+            if (isLoading) {
+                pbAdviceLoading.visibility = View.VISIBLE
+                tvWeekAdvice.visibility = View.GONE
+                btnGenerateWeekAdvice.isEnabled = false
+            } else {
+                pbAdviceLoading.visibility = View.GONE
+                tvWeekAdvice.visibility = View.VISIBLE
+                btnGenerateWeekAdvice.isEnabled = true
+            }
+        }
     }
 
     private fun loadWeekData() {
         lifecycleScope.launch {
+            // Load user profile first
+            historyViewModel.loadUserProfile()
+            // Then load week data
             historyViewModel.loadWeekData(1L)
         }
     }

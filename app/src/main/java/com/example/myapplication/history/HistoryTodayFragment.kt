@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -31,6 +33,11 @@ class HistoryTodayFragment : Fragment() {
 
     // 运动记录列表
     private lateinit var rvWorkoutRecords: RecyclerView
+    
+    // AI建议相关UI
+    private lateinit var btnGenerateTodayAdvice: Button
+    private lateinit var tvTodayAdvice: TextView
+    private lateinit var pbAdviceLoading: ProgressBar
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,6 +65,16 @@ class HistoryTodayFragment : Fragment() {
 
         // 运动记录列表
         rvWorkoutRecords = view.findViewById(R.id.rvWorkoutRecords)
+        
+        // AI建议相关
+        btnGenerateTodayAdvice = view.findViewById(R.id.btnGenerateTodayAdvice)
+        tvTodayAdvice = view.findViewById(R.id.tvTodayAdvice)
+        pbAdviceLoading = view.findViewById(R.id.pbAdviceLoading)
+        
+        // 设置按钮点击事件
+        btnGenerateTodayAdvice.setOnClickListener {
+            historyViewModel.generateTodayAdvice()
+        }
     }
 
     private fun setupRecyclerView() {
@@ -91,10 +108,33 @@ class HistoryTodayFragment : Fragment() {
         historyViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             // TODO: 显示/隐藏加载指示器
         }
+        
+        // 观察AI建议
+        historyViewModel.todayAdvice.observe(viewLifecycleOwner) { advice ->
+            advice?.let {
+                tvTodayAdvice.text = it
+            }
+        }
+        
+        // 观察AI加载状态
+        historyViewModel.isLoadingAdvice.observe(viewLifecycleOwner) { isLoading ->
+            if (isLoading) {
+                pbAdviceLoading.visibility = View.VISIBLE
+                tvTodayAdvice.visibility = View.GONE
+                btnGenerateTodayAdvice.isEnabled = false
+            } else {
+                pbAdviceLoading.visibility = View.GONE
+                tvTodayAdvice.visibility = View.VISIBLE
+                btnGenerateTodayAdvice.isEnabled = true
+            }
+        }
     }
 
     private fun loadTodayData() {
         lifecycleScope.launch {
+            // Load user profile first
+            historyViewModel.loadUserProfile()
+            // Then load today data
             historyViewModel.loadTodayData(1L) // TODO: 使用真实用户ID
         }
     }

@@ -38,17 +38,25 @@ class MainActivity : AppCompatActivity() {
 
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+        
+        // Just add top padding to FrameLayout, let BottomNavigationView to handle bottom padding
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+            insets
+        }
+        
+        // add bottonm padding to BottomNavigationView to fit navigation menu
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
+        ViewCompat.setOnApplyWindowInsetsListener(bottomNav) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(0, 0, 0, systemBars.bottom)
             insets
         }
 
         supportFragmentManager.beginTransaction()
             .replace(R.id.main, HomeFragment())
             .commit()
-
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
 
         bottomNav.setOnItemSelectedListener { item ->
             val fragment = when (item.itemId) {

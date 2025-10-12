@@ -160,25 +160,25 @@
                         android:id="@+id/advice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="💡(advise)"
+                        android:text="💡Get prepared before your workout"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/weatherDetail"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                    <ProgressBar
+                        android:id="@+id/adviceLoadingProgress"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
                         android:layout_marginTop="10dp"
-                        android:text="Start into wind, finish with tailwind."
-                        android:textSize="15sp" />
+                        android:visibility="gone" />
 
                     <TextView
-                        android:id="@+id/Preparation"
-                        android:layout_width="wrap_content"
+                        android:id="@+id/aiAdviceText"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:text="Hydrate, sunscream, light layers."
-                        android:textSize="15sp" />
+                        android:text="Loading exercise advice based on weather conditions..."
+                        android:textSize="15sp"
+                        android:lineSpacingExtra="4dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -31,6 +33,11 @@ class HistoryMonthFragment : Fragment() {
 
     // 运动记录列表
     private lateinit var rvMonthWorkouts: RecyclerView
+    
+    // AI建议相关UI
+    private lateinit var btnGenerateMonthAdvice: Button
+    private lateinit var tvMonthAdvice: TextView
+    private lateinit var pbAdviceLoading: ProgressBar
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,6 +62,16 @@ class HistoryMonthFragment : Fragment() {
         tvMonthPace = view.findViewById(R.id.tvMonthPace)
         tvMonthCalories = view.findViewById(R.id.tvMonthCalories)
         rvMonthWorkouts = view.findViewById(R.id.rvMonthWorkouts)
+        
+        // AI建议相关
+        btnGenerateMonthAdvice = view.findViewById(R.id.btnGenerateMonthAdvice)
+        tvMonthAdvice = view.findViewById(R.id.tvMonthAdvice)
+        pbAdviceLoading = view.findViewById(R.id.pbAdviceLoading)
+        
+        // 设置按钮点击事件
+        btnGenerateMonthAdvice.setOnClickListener {
+            historyViewModel.generateMonthAdvice()
+        }
     }
 
     private fun setupRecyclerView() {
@@ -80,10 +97,33 @@ class HistoryMonthFragment : Fragment() {
         historyViewModel.monthChart.observe(viewLifecycleOwner) { chartData ->
             // TODO: 显示月趋势图（折线图）
         }
+        
+        // 观察AI建议
+        historyViewModel.monthAdvice.observe(viewLifecycleOwner) { advice ->
+            advice?.let {
+                tvMonthAdvice.text = it
+            }
+        }
+        
+        // 观察AI加载状态
+        historyViewModel.isLoadingAdvice.observe(viewLifecycleOwner) { isLoading ->
+            if (isLoading) {
+                pbAdviceLoading.visibility = View.VISIBLE
+                tvMonthAdvice.visibility = View.GONE
+                btnGenerateMonthAdvice.isEnabled = false
+            } else {
+                pbAdviceLoading.visibility = View.GONE
+                tvMonthAdvice.visibility = View.VISIBLE
+                btnGenerateMonthAdvice.isEnabled = true
+            }
+        }
     }
 
     private fun loadMonthData() {
         lifecycleScope.launch {
+            // Load user profile first
+            historyViewModel.loadUserProfile()
+            // Then load month data
             historyViewModel.loadMonthData(1L)
         }
     }
