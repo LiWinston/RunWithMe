@@ -33,10 +33,10 @@
     <View
             android:id="@+id/iv_map"
             android:layout_width="300dp"
-            android:layout_height="300dp"
+            android:layout_height="200dp"
             android:layout_centerHorizontal="true"
-            android:layout_below="@id/tv_title"
-            android:layout_marginTop="40dp"
+            android:layout_below="@id/top_bar"
+            android:layout_marginTop="20dp"
             android:background="#E0E0E0" />
 
     <!-- 开始按钮 - 使用 ImageButton -->

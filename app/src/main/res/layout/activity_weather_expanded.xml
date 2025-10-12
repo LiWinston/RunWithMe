@@ -25,14 +25,14 @@
             android:layout_centerVertical="true"
             android:background="@android:color/transparent"
             android:src="@drawable/ic_arrow_back"
-            android:contentDescription="返回"
+            android:contentDescription="Back"
             app:tint="@android:color/black" />
 
         <TextView
             android:id="@+id/tv_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="天气详情"
+            android:text="Weather Details"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"
@@ -88,7 +88,7 @@
                                 android:id="@+id/location_text_expanded"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="墨尔本, 卡尔顿"
+                                android:text="Melbourne, Carlton"
                                 android:textColor="@android:color/black"
                                 android:textSize="18sp"
                                 android:textStyle="bold" />
@@ -98,7 +98,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="晴朗，适合户外运动"
+                                android:text="Clear, perfect for outdoor activities"
                                 android:textColor="#666666"
                                 android:textSize="14sp" />
 
@@ -132,7 +132,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="湿度"
+                                android:text="Humidity"
                                 android:textColor="#666666"
                                 android:textSize="12sp" />
 
@@ -158,7 +158,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="体感温度"
+                                android:text="Feels Like"
                                 android:textColor="#666666"
                                 android:textSize="12sp" />
 
@@ -184,7 +184,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="风速"
+                                android:text="Wind Speed"
                                 android:textColor="#666666"
                                 android:textSize="12sp" />
 
@@ -193,7 +193,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="12 km/h 北"
+                                android:text="12 km/h N"
                                 android:textColor="@android:color/black"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
@@ -210,7 +210,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="阵风"
+                                android:text="Wind Gust"
                                 android:textColor="#666666"
                                 android:textSize="12sp" />
 
@@ -236,7 +236,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="气压"
+                                android:text="Pressure"
                                 android:textColor="#666666"
                                 android:textSize="12sp" />
 
@@ -262,7 +262,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="能见度"
+                                android:text="Visibility"
                                 android:textColor="#666666"
                                 android:textSize="12sp" />
 
@@ -288,7 +288,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="UV指数"
+                                android:text="UV Index"
                                 android:textColor="#666666"
                                 android:textSize="12sp" />
 
@@ -297,7 +297,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="5 中等"
+                                android:text="5 Moderate"
                                 android:textColor="@android:color/black"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
@@ -314,7 +314,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="露点"
+                                android:text="Dew Point"
                                 android:textColor="#666666"
                                 android:textSize="12sp" />
 
@@ -340,7 +340,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="风寒指数"
+                                android:text="Wind Chill"
                                 android:textColor="#666666"
                                 android:textSize="12sp" />
 
@@ -366,7 +366,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="暑热指数"
+                                android:text="Heat Index"
                                 android:textColor="#666666"
                                 android:textSize="12sp" />
 
@@ -393,7 +393,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="今日每小时预报"
+                            android:text="Hourly Forecast"
                             android:textColor="@android:color/black"
                             android:textSize="16sp"
                             android:textStyle="bold" />

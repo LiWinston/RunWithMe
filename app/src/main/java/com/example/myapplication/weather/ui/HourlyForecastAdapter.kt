@@ -60,13 +60,13 @@ class HourlyForecastAdapter : RecyclerView.Adapter<HourlyForecastAdapter.HourlyV
             hourTemperature.text = "${item.temperature.degrees.toInt()}°"
             
             // 设置体感温度 (使用当前温度作为占位符)
-            hourFeelsLike.text = "体感${item.temperature.degrees.toInt()}°"
-            
+            hourFeelsLike.text = "Feels ${item.temperature.degrees.toInt()}°"
+
             // 设置降水概率
             hourPrecipitation.text = "${item.precipitationProbability}%"
-            
+
             // 设置湿度
-            hourHumidity.text = "湿度${item.humidity}%"
+            hourHumidity.text = "Humidity ${item.humidity}%"
         }
         
         private fun formatTime(timeString: String): String {

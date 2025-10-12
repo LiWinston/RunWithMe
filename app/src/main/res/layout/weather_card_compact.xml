@@ -79,7 +79,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="#000000"
-                android:text="湿度 65%"
+                android:text="H: 65%"
                 android:textSize="12sp" />
 
             <TextView
@@ -94,7 +94,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="#000000"
-                android:text="体感 20°"
+                android:text="Feels Like 20°"
                 android:textSize="12sp" />
 
             <TextView
@@ -109,7 +109,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="#000000"
-                android:text="气压 1013 hPa"
+                android:text="P: 1013 hPa"
                 android:textSize="12sp" />
 
             <TextView
