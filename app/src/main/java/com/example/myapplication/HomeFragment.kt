@@ -8,11 +8,16 @@ import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import android.view.View
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.example.myapplication.gemini.GeminiApiService
+import com.example.myapplication.gemini.GeminiConfig
 import com.example.myapplication.weather.api.WeatherApiService
+import com.example.myapplication.weather.data.CurrentWeather
 import com.example.myapplication.weather.repository.WeatherRepository
 import com.example.myapplication.weather.ui.ExpandableWeatherWidget
 import com.example.myapplication.weather.ui.WeatherExpandedActivity  // 新增导入
@@ -32,19 +37,32 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private lateinit var weatherWidget: ExpandableWeatherWidget
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var weatherRepository: WeatherRepository
+    private lateinit var geminiApiService: GeminiApiService
     private var locationCallback: LocationCallback? = null
+    
+    // UI elements for AI advice
+    private lateinit var aiAdviceText: TextView
+    private lateinit var adviceLoadingProgress: ProgressBar
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
         private const val TAG = "HomeFragment"
         private const val DEFAULT_LATITUDE = -33.768796
         private const val DEFAULT_LONGITUDE = 151.015735
+        
+        // Default weather data for fallback when API fails
+        private const val DEFAULT_TEMPERATURE = 20.0
+        private const val DEFAULT_WEATHER_CONDITION = "Partly Cloudy"
+        private const val DEFAULT_WIND_SPEED = 15.0
+        private const val DEFAULT_HUMIDITY = 65
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         initializeComponents()
+        initializeGeminiService()
+        initializeUIComponents(view)
         setupLocationServices()
         loadWeatherData()
 
@@ -72,6 +90,22 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         val apiService = retrofit.create(WeatherApiService::class.java)
         weatherRepository = WeatherRepository(apiService)
+    }
+    
+    private fun initializeGeminiService() {
+        // Check if API key is configured
+        if (!GeminiConfig.isConfigured()) {
+            Log.w(TAG, "Gemini API key not configured. Please set your API key in GeminiConfig.kt")
+            return
+        }
+        
+        geminiApiService = GeminiApiService(GeminiConfig.API_KEY)
+        Log.d(TAG, "Gemini API service initialized")
+    }
+    
+    private fun initializeUIComponents(view: View) {
+        aiAdviceText = view.findViewById(R.id.aiAdviceText)
+        adviceLoadingProgress = view.findViewById(R.id.adviceLoadingProgress)
     }
 
     private fun setupLocationServices() {
@@ -221,21 +255,33 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         val hourlyForecast = hourlyForecastResult.getOrNull()
                         Log.d(TAG, "成功获取两项数据 - 当前天气: ${currentWeather.temperature.degrees}°, 每小时预报数量: ${hourlyForecast?.forecasts?.size ?: 0}")
                         weatherWidget.updateWeatherData(currentWeather, hourlyForecast)
+                        
+                        // Generate AI advice based on weather
+                        generateExerciseAdvice(currentWeather)
                     }
                     currentWeatherResult.isSuccess -> {
                         val currentWeather = currentWeatherResult.getOrNull()!!
                         Log.d(TAG, "只获取到当前天气数据 - 温度: ${currentWeather.temperature.degrees}°")
                         weatherWidget.updateWeatherData(currentWeather)
                         Log.w(TAG, "每小时预报获取失败", hourlyForecastResult.exceptionOrNull())
+                        
+                        // Generate AI advice based on weather
+                        generateExerciseAdvice(currentWeather)
                     }
                     else -> {
                         showError("获取天气数据失败")
                         Log.e(TAG, "获取天气数据失败", currentWeatherResult.exceptionOrNull())
+                        
+                        // Generate AI advice with default weather data
+                        generateExerciseAdviceWithDefaults()
                     }
                 }
             } catch (e: Exception) {
                 showError("网络连接失败")
                 Log.e(TAG, "获取天气数据异常", e)
+                
+                // Generate AI advice with default weather data
+                generateExerciseAdviceWithDefaults()
             }
         }
     }
@@ -243,6 +289,146 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private fun showError(message: String) {
         if (isAdded && context != null) {
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Generate exercise advice using Gemini AI based on current weather
+     */
+    private fun generateExerciseAdvice(weather: CurrentWeather) {
+        // Check if Gemini API is configured
+        if (!GeminiConfig.isConfigured()) {
+            aiAdviceText.text = "⚠️ AI advice unavailable. Please configure Gemini API key in GeminiConfig.kt to enable personalized exercise recommendations."
+            return
+        }
+        
+        // Check if service is initialized
+        if (!::geminiApiService.isInitialized) {
+            aiAdviceText.text = "AI service not available"
+            return
+        }
+        
+        // Show loading state
+        showAdviceLoading()
+        
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                Log.d(TAG, "Generating AI advice for weather: ${weather.temperature.degrees}°C, ${weather.condition.description.text}")
+                
+                val result = geminiApiService.getWeatherBasedAdvice(
+                    temperature = weather.temperature.degrees,
+                    weatherCondition = weather.condition.description.text,
+                    windSpeed = weather.wind.speed.value,
+                    humidity = weather.humidity
+                )
+                
+                if (!isAdded || view == null) {
+                    return@launch
+                }
+                
+                result.fold(
+                    onSuccess = { advice ->
+                        Log.d(TAG, "Successfully generated AI advice")
+                        showAdvice(advice)
+                    },
+                    onFailure = { error ->
+                        Log.e(TAG, "Failed to generate AI advice", error)
+                        showAdviceError()
+                    }
+                )
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Error generating exercise advice", e)
+                if (isAdded && view != null) {
+                    showAdviceError()
+                }
+            }
+        }
+    }
+    
+    /**
+     * Show loading state for AI advice
+     */
+    private fun showAdviceLoading() {
+        if (!isAdded || view == null) return
+        
+        adviceLoadingProgress.visibility = View.VISIBLE
+        aiAdviceText.text = "Generating personalized exercise advice..."
+    }
+    
+    /**
+     * Display the generated advice
+     */
+    private fun showAdvice(advice: String) {
+        if (!isAdded || view == null) return
+        
+        adviceLoadingProgress.visibility = View.GONE
+        aiAdviceText.text = advice
+    }
+    
+    /**
+     * Show error state for AI advice
+     */
+    private fun showAdviceError() {
+        if (!isAdded || view == null) return
+        
+        adviceLoadingProgress.visibility = View.GONE
+        aiAdviceText.text = "Unable to generate advice at this time. Please check your internet connection and try again."
+    }
+    
+    /**
+     * Generate exercise advice using default weather data when weather API fails
+     */
+    private fun generateExerciseAdviceWithDefaults() {
+        // Check if Gemini API is configured
+        if (!GeminiConfig.isConfigured()) {
+            aiAdviceText.text = "⚠️ AI advice unavailable. Please configure Gemini API key in GeminiConfig.kt to enable personalized exercise recommendations."
+            return
+        }
+        
+        // Check if service is initialized
+        if (!::geminiApiService.isInitialized) {
+            aiAdviceText.text = "AI service not available"
+            return
+        }
+        
+        Log.i(TAG, "Weather data unavailable, using default weather conditions for AI advice")
+        
+        // Show loading state
+        showAdviceLoading()
+        
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                Log.d(TAG, "Generating AI advice with default weather: ${DEFAULT_TEMPERATURE}°C, $DEFAULT_WEATHER_CONDITION")
+                
+                val result = geminiApiService.getWeatherBasedAdvice(
+                    temperature = DEFAULT_TEMPERATURE,
+                    weatherCondition = DEFAULT_WEATHER_CONDITION,
+                    windSpeed = DEFAULT_WIND_SPEED,
+                    humidity = DEFAULT_HUMIDITY
+                )
+                
+                if (!isAdded || view == null) {
+                    return@launch
+                }
+                
+                result.fold(
+                    onSuccess = { advice ->
+                        Log.d(TAG, "Successfully generated AI advice with default weather")
+                        showAdvice(advice)
+                    },
+                    onFailure = { error ->
+                        Log.e(TAG, "Failed to generate AI advice with default weather", error)
+                        showAdviceError()
+                    }
+                )
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Error generating exercise advice with defaults", e)
+                if (isAdded && view != null) {
+                    showAdviceError()
+                }
+            }
         }
     }
 
