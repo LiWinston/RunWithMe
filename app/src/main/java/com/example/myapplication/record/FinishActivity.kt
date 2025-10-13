@@ -44,7 +44,7 @@ class FinishActivity : AppCompatActivity() {
 
         btnDone.setOnClickListener {
             // 暂时注释掉数据库操作，待异步处理
-            // saveWorkoutToDatabase()
+            saveWorkoutToDatabase()
 
             // 直接返回到主页面
             navigateBackToStart()

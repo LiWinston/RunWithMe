@@ -193,40 +193,13 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     }
 
-
-    // 传感器模式下生成基于距离的模拟路线点
-    private fun generateSensorBasedRoutePoint() {
-        if (totalDistance - lastRouteDistance >= minDistanceForRoute) {
-            // 在传感器模式下，基于步数生成模拟路线
-            val baseLat = 39.9042 + (routeSequence * 0.0001) // 每个点北移
-            val baseLng = 116.4074 + (routeSequence * 0.0001) // 每个点东移
-
-            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-            val timestamp = sdf.format(Date())
-
-            val routePoint = RoutePoint(
-                lat = baseLat,
-                lng = baseLng,
-                altitude = 50.0 + Math.sin(routeSequence * 0.1) * 3, // 较小的海拔变化
-                timestamp = timestamp,
-                sequence = ++routeSequence
-            )
-
-            routePoints.add(routePoint)
-            lastRouteDistance = totalDistance // 更新上次记录的距离
-
-            // 调试信息
-            _debugInfo.value = "Accelerometer Mode - ${routePoints.size} route points"
-        }
-    }
-
     /** 启动 GPS 定位 */
     fun startLocationTracking() {
         val context = getApplication<Application>()
 
         val locationRequest = LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY, 1000
-        ).setMinUpdateIntervalMillis(1000).build()
+            Priority.PRIORITY_HIGH_ACCURACY, 200
+        ).setMinUpdateIntervalMillis(200).build()
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
@@ -234,36 +207,44 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                 for (location in result.locations) {
                     if (lastLocation != null) {
                         val distance = lastLocation!!.distanceTo(location) // 米
+
+                        // =============================
+                        // 🚫 跳点过滤逻辑
+                        // =============================
+                        if (distance > 50f) {
+                            _debugInfo.value =
+                                "GPS jump ignored (${String.format("%.1f", distance)} m, no line)"
+                            // ✅ 不计入距离、不画线，但仍更新位置
+                            lastLocation = location
+                            lastGpsUpdateTime = System.currentTimeMillis()
+                            useGps = true
+                            continue // 跳过本次后续逻辑
+                        }
+
+                        // =============================
+                        // ✅ 正常点：更新距离和速度
+                        // =============================
                         totalDistance += distance
                         _distance.value = String.format("%.2f m", totalDistance)
 
-                        // 用距离差和时间差计算速度，避免跳值
                         val timeDiff = (location.time - lastLocation!!.time) / 1000.0 // 秒
                         if (timeDiff > 0) {
-                            val speedMps = distance / timeDiff  // 米/秒
-
-                            // 平滑处理：速度<0.5当作静止
-                            _speed.value = if (speedMps < 0.5) {
-                                "0.00 m/s"
-                            } else {
-                                String.format("%.2f m/s", speedMps)
-                            }
-
-                            // 更新运动类型
+                            val speedMps = distance / timeDiff
+                            _speed.value = if (speedMps < 0.5) "0.00 m/s" else String.format("%.2f m/s", speedMps)
                             _workoutType.value = determineWorkoutType(speedMps)
                         }
+
+                        // ✅ 仅正常点才画线
+                        recordRoutePoint(location)
                     } else {
-                        // 第一次定位没有 lastLocation
                         _speed.value = "0.00 m/s"
                     }
 
-                    // 更新状态（只保留一次）
+                    //总是更新 lastLocation（包括跳点）
                     lastLocation = location
                     lastGpsUpdateTime = System.currentTimeMillis()
                     useGps = true
                     _debugInfo.value = "GPS Mode"
-
-                    recordRoutePoint(location)
                 }
             }
         }
@@ -286,16 +267,16 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     /** 启动加速度传感器 */
     private fun startStepSensors() {
         // 加速度计
-        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-        accelerometer?.let {
-            sensorManager.registerListener(accelListener, it, SensorManager.SENSOR_DELAY_GAME)
-        }
+//        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+//        accelerometer?.let {
+//            sensorManager.registerListener(accelListener, it, SensorManager.SENSOR_DELAY_GAME)
+//        }
 
         // 陀螺仪
-        gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
-        gyroscope?.let {
-            sensorManager.registerListener(gyroListener, it, SensorManager.SENSOR_DELAY_GAME)
-        }
+//        gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+//        gyroscope?.let {
+//            sensorManager.registerListener(gyroListener, it, SensorManager.SENSOR_DELAY_GAME)
+//        }
 
         // 步数检测器
         stepDetector = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
@@ -304,74 +285,74 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    /** Accelerometer 监听（改进的步伐检测） */
-    private val accelListener = object : SensorEventListener {
-        private var lastUpdate = 0L
-        private var lastZ = 0.0
-
-        override fun onSensorChanged(event: SensorEvent) {
-            if (!running) return
-            if (stepDetector != null) return
-            val x = event.values[0]
-            val y = event.values[1]
-            val z = event.values[2]
-
-            val magnitude = Math.sqrt((x * x + y * y + z * z).toDouble())
-            val accel = magnitude - SensorManager.GRAVITY_EARTH
-            val now = System.currentTimeMillis()
-
-            // 添加到加速度历史
-            accelerationHistory.add(accel)
-            if (accelerationHistory.size > 50) {
-                accelerationHistory.removeAt(0)
-            }
-
-            // 改进的步数检测算法（峰值检测）
-            if (accelerationHistory.size >= 3 && now - lastUpdate > 250) {
-                val current = accelerationHistory[accelerationHistory.size - 1]
-                val previous = accelerationHistory[accelerationHistory.size - 2]
-                val beforePrevious = accelerationHistory[accelerationHistory.size - 3]
-
-                // 寻找局部峰值
-                if (previous > current && previous > beforePrevious && previous > 2.0) {
-                    stepCount++
-                    _steps.value = stepCount
-                    lastUpdate = now
-
-                    // 记录步数时间戳用于步频计算
-                    stepTimestamps.add(now)
-                    calculateCadence()
-                }
-            }
-
-            lastAcceleration = accel
-        }
-
-        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
-    }
+//    /** Accelerometer 监听（改进的步伐检测） */
+//    private val accelListener = object : SensorEventListener {
+//        private var lastUpdate = 0L
+//        private var lastZ = 0.0
+//
+//        override fun onSensorChanged(event: SensorEvent) {
+//            if (!running) return
+//            if (stepDetector != null) return
+//            val x = event.values[0]
+//            val y = event.values[1]
+//            val z = event.values[2]
+//
+//            val magnitude = Math.sqrt((x * x + y * y + z * z).toDouble())
+//            val accel = magnitude - SensorManager.GRAVITY_EARTH
+//            val now = System.currentTimeMillis()
+//
+//            // 添加到加速度历史
+//            accelerationHistory.add(accel)
+//            if (accelerationHistory.size > 50) {
+//                accelerationHistory.removeAt(0)
+//            }
+//
+//            // 改进的步数检测算法（峰值检测）
+//            if (accelerationHistory.size >= 3 && now - lastUpdate > 250) {
+//                val current = accelerationHistory[accelerationHistory.size - 1]
+//                val previous = accelerationHistory[accelerationHistory.size - 2]
+//                val beforePrevious = accelerationHistory[accelerationHistory.size - 3]
+//
+//                // 寻找局部峰值
+//                if (previous > current && previous > beforePrevious && previous > 2.0) {
+//                    stepCount++
+//                    _steps.value = stepCount
+//                    lastUpdate = now
+//
+//                    // 记录步数时间戳用于步频计算
+//                    stepTimestamps.add(now)
+//                    calculateCadence()
+//                }
+//            }
+//
+//            lastAcceleration = accel
+//        }
+//
+//        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+//    }
 
     /** 陀螺仪监听器 */
-    private val gyroListener = object : SensorEventListener {
-        override fun onSensorChanged(event: SensorEvent) {
-            if (!running) return
-            rotationRateX = event.values[0].toDouble()
-            rotationRateY = event.values[1].toDouble()
-            rotationRateZ = event.values[2].toDouble()
-
-            // 陀螺仪数据可用于检测跑步姿态和稳定性
-            val totalRotation = Math.sqrt(rotationRateX * rotationRateX +
-                                        rotationRateY * rotationRateY +
-                                        rotationRateZ * rotationRateZ)
-
-            // 基于运动状态调整步长
-            if (totalRotation > 1.0) {
-                // 不稳定运动，可能在快速跑步
-                // 可以调整步长或其他参数，目前没有用到
-            }
-        }
-
-        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
-    }
+//    private val gyroListener = object : SensorEventListener {
+//        override fun onSensorChanged(event: SensorEvent) {
+//            if (!running) return
+//            rotationRateX = event.values[0].toDouble()
+//            rotationRateY = event.values[1].toDouble()
+//            rotationRateZ = event.values[2].toDouble()
+//
+//            // 陀螺仪数据可用于检测跑步姿态和稳定性
+//            val totalRotation = Math.sqrt(rotationRateX * rotationRateX +
+//                                        rotationRateY * rotationRateY +
+//                                        rotationRateZ * rotationRateZ)
+//
+//            // 基于运动状态调整步长
+//            if (totalRotation > 1.0) {
+//                // 不稳定运动，可能在快速跑步
+//                // 可以调整步长或其他参数，目前没有用到
+//            }
+//        }
+//
+//        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+//    }
 
     /** 硬件步数检测器（更准确） */
     private val stepListener = object : SensorEventListener {
@@ -420,8 +401,8 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         stepCount = 0
 
         // 卸载所有传感器监听器
-        sensorManager.unregisterListener(accelListener)
-        sensorManager.unregisterListener(gyroListener)
+//        sensorManager.unregisterListener(accelListener)
+//        sensorManager.unregisterListener(gyroListener)
         sensorManager.unregisterListener(stepListener)
 
         // 停止GPS追踪
@@ -563,57 +544,6 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         cadenceSamples.clear()
         accuracySamples.clear()
         routeSequence = 0
-    }
-
-    // 获取运动数据用于保存
-    fun getWorkoutData(): WorkoutCreateRequest {
-        val durationSeconds = if (startTime > 0) {
-            ((System.currentTimeMillis() - startTime + pauseOffset) / 1000).toInt()
-        } else 0
-
-        // 获取当前位置（用于天气查询）
-        val currentLat = if (isSimulatorMode) 39.9042 else lastLocation?.latitude
-        val currentLng = if (isSimulatorMode) 116.4074 else lastLocation?.longitude
-
-        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-
-        val startTimeStr = sdf.format(Date(startTime))   // startTime 是 Long
-        val endTimeStr = sdf.format(Date())              // 当前时间
-
-        return WorkoutCreateRequest(
-            userId = 1L,
-            workoutType = "OUTDOOR_RUN",
-            distance = totalDistance / 1000.0,
-            duration = durationSeconds,
-            steps = stepCount,
-            calories = calculateCalories(durationSeconds),
-            avgSpeed = calculateAvgSpeed(),
-            avgPace = calculateAvgPace(),
-            avgHeartRate = _heartRate.value?.takeIf { it > 0 },
-            maxHeartRate = _heartRate.value?.takeIf { it > 0 },
-            startTime = startTimeStr,
-            endTime = endTimeStr,
-            status = "COMPLETED",
-            visibility = "PRIVATE",
-            goalAchieved = checkGoalAchievement(totalDistance / 1000, durationSeconds),
-            notes = null,
-            weatherCondition = generateWeatherCondition(),
-            temperature = generateTemperature(),
-            latitude = currentLat,
-            longitude = currentLng
-        )
-    }
-
-    // 生成模拟天气条件
-    private fun generateWeatherCondition(): String {
-        val conditions = listOf("晴天", "多云", "阴天", "小雨", "薄雾")
-        return conditions.random()
-    }
-
-    // 生成模拟温度
-    private fun generateTemperature(): Double {
-        // 模拟20-30度的温度
-        return 20.0 + Math.random() * 10.0
     }
 
     private fun calculateCalories(durationSeconds: Int): Double? {
