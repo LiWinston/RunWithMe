@@ -14,7 +14,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.*
 import java.text.SimpleDateFormat
-import java.time.Instant
 import java.util.Date
 import java.util.Locale
 
@@ -188,80 +187,12 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         // 每5秒记录一次动态数据（用于图表，不是UI实时显示）
         if (seconds > 0 && seconds % 5 == 0) {
             val heartRate = _heartRate.value ?: 0
-            val latestSpeed = _speed.value?.replace(" mph", "")?.toFloatOrNull() ?: 0f
-            recordDynamicData(latestSpeed * 1.60934, heartRate, seconds) // mph -> km/h
+            val latestSpeed = _speed.value?.replace(" m/s", "")?.toFloatOrNull() ?: 0f
+            recordDynamicData(latestSpeed, heartRate, seconds)
         }
 
-        // 如果没GPS，用传感器生成路线
-        if (!useGps) {
-            generateSensorBasedRoutePoint()
-        }
     }
 
-
-    // 模拟运动数据（模拟器环境下使用）
-    private fun simulateMovement(seconds: Int) {
-        // 模拟跑步：平均速度 8-12 km/h（适中的跑步速度）
-        val baseSpeed = 10.0 + Math.sin(seconds * 0.05) * 2.0 // 10±2 km/h
-        val speedMps = baseSpeed / 3.6 // 转换为m/s
-
-        // 每秒增加距离（但要控制总距离合理）
-        val previousDistance = simulatedDistance
-        simulatedDistance += speedMps
-
-        // 模拟步数：大约每分钟180步（正常跑步步频）
-        val targetSteps = (seconds * 180.0 / 60.0).toInt()
-        if (stepCount < targetSteps) {
-            stepCount = targetSteps
-            _steps.value = stepCount
-
-            // 更新步频
-            val now = System.currentTimeMillis()
-            stepTimestamps.add(now)
-            calculateCadence()
-        }
-
-        // 模拟心率：140-170 bpm（跑步心率）
-        val heartRate = (140 + Math.sin(seconds * 0.03) * 15).toInt()
-        _heartRate.value = heartRate
-
-        // 采样动态数据（每5秒采样一次）
-        if (seconds % 5 == 0) {
-            recordDynamicData(speedMps * 3.6, heartRate, seconds)
-        }
-
-        // 调试信息包含更多详情
-        _debugInfo.value = "Simulator Mode - ${routePoints.size} points, ${cadence} bpm"
-    }
-
-    // 生成模拟的路线点
-    private fun generateSimulatedRoutePoint() {
-        val seconds = ((System.currentTimeMillis() - startTime + pauseOffset) / 1000).toInt()
-
-        // 修复bug：应该按距离间隔生成，而不是时间间隔
-        if (totalDistance - lastRouteDistance >= minDistanceForRoute) {
-            // 模拟北京附近的移动路线
-            val baseLat = 39.9042 + (routeSequence * 0.0001) // 每个点北移
-            val baseLng = 116.4074 + (routeSequence * 0.0001) // 每个点东移
-
-            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
-            val timestamp = sdf.format(java.util.Date())
-
-            val routePoint = RoutePoint(
-                lat = baseLat,
-                lng = baseLng,
-                altitude = 50.0 + Math.sin(routeSequence * 0.1) * 5, // 模拟轻微海拔变化
-                timestamp = timestamp,
-                sequence = ++routeSequence
-            )
-
-            routePoints.add(routePoint)
-            lastRouteDistance = totalDistance // 更新上次记录的距离
-
-            // 调试信息
-            _debugInfo.value = "Simulator Mode - ${routePoints.size} route points"
-        }
-    }
 
     // 传感器模式下生成基于距离的模拟路线点
     private fun generateSensorBasedRoutePoint() {
@@ -568,7 +499,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     }
 
     // 记录动态数据（定期采样）
-    private fun recordDynamicData(currentSpeed: Double, currentHeartRate: Int, elapsedSeconds: Int) {
+    private fun recordDynamicData(currentSpeed: Float, currentHeartRate: Int, elapsedSeconds: Int) {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         val timestamp = sdf.format(Date())
 
@@ -726,7 +657,7 @@ data class RoutePoint(
 )
 
 data class SpeedSample(
-    val speed: Double,
+    val speed: Float,
     val timestamp: String
 )
 
