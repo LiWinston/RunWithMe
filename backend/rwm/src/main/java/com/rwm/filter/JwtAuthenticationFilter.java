@@ -86,14 +86,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      * 检查是否为排除路径
      */
     private boolean isExcludedPath(String requestURI) {
-        return true;
-        // if (requestURI == null) return false;
-        // for (String p : EXCLUDED_PATHS) {
-        //     if (requestURI.equals(p) || requestURI.startsWith(p)) {
-        //         return true;
-        //     }
-        // }
-        // return false;
+        if (requestURI == null) return false;
+        for (String p : EXCLUDED_PATHS) {
+            if (requestURI.equals(p) || requestURI.startsWith(p)) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**

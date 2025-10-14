@@ -19,22 +19,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
-//    TODO: change this back before launch
-//    private lateinit var tokenManager: TokenManager
+    // Enforce login and init Retrofit client for authenticated APIs
+    private lateinit var tokenManager: TokenManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-// TODO: change this back before launch
-        // 初始化
-//        RetrofitClient.init(this)
-//        tokenManager = TokenManager.getInstance(this)
-//
-//        // 检查登录状态
-//        if (!tokenManager.isLoggedIn()) {
-//            navigateToLogin()
-//            return
-//        }
+    // Initialize networking and enforce login
+    RetrofitClient.init(this)
+    tokenManager = TokenManager.getInstance(this)
+
+    if (!tokenManager.isLoggedIn()) {
+        navigateToLogin()
+        return
+    }
 
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
@@ -80,40 +78,36 @@ class MainActivity : AppCompatActivity() {
         menuInflater.inflate(R.menu.main_menu, menu)
         return true
     }
-//    TODO: change this back before launch
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_logout -> {
+                logout()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
 
-//    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-//        return when (item.itemId) {
-//            R.id.action_logout -> {
-//                logout()
-//                true
-//            }
-//            else -> super.onOptionsItemSelected(item)
-//        }
-//    }
-//
-//    private fun logout() {
-//        CoroutineScope(Dispatchers.IO).launch {
-//            try {
-//                val accessToken = tokenManager.getAccessToken()
-//                if (accessToken != null) {
-//                    RetrofitClient.api.logout("Bearer $accessToken")
-//                }
-//            } catch (e: Exception) {
-//                // 忽略网络错误，直接清除本地token
-//            } finally {
-//                tokenManager.clearTokens()
-//                runOnUiThread {
-//                    navigateToLogin()
-//                }
-//            }
-//        }
-//    }
-//
-//    private fun navigateToLogin() {
-//        val intent = Intent(this, LoginActivity::class.java)
-//        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-//        startActivity(intent)
-//        finish()
-//    }
+    private fun logout() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val accessToken = tokenManager.getAccessToken()
+                if (accessToken != null) {
+                    RetrofitClient.api.logout("Bearer $accessToken")
+                }
+            } catch (e: Exception) {
+                // ignore network error
+            } finally {
+                tokenManager.clearTokens()
+                runOnUiThread { navigateToLogin() }
+            }
+        }
+    }
+
+    private fun navigateToLogin() {
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
+    }
 }
