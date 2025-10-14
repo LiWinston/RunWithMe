@@ -117,6 +117,9 @@ class GroupFragment : Fragment() {
         setupTopBar(view)
 
         if (hasGroup && groupInfo != null) {
+            // 显示进度卡片和成员列表
+            view.findViewById<androidx.cardview.widget.CardView>(R.id.progress_card)?.visibility = View.VISIBLE
+            view.findViewById<androidx.cardview.widget.CardView>(R.id.members_card)?.visibility = View.VISIBLE
             // 有group，显示正常内容
             // 设置进度卡片
             setupProgressCard(view)
