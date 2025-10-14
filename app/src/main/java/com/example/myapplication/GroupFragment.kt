@@ -40,7 +40,10 @@ class GroupFragment : Fragment() {
         val completed: Boolean,
         val weeklyLikeCount: Int,
         val weeklyRemindCount: Int,
-        val isSelf: Boolean
+        val isSelf: Boolean,
+        val weeklyDistanceKmDone: Double?,
+        val weeklyDistanceKmGoal: Double?,
+        val progressPercent: Int?
     )
 
     enum class ActionType {
@@ -466,7 +469,10 @@ class GroupFragment : Fragment() {
                         completed = info.completedThisWeek,
                         weeklyLikeCount = info.weeklyLikeCount,
                         weeklyRemindCount = info.weeklyRemindCount,
-                        isSelf = info.isSelf
+                        isSelf = info.isSelf,
+                        weeklyDistanceKmDone = info.weeklyDistanceKmDone,
+                        weeklyDistanceKmGoal = info.weeklyDistanceKmGoal,
+                        progressPercent = info.progressPercent
                     )
                 }
                 recyclerView?.adapter = MembersAdapter(mapped) { member, action -> handleMemberAction(member, action) }
@@ -552,7 +558,15 @@ class GroupFragment : Fragment() {
 
             holder.avatar.setImageResource(R.drawable.ic_profile)
             holder.name.text = member.name
-            holder.stats.text = if (member.completed) "Completed this week" else "Not completed"
+            val kmDone = member.weeklyDistanceKmDone ?: 0.0
+            val kmGoal = member.weeklyDistanceKmGoal
+            val percent = member.progressPercent
+            val statusText = if (kmGoal != null && kmGoal > 0.0 && percent != null) {
+                String.format("%.1f km / %.1f km · %d%%", kmDone, kmGoal, percent)
+            } else {
+                if (member.completed) "Completed this week" else "Not completed"
+            }
+            holder.stats.text = statusText
 
             // 决策显示交互按钮。完成周目标后可点赞，否则可督促；自己不可对自己操作
             val action = if (member.isSelf) null else if (member.completed) ActionType.LIKE else ActionType.REMIND

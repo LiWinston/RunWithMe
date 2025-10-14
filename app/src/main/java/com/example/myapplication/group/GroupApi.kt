@@ -40,7 +40,10 @@ data class GroupMemberInfo(
     val weeklyLikeCount: Int,
     val weeklyRemindCount: Int,
     val completedThisWeek: Boolean,
-    val isSelf: Boolean
+    val isSelf: Boolean,
+    val weeklyDistanceKmDone: Double?,
+    val weeklyDistanceKmGoal: Double?,
+    val progressPercent: Int?
 )
 
 data class NotificationItem(

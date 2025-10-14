@@ -6,6 +6,7 @@ import com.rwm.dto.response.ApplicationItem;
 import com.rwm.dto.response.GroupInfoResponse;
 import com.rwm.entity.*;
 import com.rwm.mapper.*;
+import com.rwm.mapper.WorkoutMapper;
 import com.rwm.service.GroupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ public class GroupServiceImpl implements GroupService {
     private final UserWeeklyContributionMapper userWeeklyContributionMapper;
     private final NotificationMapper notificationMapper;
     private final UserMapper userMapper;
+    private final WorkoutMapper workoutMapper;
 
     private LocalDate weekStartUtc(LocalDate date) {
         // Assume Monday as start
@@ -444,13 +446,44 @@ public class GroupServiceImpl implements GroupService {
             uq.eq("user_id", m.getUserId()).eq("week_start", ws);
             UserWeeklyContribution c = userWeeklyContributionMapper.selectOne(uq);
             boolean completed = c != null && Boolean.TRUE.equals(c.getIndividualCompleted());
+
+            // aggregate this week's distance from workouts
+            java.math.BigDecimal weekDistance = java.math.BigDecimal.ZERO;
+            try {
+                // Sum workouts distance for this user since week start, completed only
+                com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.rwm.entity.Workout> wq = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
+                wq.eq("user_id", m.getUserId())
+                  .ge("start_time", ws.atStartOfDay())
+                  .eq("status", "COMPLETED");
+                List<com.rwm.entity.Workout> workouts = workoutMapper.selectList(wq);
+                for (com.rwm.entity.Workout w : workouts) {
+                    if (w.getDistance() != null) weekDistance = weekDistance.add(w.getDistance());
+                }
+            } catch (Exception ex) {
+                log.warn("Failed to sum weekly distance for user {}: {}", m.getUserId(), ex.getMessage());
+            }
+
+            // fetch user's weekly goal from profile
+            Double goal = null;
+            var user = userMapper.selectById(m.getUserId());
+            if (user != null && user.getFitnessGoal() != null && user.getFitnessGoal().getWeeklyDistanceKm() != null) {
+                goal = user.getFitnessGoal().getWeeklyDistanceKm();
+            }
+            double done = weekDistance.doubleValue();
+            int percent = 0;
+            if (goal != null && goal > 0) {
+                percent = (int) Math.min(100, Math.round((done / goal) * 100));
+            }
             return new com.rwm.dto.response.GroupMemberInfo(
                     m.getUserId(),
                     name,
                     m.getWeeklyLikeCount() == null ? 0 : m.getWeeklyLikeCount(),
                     m.getWeeklyRemindCount() == null ? 0 : m.getWeeklyRemindCount(),
                     completed,
-                    Objects.equals(m.getUserId(), userId)
+                    Objects.equals(m.getUserId(), userId),
+                    done,
+                    goal,
+                    percent
             );
         }).collect(Collectors.toList());
     }
