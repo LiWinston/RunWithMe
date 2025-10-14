@@ -20,4 +20,7 @@ public interface GroupService {
 
     // mark an user weekly plan completed to contribute to group score
     void completeWeeklyPlan(Long userId);
+
+    java.util.List<com.rwm.dto.response.GroupMemberInfo> listMembers(Long userId);
+    java.util.List<com.rwm.entity.Notification> myNotifications(Long userId, int limit);
 }

@@ -428,4 +428,37 @@ public class GroupServiceImpl implements GroupService {
         stats.setTotalPoints((stats.getTotalPoints() == null ? 0 : stats.getTotalPoints()) + 15);
         groupWeeklyStatsMapper.updateById(stats);
     }
+
+    @Override
+    public List<com.rwm.dto.response.GroupMemberInfo> listMembers(Long userId) {
+        Long gid = getUserCurrentGroupId(userId);
+        if (gid == null) return List.of();
+        LocalDate ws = weekStartUtc(LocalDate.now());
+        QueryWrapper<GroupMember> mq = new QueryWrapper<>();
+        mq.eq("group_id", gid).eq("deleted", false).orderByAsc("joined_at");
+        List<GroupMember> members = groupMemberMapper.selectList(mq);
+        return members.stream().map(m -> {
+            String name = userSafeName(m.getUserId());
+            // check weekly completion
+            QueryWrapper<UserWeeklyContribution> uq = new QueryWrapper<>();
+            uq.eq("user_id", m.getUserId()).eq("week_start", ws);
+            UserWeeklyContribution c = userWeeklyContributionMapper.selectOne(uq);
+            boolean completed = c != null && Boolean.TRUE.equals(c.getIndividualCompleted());
+            return new com.rwm.dto.response.GroupMemberInfo(
+                    m.getUserId(),
+                    name,
+                    m.getWeeklyLikeCount() == null ? 0 : m.getWeeklyLikeCount(),
+                    m.getWeeklyRemindCount() == null ? 0 : m.getWeeklyRemindCount(),
+                    completed,
+                    Objects.equals(m.getUserId(), userId)
+            );
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Notification> myNotifications(Long userId, int limit) {
+        QueryWrapper<Notification> nq = new QueryWrapper<>();
+        nq.eq("user_id", userId).orderByDesc("created_at").last("LIMIT " + Math.max(1, limit));
+        return notificationMapper.selectList(nq);
+    }
 }

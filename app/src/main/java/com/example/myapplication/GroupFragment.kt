@@ -395,12 +395,7 @@ class GroupFragment : Fragment() {
             view.findViewById<ImageView>(R.id.iv_coffee)?.setImageResource(android.R.drawable.ic_menu_gallery)
         }
 
-        // 添加测试功能：点击进度卡片增加进度（用于测试优惠券功能）
-        // TODO: 在实际应用中删除此测试代码
-        view.findViewById<androidx.cardview.widget.CardView>(R.id.progress_card)?.setOnClickListener {
-            updateProgress(10) // 每次点击增加10进度
-            android.widget.Toast.makeText(context, "Progress +10 (Test Mode)", android.widget.Toast.LENGTH_SHORT).show()
-        }
+        // Coffee progress is display-only; no interactive test logic
     }
 
     /**

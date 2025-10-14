@@ -101,4 +101,17 @@ public class GroupController {
             return ResponseEntity.ok(Result.error(e.getMessage()));
         }
     }
+
+    @GetMapping("/members")
+    public ResponseEntity<Result<java.util.List<com.rwm.dto.response.GroupMemberInfo>>> members(HttpServletRequest req) {
+        var list = groupService.listMembers(currentUserId(req));
+        return ResponseEntity.ok(Result.ok(list));
+    }
+
+    @GetMapping("/notifications")
+    public ResponseEntity<Result<java.util.List<com.rwm.entity.Notification>>> notifications(HttpServletRequest req,
+                                                                                             @RequestParam(defaultValue = "20") int limit) {
+        var list = groupService.myNotifications(currentUserId(req), limit);
+        return ResponseEntity.ok(Result.ok(list));
+    }
 }
