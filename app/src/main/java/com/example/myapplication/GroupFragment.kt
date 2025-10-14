@@ -35,13 +35,12 @@ class GroupFragment : Fragment() {
     )
 
     data class Member(
-        val id: Int,
+        val userId: Long,
         val name: String,
-        val avatarRes: Int,
-        val distance: Double,
-        val percentage: Int,
-        val actionType: ActionType,
-        val actionCount: Int = 0
+        val completed: Boolean,
+        val weeklyLikeCount: Int,
+        val weeklyRemindCount: Int,
+        val isSelf: Boolean
     )
 
     enum class ActionType {
@@ -449,9 +448,34 @@ class GroupFragment : Fragment() {
     private fun setupMembersList(view: View) {
         val recyclerView = view.findViewById<RecyclerView>(R.id.members_recycler)
         recyclerView?.layoutManager = LinearLayoutManager(context)
-        recyclerView?.adapter = MembersAdapter(members) { member, action ->
-            handleMemberAction(member, action)
-        }
+        val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.group.GroupApi::class.java)
+        api.listMembers().enqueue(object: retrofit2.Callback<com.example.myapplication.group.Result<List<com.example.myapplication.group.GroupMemberInfo>>> {
+            override fun onResponse(
+                call: retrofit2.Call<com.example.myapplication.group.Result<List<com.example.myapplication.group.GroupMemberInfo>>>,
+                response: retrofit2.Response<com.example.myapplication.group.Result<List<com.example.myapplication.group.GroupMemberInfo>>>
+            ) {
+                val res = response.body()
+                val list = if (response.isSuccessful && res != null && res.code == 0 && res.data != null) res.data else emptyList()
+                val mapped = list.map { info ->
+                    Member(
+                        userId = info.userId,
+                        name = info.name,
+                        completed = info.completedThisWeek,
+                        weeklyLikeCount = info.weeklyLikeCount,
+                        weeklyRemindCount = info.weeklyRemindCount,
+                        isSelf = info.isSelf
+                    )
+                }
+                recyclerView?.adapter = MembersAdapter(mapped) { member, action -> handleMemberAction(member, action) }
+            }
+
+            override fun onFailure(
+                call: retrofit2.Call<com.example.myapplication.group.Result<List<com.example.myapplication.group.GroupMemberInfo>>>,
+                t: Throwable
+            ) {
+                recyclerView?.adapter = MembersAdapter(emptyList()) { _, _ -> }
+            }
+        })
     }
 
     private fun handleMemberAction(member: Member, action: ActionType) {
@@ -472,18 +496,24 @@ class GroupFragment : Fragment() {
                 .setTitle(title)
                 .setMessage(message)
                 .setPositiveButton("Send") { dialog, _ ->
-                    // TODO: 调用后端API发送通知
-                    // sendNotification(member.id, action)
-                    
-                    val successMsg = when (action) {
-                        ActionType.REMIND -> "Reminder sent to ${member.name}!"
-                        ActionType.LIKE -> "Liked ${member.name}'s progress!"
-                    }
-                    android.widget.Toast.makeText(
-                        context,
-                        successMsg,
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
+                    val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.group.GroupApi::class.java)
+                    val body = com.example.myapplication.group.MemberInteractBody(targetUserId = member.userId, action = action.name)
+                    api.interact(body).enqueue(object: retrofit2.Callback<com.example.myapplication.group.Result<String>>{
+                        override fun onResponse(
+                            call: retrofit2.Call<com.example.myapplication.group.Result<String>>,
+                            response: retrofit2.Response<com.example.myapplication.group.Result<String>>
+                        ) {
+                            val msg = response.body()?.message ?: "Done"
+                            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                        }
+
+                        override fun onFailure(
+                            call: retrofit2.Call<com.example.myapplication.group.Result<String>>,
+                            t: Throwable
+                        ) {
+                            android.widget.Toast.makeText(context, "Network error: ${t.message}", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    })
                     dialog.dismiss()
                 }
                 .setNegativeButton("Cancel") { dialog, _ ->
@@ -517,31 +547,29 @@ class GroupFragment : Fragment() {
         override fun onBindViewHolder(holder: MemberViewHolder, position: Int) {
             val member = members[position]
 
-            holder.avatar.setImageResource(member.avatarRes)
+            holder.avatar.setImageResource(R.drawable.ic_profile)
             holder.name.text = member.name
-            holder.stats.text = "${member.distance}km / ${member.percentage}%"
+            holder.stats.text = if (member.completed) "Completed this week" else "Not completed"
 
-            when (member.actionType) {
-                ActionType.REMIND -> {
-                    holder.actionIcon.setImageResource(R.drawable.group_remind)
-                    holder.actionText.text = "Remind"
-                    holder.actionButton.setBackgroundResource(R.drawable.btn_remind_like)
-                }
-                ActionType.LIKE -> {
+            // 决策显示交互按钮。完成周目标后可点赞，否则可督促；自己不可对自己操作
+            val action = if (member.isSelf) null else if (member.completed) ActionType.LIKE else ActionType.REMIND
+            if (action == null) {
+                holder.actionButton.visibility = View.GONE
+            } else {
+                holder.actionButton.visibility = View.VISIBLE
+                if (action == ActionType.LIKE) {
                     holder.actionIcon.setImageResource(R.drawable.group_like)
-                    val likeText = if (member.actionCount > 0) {
-                        "Like ${member.actionCount}"
-                    } else {
-                        "Like"
-                    }
+                    val likeText = if (member.weeklyLikeCount > 0) "Like ${member.weeklyLikeCount}" else "Like"
                     holder.actionText.text = likeText
-                    holder.actionButton.setBackgroundResource(R.drawable.btn_remind_like)
+                } else {
+                    holder.actionIcon.setImageResource(R.drawable.group_remind)
+                    val reminderText = if (member.weeklyRemindCount > 0) "Remind ${member.weeklyRemindCount}" else "Remind"
+                    holder.actionText.text = reminderText
                 }
+                holder.actionButton.setBackgroundResource(R.drawable.btn_remind_like)
+                holder.actionButton.setOnClickListener { onActionClick(member, action) }
             }
 
-            holder.actionButton.setOnClickListener {
-                onActionClick(member, member.actionType)
-            }
         }
 
         override fun getItemCount() = members.size
