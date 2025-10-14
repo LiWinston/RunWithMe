@@ -1,18 +1,8 @@
 package com.example.myapplication.record
 
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import com.example.myapplication.landr.RetrofitClient
 
 object RetrofitClient {
-    private const val BASE_URL = "http://10.0.2.2:8080"
-    // ⚠️ 注意：如果你后端在自己电脑本地跑的 http://localhost:8080，
-    // 在 Android 模拟器中要写成 http://10.0.2.2:8080
-
-    val api: RecordApi by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(RecordApi::class.java)
-    }
+    // 复用带鉴权的 Retrofit 实例，确保所有记录/历史接口携带 Bearer token
+    val api: RecordApi by lazy { RetrofitClient.create(RecordApi::class.java) }
 }

@@ -83,12 +83,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private fun initializeComponents() {
         weatherWidget = requireView().findViewById(R.id.weather_card)
 
-        val retrofit = Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        val apiService = retrofit.create(WeatherApiService::class.java)
+        val apiService = com.example.myapplication.landr.RetrofitClient.create(WeatherApiService::class.java)
         weatherRepository = WeatherRepository(apiService)
     }
     

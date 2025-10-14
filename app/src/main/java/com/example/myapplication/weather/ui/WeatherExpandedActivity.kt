@@ -93,13 +93,8 @@ class WeatherExpandedActivity : AppCompatActivity() {
         heatIndexValue = findViewById(R.id.heat_index_value_expanded)
         hourlyForecastRecycler = findViewById(R.id.hourly_forecast_recycler)
 
-        // 初始化Repository
-        val retrofit = Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        val apiService = retrofit.create(WeatherApiService::class.java)
+        // 初始化Repository：复用带鉴权的统一 Retrofit
+        val apiService = com.example.myapplication.landr.RetrofitClient.create(WeatherApiService::class.java)
         weatherRepository = WeatherRepository(apiService)
 
         // 设置每小时预报RecyclerView

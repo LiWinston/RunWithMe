@@ -22,8 +22,12 @@ object RetrofitClient {
         val accessToken = tokenManager.getAccessToken()
 
         // 如果没有 token 或者是登录/注册请求，直接发送原始请求
-        if (accessToken == null || originalRequest.url.encodedPath.contains("/auth/login") 
-            || originalRequest.url.encodedPath.contains("/auth/register")) {
+        if (
+            accessToken == null ||
+            originalRequest.url.encodedPath.contains("/auth/login") ||
+            originalRequest.url.encodedPath.contains("/auth/register") ||
+            originalRequest.url.encodedPath.contains("/auth/refresh")
+        ) {
             return@Interceptor chain.proceed(originalRequest)
         }
 
@@ -46,7 +50,8 @@ object RetrofitClient {
                         api.refreshToken("Bearer $refreshToken")
                     }
                     
-                    if (refreshResponse.isSuccessful && refreshResponse.body()?.status == 1) {
+                    // 后端约定：code == 0 表示成功
+                    if (refreshResponse.isSuccessful && refreshResponse.body()?.status == 0) {
                         val loginData = refreshResponse.body()?.data
                         if (loginData != null) {
                             // 保存新的 tokens
