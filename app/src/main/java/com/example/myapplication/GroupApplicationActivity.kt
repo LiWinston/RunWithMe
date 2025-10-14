@@ -60,37 +60,47 @@ class GroupApplicationActivity : AppCompatActivity() {
     }
 
     private fun initMockData() {
-        // Mock received applications
-        receivedApplications = mutableListOf(
-            Application(
-                id = "app1",
-                userId = "user1",
-                userName = "Alice",
-                userAvatar = R.drawable.ic_profile,
-                groupId = "group1",
-                groupName = "My Running Group",
-                timestamp = System.currentTimeMillis() - 3600000,
-                status = ApplicationStatus.PENDING,
-                type = ApplicationType.RECEIVED
-            ),
-            Application(
-                id = "app2",
-                userId = "user2",
-                userName = "Bob",
-                userAvatar = R.drawable.ic_profile,
-                groupId = "group1",
-                groupName = "My Running Group",
-                timestamp = System.currentTimeMillis() - 7200000,
-                status = ApplicationStatus.PENDING,
-                type = ApplicationType.RECEIVED
-            )
-        )
+        receivedApplications = mutableListOf()
+        val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.group.GroupApi::class.java)
+        api.receivedApplications().enqueue(object: retrofit2.Callback<com.example.myapplication.group.Result<List<com.example.myapplication.group.ApplicationItem>>> {
+            override fun onResponse(
+                call: retrofit2.Call<com.example.myapplication.group.Result<List<com.example.myapplication.group.ApplicationItem>>>,
+                response: retrofit2.Response<com.example.myapplication.group.Result<List<com.example.myapplication.group.ApplicationItem>>>
+            ) {
+                val res = response.body()
+                if (response.isSuccessful && res != null && res.code == 0 && res.data != null) {
+                    val mapped = res.data.map {
+                        Application(
+                            id = it.id.toString(),
+                            userId = it.userId.toString(),
+                            userName = it.userName,
+                            userAvatar = R.drawable.ic_profile,
+                            groupId = it.groupId.toString(),
+                            groupName = it.groupName,
+                            timestamp = it.timestamp,
+                            status = when (it.status) {
+                                "APPROVED" -> ApplicationStatus.APPROVED
+                                "REJECTED" -> ApplicationStatus.REJECTED
+                                else -> ApplicationStatus.PENDING
+                            },
+                            type = ApplicationType.RECEIVED
+                        )
+                    }
+                    receivedApplications.clear()
+                    receivedApplications.addAll(mapped)
+                    updateDisplay()
+                } else {
+                    updateDisplay()
+                }
+            }
 
-        // Removed Sent mock data
-
-        // TODO: 从数据库获取真实数据
-        // receivedApplications = fetchReceivedApplications()
-        // sentApplications = fetchSentApplications()
+            override fun onFailure(
+                call: retrofit2.Call<com.example.myapplication.group.Result<List<com.example.myapplication.group.ApplicationItem>>>,
+                t: Throwable
+            ) {
+                updateDisplay()
+            }
+        })
     }
 
     private fun initViews() {
@@ -142,19 +152,55 @@ class GroupApplicationActivity : AppCompatActivity() {
     }
 
     private fun approveApplication(application: Application) {
-        // TODO: 调用数据库API批准申请
-        Toast.makeText(this, "Approved ${application.userName}", Toast.LENGTH_SHORT).show()
-        
-        application.status = ApplicationStatus.APPROVED
-        updateDisplay()
+        val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.group.GroupApi::class.java)
+        val body = com.example.myapplication.group.ModerateBody(applicationId = application.id.toLong(), approve = true, reason = null)
+        api.moderate(body).enqueue(object: retrofit2.Callback<com.example.myapplication.group.Result<String>> {
+            override fun onResponse(
+                call: retrofit2.Call<com.example.myapplication.group.Result<String>>,
+                response: retrofit2.Response<com.example.myapplication.group.Result<String>>
+            ) {
+                if (response.isSuccessful && response.body()?.code == 0) {
+                    Toast.makeText(this@GroupApplicationActivity, "Approved ${application.userName}", Toast.LENGTH_SHORT).show()
+                    application.status = ApplicationStatus.APPROVED
+                    updateDisplay()
+                } else {
+                    Toast.makeText(this@GroupApplicationActivity, response.body()?.message ?: "Failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(
+                call: retrofit2.Call<com.example.myapplication.group.Result<String>>,
+                t: Throwable
+            ) {
+                Toast.makeText(this@GroupApplicationActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 
     private fun rejectApplication(application: Application) {
-        // TODO: 调用数据库API拒绝申请
-        Toast.makeText(this, "Rejected ${application.userName}", Toast.LENGTH_SHORT).show()
-        
-        application.status = ApplicationStatus.REJECTED
-        updateDisplay()
+        val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.group.GroupApi::class.java)
+        val body = com.example.myapplication.group.ModerateBody(applicationId = application.id.toLong(), approve = false, reason = null)
+        api.moderate(body).enqueue(object: retrofit2.Callback<com.example.myapplication.group.Result<String>> {
+            override fun onResponse(
+                call: retrofit2.Call<com.example.myapplication.group.Result<String>>,
+                response: retrofit2.Response<com.example.myapplication.group.Result<String>>
+            ) {
+                if (response.isSuccessful && response.body()?.code == 0) {
+                    Toast.makeText(this@GroupApplicationActivity, "Rejected ${application.userName}", Toast.LENGTH_SHORT).show()
+                    application.status = ApplicationStatus.REJECTED
+                    updateDisplay()
+                } else {
+                    Toast.makeText(this@GroupApplicationActivity, response.body()?.message ?: "Failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(
+                call: retrofit2.Call<com.example.myapplication.group.Result<String>>,
+                t: Throwable
+            ) {
+                Toast.makeText(this@GroupApplicationActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 
     // RecyclerView Adapter

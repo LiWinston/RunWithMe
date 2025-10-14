@@ -11,6 +11,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 object RetrofitClient {
     private const val BASE_URL = "http://10.0.2.2:8080/"
     private lateinit var tokenManager: TokenManager
+    private var retrofitInstance: Retrofit? = null
 
     fun init(context: Context) {
         tokenManager = TokenManager.getInstance(context)
@@ -75,12 +76,19 @@ object RetrofitClient {
         .addInterceptor(authInterceptor)
         .build()
 
-    val api: ApiService by lazy {
-        Retrofit.Builder()
+    private fun retrofit(): Retrofit {
+        val cached = retrofitInstance
+        if (cached != null) return cached
+        val created = Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(ApiService::class.java)
+        retrofitInstance = created
+        return created
     }
+
+    val api: ApiService by lazy { retrofit().create(ApiService::class.java) }
+
+    fun <T> create(service: Class<T>): T = retrofit().create(service)
 }

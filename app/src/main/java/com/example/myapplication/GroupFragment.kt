@@ -48,10 +48,9 @@ class GroupFragment : Fragment() {
         REMIND, LIKE
     }
 
-    // Mock data
+    // Live data holders
     private var groupInfo: GroupInfo? = null
-    private lateinit var members: List<Member>
-    private var hasGroup: Boolean = false // 用户是否已有group
+    private var hasGroup: Boolean = false
     
     // Activity result launchers
     private val createGroupLauncher = registerForActivityResult(
@@ -109,10 +108,8 @@ class GroupFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 初始化 mock data
-        initMockData()
-
-        // 设置UI
+        // 初始化
+        fetchMyGroupAndRender(view)
         setupUI(view)
     }
     
@@ -133,73 +130,44 @@ class GroupFragment : Fragment() {
         }
     }
 
-    private fun initMockData() {
-        // TODO: 从数据库检查用户是否已有group
-        // hasGroup = checkUserHasGroup()
-        
-        // Mock: 假设用户已有group
-        hasGroup = true
-        
-        // Mock group info
-        groupInfo = GroupInfo(
-            id = "group_mock_123",
-            name = "Group Name",
-            week = 12,
-            score = 120,
-            weeklyProgress = 2,
-            weeklyGoal = 5,
-            waterDrops = 40,
-            progressScore = 95,  // TODO: 从数据库获取，范围 0-100
-            couponCount = 2,     // TODO: 从数据库获取
-            memberCount = 5      // 当前有5个成员
-        )
+    private fun fetchMyGroupAndRender(root: View) {
+        val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.group.GroupApi::class.java)
+        api.myGroup().enqueue(object: retrofit2.Callback<com.example.myapplication.group.Result<com.example.myapplication.group.GroupInfo>> {
+            override fun onResponse(
+                call: retrofit2.Call<com.example.myapplication.group.Result<com.example.myapplication.group.GroupInfo>>,
+                response: retrofit2.Response<com.example.myapplication.group.Result<com.example.myapplication.group.GroupInfo>>
+            ) {
+                val res = response.body()
+                if (response.isSuccessful && res != null && res.code == 0 && res.data != null) {
+                    hasGroup = true
+                    groupInfo = GroupInfo(
+                        id = res.data.id.toString(),
+                        name = res.data.name,
+                        week = res.data.week ?: 0,
+                        score = res.data.score ?: 0,
+                        weeklyProgress = res.data.weeklyProgress ?: 0,
+                        weeklyGoal = res.data.weeklyGoal ?: 0,
+                        waterDrops = 0,
+                        progressScore = res.data.weeklyProgress ?: 0,
+                        couponCount = res.data.couponCount ?: 0,
+                        memberCount = res.data.memberCount ?: 1
+                    )
+                } else {
+                    hasGroup = false
+                    groupInfo = null
+                }
+                setupUI(root)
+            }
 
-        // Mock members
-        members = listOf(
-            Member(
-                id = 1,
-                name = "Siyu",
-                avatarRes = R.drawable.ic_profile,
-                distance = 8.9,
-                percentage = 60,
-                actionType = ActionType.REMIND
-            ),
-            Member(
-                id = 2,
-                name = "Michelle",
-                avatarRes = R.drawable.ic_profile,
-                distance = 18.0,
-                percentage = 100,
-                actionType = ActionType.LIKE,
-                actionCount = 3
-            ),
-            Member(
-                id = 3,
-                name = "Yongchun",
-                avatarRes = R.drawable.ic_profile,
-                distance = 20.1,
-                percentage = 100,
-                actionType = ActionType.LIKE,
-                actionCount = 4
-            ),
-            Member(
-                id = 4,
-                name = "Wenji",
-                avatarRes = R.drawable.ic_profile,
-                distance = 18.6,
-                percentage = 90,
-                actionType = ActionType.REMIND
-            ),
-            Member(
-                id = 5,
-                name = "Xiang",
-                avatarRes = R.drawable.ic_profile,
-                distance = 15.3,
-                percentage = 85,
-                actionType = ActionType.LIKE,
-                actionCount = 2
-            )
-        )
+            override fun onFailure(
+                call: retrofit2.Call<com.example.myapplication.group.Result<com.example.myapplication.group.GroupInfo>>,
+                t: Throwable
+            ) {
+                hasGroup = false
+                groupInfo = null
+                setupUI(root)
+            }
+        })
     }
 
     private fun setupTopBar(view: View) {
@@ -217,12 +185,7 @@ class GroupFragment : Fragment() {
         view.findViewById<androidx.cardview.widget.CardView>(R.id.progress_card)?.visibility = View.GONE
         view.findViewById<androidx.cardview.widget.CardView>(R.id.members_card)?.visibility = View.GONE
         
-        // TODO: 添加一个"创建或加入Group"的提示视图
-        android.widget.Toast.makeText(
-            context,
-            "You don't have a group yet. Please create or join one!",
-            android.widget.Toast.LENGTH_LONG
-        ).show()
+        // TODO: 可以放置一个提示视图或按钮
     }
 
     private fun showGroupMenu(anchor: View) {
@@ -340,15 +303,25 @@ class GroupFragment : Fragment() {
             .setTitle("Leave Group")
             .setMessage("Are you sure you want to leave this group?")
             .setPositiveButton("Yes") { dialog, _ ->
-                // TODO: 调用数据库API离开group
-                hasGroup = false
-                groupInfo = null
-                view?.let { setupUI(it) }
-                android.widget.Toast.makeText(
-                    context,
-                    "Left group successfully",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
+                val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.group.GroupApi::class.java)
+                api.leave().enqueue(object: retrofit2.Callback<com.example.myapplication.group.Result<String>>{
+                    override fun onResponse(
+                        call: retrofit2.Call<com.example.myapplication.group.Result<String>>,
+                        response: retrofit2.Response<com.example.myapplication.group.Result<String>>
+                    ) {
+                        hasGroup = false
+                        groupInfo = null
+                        view?.let { setupUI(it) }
+                        android.widget.Toast.makeText(context, response.body()?.message ?: "Left group", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+
+                    override fun onFailure(
+                        call: retrofit2.Call<com.example.myapplication.group.Result<String>>,
+                        t: Throwable
+                    ) {
+                        android.widget.Toast.makeText(context, "Network error: ${t.message}", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                })
                 dialog.dismiss()
             }
             .setNegativeButton("No") { dialog, _ ->
@@ -369,8 +342,8 @@ class GroupFragment : Fragment() {
         // 检查是否达到100，如果达到则清零并增加优惠券
         checkProgressMilestone()
 
-        // Progress text - 显示 "Weekly Progress" + progressScore
-        val progressText = "Weekly Progress ${info.progressScore}"
+    // Progress text - 显示 "Weekly Progress" + progressScore
+    val progressText = "Weekly Progress ${info.progressScore}"
         view.findViewById<TextView>(R.id.tv_progress)?.text = progressText
 
         // Progress bar - 显示 progressScore/100 的比例
