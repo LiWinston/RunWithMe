@@ -15,6 +15,7 @@ import com.example.myapplication.landr.RetrofitClient
 import com.example.myapplication.landr.loginapp.LoginActivity
 import com.example.myapplication.R
 import com.example.myapplication.landr.registerapp.models.RegisterRequest
+import com.example.myapplication.landr.registerapp.models.FitnessGoal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -114,7 +115,7 @@ class RegisterActivity : AppCompatActivity() {
         val phoneNumber = phoneEt.text.toString().trim()
         val heightText = heightEt.text.toString().trim()
         val weightText = weightEt.text.toString().trim()
-        val fitnessGoal = fitnessGoalEt.text.toString().trim()
+    val fitnessGoalText = fitnessGoalEt.text.toString().trim()
 
         // 验证必填字段
         if (username.isEmpty()) {
@@ -170,7 +171,8 @@ class RegisterActivity : AppCompatActivity() {
             phoneNumber = if (phoneNumber.isNotEmpty()) phoneNumber else null,
             height = height,
             weight = weight,
-            fitnessGoal = if (fitnessGoal.isNotEmpty()) fitnessGoal else null,
+            // Interpret the single field as weeklyDistanceKm for now
+            fitnessGoal = fitnessGoalText.toDoubleOrNull()?.let { FitnessGoal(weeklyDistanceKm = it) },
             fitnessLevel = fitnessLevel,
             weeklyAvailability = null
         )

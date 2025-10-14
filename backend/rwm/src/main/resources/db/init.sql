@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS workouts (
 DROP TABLE IF EXISTS workout_routes;
 
 -- 群组表
-CREATE TABLE IF NOT EXISTS groups (
+CREATE TABLE IF NOT EXISTS `groups` (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     owner_id BIGINT NOT NULL,
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS groups (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='群组表';
 
 -- 群组成员表
-CREATE TABLE IF NOT EXISTS group_members (
+CREATE TABLE IF NOT EXISTS `group_members` (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     group_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS group_members (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='群组成员表';
 
 -- 入群申请表
-CREATE TABLE IF NOT EXISTS group_join_applications (
+CREATE TABLE IF NOT EXISTS `group_join_applications` (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     group_id BIGINT NOT NULL,
     applicant_user_id BIGINT NOT NULL,
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS group_join_applications (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='入群申请表';
 
 -- 群组每周统计
-CREATE TABLE IF NOT EXISTS group_weekly_stats (
+CREATE TABLE IF NOT EXISTS `group_weekly_stats` (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     group_id BIGINT NOT NULL,
     week_start DATE NOT NULL,
@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS group_weekly_stats (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='群组每周统计';
 
 -- 用户每周贡献约束（防刷分）
-CREATE TABLE IF NOT EXISTS user_weekly_contributions (
+CREATE TABLE IF NOT EXISTS `user_weekly_contributions` (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
     group_id BIGINT NOT NULL,
@@ -158,7 +158,7 @@ CREATE TABLE IF NOT EXISTS user_weekly_contributions (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户每周贡献约束';
 
 -- 通知表
-CREATE TABLE IF NOT EXISTS notifications (
+CREATE TABLE IF NOT EXISTS `notifications` (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
     type VARCHAR(30) NOT NULL,

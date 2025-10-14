@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("user_weekly_contributions")
+@TableName("`user_weekly_contributions`")
 public class UserWeeklyContribution {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;

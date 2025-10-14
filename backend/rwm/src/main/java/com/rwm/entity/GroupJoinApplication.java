@@ -6,7 +6,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("group_join_applications")
+@TableName("`group_join_applications`")
 public class GroupJoinApplication {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;

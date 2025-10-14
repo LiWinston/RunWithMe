@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("group_weekly_stats")
+@TableName("`group_weekly_stats`")
 public class GroupWeeklyStats {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
