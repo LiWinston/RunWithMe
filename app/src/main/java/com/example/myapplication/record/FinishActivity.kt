@@ -3,6 +3,7 @@ package com.example.myapplication.record
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -25,11 +26,13 @@ class FinishActivity : AppCompatActivity() {
         val tvDistance = findViewById<TextView>(R.id.tvDistance)
         val tvDuration = findViewById<TextView>(R.id.tvDuration)
         val tvCalories = findViewById<TextView>(R.id.tvCalories)
-        val tvSpeed = findViewById<TextView>(R.id.tvPace)  // 用 speed 填 pace 的格子
+        val tvSpeed = findViewById<TextView>(R.id.tvPace)  // Use speed to fill pace field
+        val tvSteps = findViewById<TextView>(R.id.tvSteps)
         val tvWorkoutType = findViewById<TextView>(R.id.tvWorkoutType)
+        val ivWorkoutIcon = findViewById<ImageView>(R.id.ivWorkoutIcon)
         val btnDone = findViewById<Button>(R.id.btnDone)
 
-        // 取出传递过来的数据
+        // Get passed data
         val distance = intent.getStringExtra("distance") ?: "0.00 m"
         val duration = intent.getStringExtra("duration") ?: "00:00:00"
         val calories = intent.getStringExtra("calories") ?: "0 kcal"
@@ -39,20 +42,51 @@ class FinishActivity : AppCompatActivity() {
         tvDistance.text = distance
         tvDuration.text = duration
         tvCalories.text = calories
-        tvSpeed.text = speed  // 直接显示速度
-        tvWorkoutType.text = workoutType
+        tvSpeed.text = speed  // Display speed directly
+        
+        // Display steps from ViewModel
+        val steps = workoutViewModel.steps.value ?: 0
+        tvSteps.text = steps.toString()
+        
+        // Set workout type and corresponding icon
+        when (workoutType) {
+            "Walking" -> {
+                tvWorkoutType.text = "Walking"
+                ivWorkoutIcon.setImageResource(R.drawable.walking)
+            }
+            "Brisk Walking" -> {
+                tvWorkoutType.text = "Brisk Walking"
+                ivWorkoutIcon.setImageResource(R.drawable.walking)
+            }
+            "Jogging" -> {
+                tvWorkoutType.text = "Jogging"
+                ivWorkoutIcon.setImageResource(R.drawable.jogging)
+            }
+            "Running" -> {
+                tvWorkoutType.text = "Running"
+                ivWorkoutIcon.setImageResource(R.drawable.running)
+            }
+            "Fast Running" -> {
+                tvWorkoutType.text = "Fast Running"
+                ivWorkoutIcon.setImageResource(R.drawable.running)
+            }
+            else -> {
+                tvWorkoutType.text = workoutType
+                ivWorkoutIcon.setImageResource(R.drawable.jogging) // Default to jogging icon
+            }
+        }
 
         btnDone.setOnClickListener {
-            // 暂时注释掉数据库操作，待异步处理
+            // Save workout to database (asynchronous)
             saveWorkoutToDatabase()
 
-            // 直接返回到主页面
+            // Navigate back to home page
             navigateBackToStart()
         }
     }
 
     /**
-     * 保存运动记录到数据库（暂时 mute，待异步处理）
+     * Save workout record to database (asynchronous processing)
      */
     private fun saveWorkoutToDatabase() {
         val distance = intent.getStringExtra("distance") ?: "0.00 m"
@@ -97,30 +131,30 @@ class FinishActivity : AppCompatActivity() {
                     if (response.isSuccessful && response.body()?.code == 0) {
                         val workoutId = response.body()?.data?.id
 
-                        // 显示保存成功信息（JSON数据已经一次性保存）
+                        // Show save success message (JSON data saved in one go)
                         if (workoutId != null) {
                             showSaveSuccess(workoutId)
                         } else {
-                            Toast.makeText(this@FinishActivity, "运动记录保存成功！", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@FinishActivity, "Workout saved successfully!", Toast.LENGTH_SHORT).show()
                         }
                     } else {
-                        val errorMsg = response.body()?.message ?: "保存失败"
+                        val errorMsg = response.body()?.message ?: "Save failed"
                         Toast.makeText(this@FinishActivity, errorMsg, Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    Toast.makeText(this@FinishActivity, "网络错误: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@FinishActivity, "Network error: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
     }
 
     /**
-     * 返回到主页面
+     * Navigate back to main page
      */
     private fun navigateBackToStart() {
-        // 清空任务栈，回到主页面
+        // Clear task stack and return to main page
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
@@ -128,7 +162,7 @@ class FinishActivity : AppCompatActivity() {
         finish()
     }
 
-    // 辅助函数 - 解析距离字符串
+    // Helper function - parse distance string
     private fun parseDistance(distanceStr: String): Double? {
         return try {
             val regex = Regex("""(\d+\.?\d*)\s*(m|km)""")
@@ -137,7 +171,7 @@ class FinishActivity : AppCompatActivity() {
                 val value = matchResult.groupValues[1].toDouble()
                 val unit = matchResult.groupValues[2]
                 when (unit) {
-                    "km" -> value * 1000.0   // km 转换为 m
+                    "km" -> value * 1000.0   // Convert km to m
                     "m" -> value
                     else -> value
                 }
@@ -150,7 +184,7 @@ class FinishActivity : AppCompatActivity() {
     }
 
 
-    // 辅助函数 - 解析时长字符串 (如 "01:23:45" -> 5025 秒)
+    // Helper function - parse duration string (e.g. "01:23:45" -> 5025 seconds)
     private fun parseDuration(durationStr: String): Int? {
         return try {
             val parts = durationStr.split(":")
@@ -167,7 +201,7 @@ class FinishActivity : AppCompatActivity() {
         }
     }
 
-    // 辅助函数 - 解析卡路里字符串 (如 "120 kcal" -> 120.0)
+    // Helper function - parse calories string (e.g. "120 kcal" -> 120.0)
     private fun parseCalories(caloriesStr: String): Double? {
         return try {
             val regex = Regex("""(\d+\.?\d*)\s*kcal""")
@@ -178,7 +212,7 @@ class FinishActivity : AppCompatActivity() {
         }
     }
 
-    // 辅助函数 - 解析速度字符串 (如 "5.2 mph" -> m/s)
+    // Helper function - parse speed string (e.g. "5.2 mph" -> m/s)
     private fun parseSpeed(speedStr: String): Double? {
         return try {
             val regex = Regex("""(\d+\.?\d*)\s*(m/s|mps)""")
@@ -195,7 +229,7 @@ class FinishActivity : AppCompatActivity() {
     }
 
 
-    // 辅助函数 - 计算平均配速 (秒/米)
+    // Helper function - calculate average pace (seconds/meter)
     private fun calculateAvgPace(distance: Double?, duration: Int?): Int? {
         return if (distance != null && duration != null && distance > 0) {
             (duration / distance).toInt()
@@ -204,15 +238,15 @@ class FinishActivity : AppCompatActivity() {
         }
     }
 
-    // 辅助函数 - 检查目标达成 (距离>=1km 或 时长>=15分钟)
+    // Helper function - check goal achievement (distance>=1km or duration>=15min)
     private fun checkGoalAchievement(distance: Double?, duration: Int?): Boolean {
-        val distanceGoal = distance != null && distance >= 1000.0 // 1000米 = 1km
-        val durationGoal = duration != null && duration >= 900 // 15分钟
+        val distanceGoal = distance != null && distance >= 1000.0 // 1000m = 1km
+        val durationGoal = duration != null && duration >= 900 // 15 minutes
         return distanceGoal || durationGoal
     }
 
 
-    // 显示保存成功信息
+    // Show save success message
     private fun showSaveSuccess(workoutId: Long) {
         val dynamicData = workoutViewModel.getWorkoutDynamicData()
         val totalDataPoints = dynamicData.route.size +
@@ -224,26 +258,26 @@ class FinishActivity : AppCompatActivity() {
 
         if (totalDataPoints > 0) {
             Toast.makeText(this@FinishActivity,
-                "运动记录保存成功！包含${totalDataPoints}个数据点", Toast.LENGTH_LONG).show()
+                "Workout saved successfully! Contains ${totalDataPoints} data points", Toast.LENGTH_LONG).show()
         } else {
-            Toast.makeText(this@FinishActivity, "运动记录保存成功！", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@FinishActivity, "Workout saved successfully!", Toast.LENGTH_SHORT).show()
         }
     }
 }
 
-// 前端用来传输数据的实体 - 适配新的后端结构
+// Frontend data transfer entity - adapted for new backend structure
 data class WorkoutCreateRequest(
     val userId: Long,
     val workoutType: String = "OUTDOOR_RUN",
     val distance: Double?,
-    val duration: Int?, // 秒
+    val duration: Int?, // seconds
     val steps: Int?,
     val calories: Double?,
     val avgSpeed: Double?,
     val avgPace: Int?,
     val avgHeartRate: Int?,
     val maxHeartRate: Int?,
-    val startTime: String, // ISO格式时间
+    val startTime: String, // ISO format time
     val endTime: String?,
     val status: String = "COMPLETED",
     val visibility: String = "PRIVATE",
@@ -252,12 +286,12 @@ data class WorkoutCreateRequest(
     val notes: String? = null,
     val weatherCondition: String? = null,
     val temperature: Double? = null,
-    val latitude: Double? = null, // 纬度
-    val longitude: Double? = null, // 经度
-    val workoutData: WorkoutDynamicData? = null // JSON动态数据
+    val latitude: Double? = null, // Latitude
+    val longitude: Double? = null, // Longitude
+    val workoutData: WorkoutDynamicData? = null // JSON dynamic data
 )
 
-// API响应包装
+// API response wrapper
 data class ApiResponse<T>(
     val code: Int,
     val message: String,

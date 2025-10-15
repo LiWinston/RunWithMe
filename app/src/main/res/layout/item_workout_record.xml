@@ -17,7 +17,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginBottom="12dp">
+        android:layout_marginBottom="12dp"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/ivWorkoutIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/running"
+            android:contentDescription="Workout Icon"
+            android:layout_marginEnd="8dp" />
 
         <TextView
             android:id="@+id/tvWorkoutType"
