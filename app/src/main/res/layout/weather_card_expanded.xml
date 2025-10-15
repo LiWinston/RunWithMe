@@ -32,7 +32,7 @@
                 android:id="@+id/location_text_expanded"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="墨尔本, 卡尔顿"
+                android:text="Melbourne, Carlton"
                 android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -42,7 +42,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="晴朗，适合户外运动"
+                android:text="Clear, perfect for outdoor activities"
                 android:textColor="#666666"
                 android:textSize="14sp" />
 
@@ -67,7 +67,7 @@
         android:columnCount="2"
         android:rowCount="6">
 
-        <!-- 湿度 -->
+        <!-- Humidity -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -78,7 +78,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="湿度"
+                android:text="Humidity"
                 android:textColor="#666666"
                 android:textSize="12sp" />
 
@@ -94,7 +94,7 @@
 
         </LinearLayout>
 
-        <!-- 体感温度 -->
+        <!-- Feels Like -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -105,7 +105,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="体感温度"
+                android:text="Feels Like"
                 android:textColor="#666666"
                 android:textSize="12sp" />
 
@@ -121,7 +121,7 @@
 
         </LinearLayout>
 
-        <!-- 风速 -->
+        <!-- Wind Speed -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -132,7 +132,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="风速"
+                android:text="Wind Speed"
                 android:textColor="#666666"
                 android:textSize="12sp" />
 
@@ -141,14 +141,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="12 km/h 北"
+                android:text="12 km/h N"
                 android:textColor="@android:color/black"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
         </LinearLayout>
 
-        <!-- 阵风 -->
+        <!-- Wind Gust -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -159,7 +159,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="阵风"
+                android:text="Wind Gust"
                 android:textColor="#666666"
                 android:textSize="12sp" />
 
@@ -175,7 +175,7 @@
 
         </LinearLayout>
 
-        <!-- 气压 -->
+        <!-- Pressure -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -186,7 +186,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="气压"
+                android:text="Pressure"
                 android:textColor="#666666"
                 android:textSize="12sp" />
 
@@ -202,7 +202,7 @@
 
         </LinearLayout>
 
-        <!-- 能见度 -->
+        <!-- Visibility -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -213,7 +213,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="能见度"
+                android:text="Visibility"
                 android:textColor="#666666"
                 android:textSize="12sp" />
 
@@ -229,7 +229,7 @@
 
         </LinearLayout>
 
-        <!-- UV指数 -->
+        <!-- UV Index -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -240,7 +240,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="UV指数"
+                android:text="UV Index"
                 android:textColor="#666666"
                 android:textSize="12sp" />
 
@@ -249,14 +249,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="5 中等"
+                android:text="5 Moderate"
                 android:textColor="@android:color/black"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
         </LinearLayout>
 
-        <!-- 露点 -->
+        <!-- Dew Point -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -267,7 +267,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="露点"
+                android:text="Dew Point"
                 android:textColor="#666666"
                 android:textSize="12sp" />
 
@@ -283,7 +283,7 @@
 
         </LinearLayout>
 
-        <!-- 风寒指数 -->
+        <!-- Wind Chill -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -294,7 +294,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="风寒指数"
+                android:text="Wind Chill"
                 android:textColor="#666666"
                 android:textSize="12sp" />
 
@@ -310,7 +310,7 @@
 
         </LinearLayout>
 
-        <!-- 暑热指数 -->
+        <!-- Heat Index -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -321,7 +321,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="暑热指数"
+                android:text="Heat Index"
                 android:textColor="#666666"
                 android:textSize="12sp" />
 
@@ -339,7 +339,7 @@
 
     </GridLayout>
 
-    <!-- 每小时预报 -->
+    <!-- Hourly Forecast -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -349,7 +349,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="今日每小时预报"
+            android:text="Hourly Forecast"
             android:textColor="@android:color/black"
             android:textSize="16sp"
             android:textStyle="bold" />
