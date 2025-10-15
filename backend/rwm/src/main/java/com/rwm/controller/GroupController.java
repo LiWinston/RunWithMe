@@ -28,13 +28,8 @@ public class GroupController {
 
     @PostMapping("/create")
     public ResponseEntity<Result<Group>> create(HttpServletRequest req, @Valid @RequestBody GroupCreateRequest body) {
-        try {
-            Group g = groupService.createGroup(currentUserId(req), body);
-            return ResponseEntity.ok(Result.ok("Group created", g));
-        } catch (Exception e) {
-            log.error("Create group failed", e);
-            return ResponseEntity.ok(Result.error(e.getMessage()));
-        }
+        Group g = groupService.createGroup(currentUserId(req), body);
+        return ResponseEntity.ok(Result.ok("Group created", g));
     }
 
     @GetMapping("/me")
@@ -45,25 +40,17 @@ public class GroupController {
 
     @PostMapping("/leave")
     public ResponseEntity<Result<String>> leave(HttpServletRequest req) {
-        try {
-            groupService.leaveGroup(currentUserId(req));
-            return ResponseEntity.ok(Result.ok("Left group"));
-        } catch (Exception e) {
-            return ResponseEntity.ok(Result.error(e.getMessage()));
-        }
+        groupService.leaveGroup(currentUserId(req));
+        return ResponseEntity.ok(Result.ok("Left group"));
     }
 
     @PostMapping("/join")
     public ResponseEntity<Result<Object>> requestJoin(HttpServletRequest req, @Valid @RequestBody GroupJoinRequest body) {
-        try {
-            GroupJoinApplication app = groupService.requestJoin(currentUserId(req), body);
-            if (app == null) {
-                return ResponseEntity.ok(Result.ok("Joined directly"));
-            }
-            return ResponseEntity.ok(Result.ok("Join requested", app));
-        } catch (Exception e) {
-            return ResponseEntity.ok(Result.error(e.getMessage()));
+        GroupJoinApplication app = groupService.requestJoin(currentUserId(req), body);
+        if (app == null) {
+            return ResponseEntity.ok(Result.ok("Joined directly"));
         }
+        return ResponseEntity.ok(Result.ok("Join requested", app));
     }
 
     @GetMapping("/applications/received")
@@ -74,32 +61,20 @@ public class GroupController {
 
     @PostMapping("/applications/moderate")
     public ResponseEntity<Result<String>> moderate(HttpServletRequest req, @Valid @RequestBody ModerateApplicationRequest body) {
-        try {
-            groupService.moderateApplication(currentUserId(req), body.getApplicationId(), body.getApprove(), body.getReason());
-            return ResponseEntity.ok(Result.ok("Processed"));
-        } catch (Exception e) {
-            return ResponseEntity.ok(Result.error(e.getMessage()));
-        }
+        groupService.moderateApplication(currentUserId(req), body.getApplicationId(), body.getApprove(), body.getReason());
+        return ResponseEntity.ok(Result.ok("Processed"));
     }
 
     @PostMapping("/members/interact")
     public ResponseEntity<Result<String>> interact(HttpServletRequest req, @Valid @RequestBody MemberInteractRequest body) {
-        try {
-            groupService.likeOrRemind(currentUserId(req), body.getTargetUserId(), body.getAction());
-            return ResponseEntity.ok(Result.ok("Done"));
-        } catch (Exception e) {
-            return ResponseEntity.ok(Result.error(e.getMessage()));
-        }
+        groupService.likeOrRemind(currentUserId(req), body.getTargetUserId(), body.getAction());
+        return ResponseEntity.ok(Result.ok("Done"));
     }
 
     @PostMapping("/weekly/complete")
     public ResponseEntity<Result<String>> completeWeekly(HttpServletRequest req) {
-        try {
-            groupService.completeWeeklyPlan(currentUserId(req));
-            return ResponseEntity.ok(Result.ok("Recorded"));
-        } catch (Exception e) {
-            return ResponseEntity.ok(Result.error(e.getMessage()));
-        }
+        groupService.completeWeeklyPlan(currentUserId(req));
+        return ResponseEntity.ok(Result.ok("Recorded"));
     }
 
     @GetMapping("/members")

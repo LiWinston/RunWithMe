@@ -23,7 +23,7 @@ public class Notification {
     @TableField("content")
     private String content;
 
-    @TableField("read")
+    @TableField("`read`")
     private Boolean read;
 
     @TableField(value = "created_at", fill = FieldFill.INSERT)
