@@ -30,6 +30,7 @@ class HistoryTodayFragment : Fragment() {
     private lateinit var tvTotalDuration: TextView
     private lateinit var tvTotalPace: TextView
     private lateinit var tvTotalCalories: TextView
+    private lateinit var tvTotalSteps: TextView
 
     // 运动记录列表
     private lateinit var rvWorkoutRecords: RecyclerView
@@ -62,6 +63,7 @@ class HistoryTodayFragment : Fragment() {
         tvTotalDuration = view.findViewById(R.id.tvTotalDuration)
         tvTotalPace = view.findViewById(R.id.tvTotalPace)
         tvTotalCalories = view.findViewById(R.id.tvTotalCalories)
+        tvTotalSteps = view.findViewById(R.id.tvTotalSteps)
 
         // 运动记录列表
         rvWorkoutRecords = view.findViewById(R.id.rvWorkoutRecords)
@@ -143,6 +145,7 @@ class HistoryTodayFragment : Fragment() {
         val distance = stats["totalDistance"] as? Double ?: 0.0
         val duration = (stats["totalDuration"] as? Number)?.toInt() ?: 0 // 秒，兼容Int和Double
         val calories = stats["totalCalories"] as? Double ?: 0.0
+        val steps = (stats["totalSteps"] as? Number)?.toInt() ?: 0
         val workoutCount = (stats["workoutCount"] as? Number)?.toInt() ?: 0
         
         // 调试信息
@@ -178,6 +181,9 @@ class HistoryTodayFragment : Fragment() {
 
         // 更新卡路里
         tvTotalCalories.text = "${calories.toInt()} kcal"
+
+        // 更新步数
+        tvTotalSteps.text = steps.toString()
     }
 
     private fun showWorkoutDetail(workout: Workout) {
