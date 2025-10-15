@@ -30,6 +30,7 @@ class HistoryMonthFragment : Fragment() {
     private lateinit var tvMonthDuration: TextView
     private lateinit var tvMonthPace: TextView
     private lateinit var tvMonthCalories: TextView
+    private lateinit var tvMonthSteps: TextView
 
     // 运动记录列表
     private lateinit var rvMonthWorkouts: RecyclerView
@@ -61,6 +62,7 @@ class HistoryMonthFragment : Fragment() {
         tvMonthDuration = view.findViewById(R.id.tvMonthDuration)
         tvMonthPace = view.findViewById(R.id.tvMonthPace)
         tvMonthCalories = view.findViewById(R.id.tvMonthCalories)
+        tvMonthSteps = view.findViewById(R.id.tvMonthSteps)
         rvMonthWorkouts = view.findViewById(R.id.rvMonthWorkouts)
         
         // AI建议相关
@@ -132,6 +134,7 @@ class HistoryMonthFragment : Fragment() {
         val distance = stats["totalDistance"] as? Double ?: 0.0
         val duration = (stats["totalDuration"] as? Number)?.toInt() ?: 0 // 兼容Int和Double
         val calories = stats["totalCalories"] as? Double ?: 0.0
+        val steps = (stats["totalSteps"] as? Number)?.toInt() ?: 0
 
         tvMonthDistance.text = String.format("%.1f km", distance)
 
@@ -158,5 +161,7 @@ class HistoryMonthFragment : Fragment() {
         tvMonthPace.text = "$avgPace /km"
 
         tvMonthCalories.text = "${calories.toInt()} kcal"
+
+        tvMonthSteps.text = steps.toString()
     }
 }

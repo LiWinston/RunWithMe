@@ -30,6 +30,7 @@ class HistoryWeekFragment : Fragment() {
     private lateinit var tvWeekDuration: TextView
     private lateinit var tvWeekPace: TextView
     private lateinit var tvWeekCalories: TextView
+    private lateinit var tvWeekSteps: TextView
 
     // 运动记录列表
     private lateinit var rvWeekWorkouts: RecyclerView
@@ -61,6 +62,7 @@ class HistoryWeekFragment : Fragment() {
         tvWeekDuration = view.findViewById(R.id.tvWeekDuration)
         tvWeekPace = view.findViewById(R.id.tvWeekPace)
         tvWeekCalories = view.findViewById(R.id.tvWeekCalories)
+        tvWeekSteps = view.findViewById(R.id.tvWeekSteps)
         rvWeekWorkouts = view.findViewById(R.id.rvWeekWorkouts)
         
         // AI建议相关
@@ -132,6 +134,7 @@ class HistoryWeekFragment : Fragment() {
         val distance = stats["totalDistance"] as? Double ?: 0.0
         val duration = (stats["totalDuration"] as? Number)?.toInt() ?: 0 // 兼容Int和Double
         val calories = stats["totalCalories"] as? Double ?: 0.0
+        val steps = (stats["totalSteps"] as? Number)?.toInt() ?: 0
 
         tvWeekDistance.text = String.format("%.2f km", distance)
 
@@ -158,5 +161,7 @@ class HistoryWeekFragment : Fragment() {
         tvWeekPace.text = "$avgPace /km"
 
         tvWeekCalories.text = "${calories.toInt()} kcal"
+
+        tvWeekSteps.text = steps.toString()
     }
 }

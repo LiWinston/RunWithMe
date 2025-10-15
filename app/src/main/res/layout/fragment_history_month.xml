@@ -166,6 +166,53 @@
                         <ImageView
                             android:layout_width="16dp"
                             android:layout_height="16dp"
+                            android:src="@drawable/steps"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="4dp"
+                            app:tint="#666666" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Steps"
+                            style="@style/StatsLabelText" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvMonthSteps"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        style="@style/StatsNumberText" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- 第三行：卡路里（占一整行） -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <!-- 卡路里卡片 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    style="@style/StatsCardStyle">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
                             android:src="@drawable/kcal"
                             android:layout_gravity="center_vertical"
                             android:layout_marginEnd="4dp"

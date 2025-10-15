@@ -27,6 +27,7 @@ class FinishActivity : AppCompatActivity() {
         val tvDuration = findViewById<TextView>(R.id.tvDuration)
         val tvCalories = findViewById<TextView>(R.id.tvCalories)
         val tvSpeed = findViewById<TextView>(R.id.tvPace)  // Use speed to fill pace field
+        val tvSteps = findViewById<TextView>(R.id.tvSteps)
         val tvWorkoutType = findViewById<TextView>(R.id.tvWorkoutType)
         val ivWorkoutIcon = findViewById<ImageView>(R.id.ivWorkoutIcon)
         val btnDone = findViewById<Button>(R.id.btnDone)
@@ -42,6 +43,10 @@ class FinishActivity : AppCompatActivity() {
         tvDuration.text = duration
         tvCalories.text = calories
         tvSpeed.text = speed  // Display speed directly
+        
+        // Display steps from ViewModel
+        val steps = workoutViewModel.steps.value ?: 0
+        tvSteps.text = steps.toString()
         
         // Set workout type and corresponding icon
         when (workoutType) {
