@@ -33,11 +33,27 @@
                     style="@style/StatsCardStyle"
                     android:layout_marginEnd="6dp">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Distance"
-                        style="@style/StatsLabelText" />
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/distance"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="4dp"
+                            app:tint="#666666" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Distance"
+                            style="@style/StatsLabelText" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvWeekDistance"
@@ -56,11 +72,27 @@
                     style="@style/StatsCardStyle"
                     android:layout_marginStart="6dp">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Duration"
-                        style="@style/StatsLabelText" />
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/duration"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="4dp"
+                            app:tint="#666666" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Duration"
+                            style="@style/StatsLabelText" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvWeekDuration"
@@ -86,11 +118,27 @@
                     style="@style/StatsCardStyle"
                     android:layout_marginEnd="6dp">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Pace"
-                        style="@style/StatsLabelText" />
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/pace"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="4dp"
+                            app:tint="#666666" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Pace"
+                            style="@style/StatsLabelText" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvWeekPace"
@@ -109,11 +157,27 @@
                     style="@style/StatsCardStyle"
                     android:layout_marginStart="6dp">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Calories"
-                        style="@style/StatsLabelText" />
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/kcal"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="4dp"
+                            app:tint="#666666" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Calories"
+                            style="@style/StatsLabelText" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvWeekCalories"

@@ -98,12 +98,28 @@
             android:gravity="center"
             android:background="@android:color/white">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Distance"
-                android:textSize="14sp"
-                android:textColor="@android:color/darker_gray" />
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dp">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/distance"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="4dp"
+                    app:tint="@android:color/darker_gray" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Distance"
+                    android:textSize="14sp"
+                    android:textColor="@android:color/darker_gray" />
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvDistance"
@@ -123,12 +139,28 @@
             android:gravity="center"
             android:background="@android:color/white">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Duration"
-                android:textSize="14sp"
-                android:textColor="@android:color/darker_gray" />
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dp">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/duration"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="4dp"
+                    app:tint="@android:color/darker_gray" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Duration"
+                    android:textSize="14sp"
+                    android:textColor="@android:color/darker_gray" />
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvDuration"
@@ -148,12 +180,28 @@
             android:gravity="center"
             android:background="@android:color/white">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pace"
-                android:textSize="14sp"
-                android:textColor="@android:color/darker_gray" />
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dp">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/pace"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="4dp"
+                    app:tint="@android:color/darker_gray" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pace"
+                    android:textSize="14sp"
+                    android:textColor="@android:color/darker_gray" />
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvPace"
@@ -173,12 +221,28 @@
             android:gravity="center"
             android:background="@android:color/white">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Calories"
-                android:textSize="14sp"
-                android:textColor="@android:color/darker_gray" />
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dp">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/kcal"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="4dp"
+                    app:tint="@android:color/darker_gray" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Calories"
+                    android:textSize="14sp"
+                    android:textColor="@android:color/darker_gray" />
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvCalories"
