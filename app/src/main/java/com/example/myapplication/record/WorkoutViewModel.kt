@@ -27,7 +27,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     private val _debugInfo = MutableLiveData("Idle")
     private val _workoutType = MutableLiveData("Running")
 
-    // 新增数据
+    // Additional data
     private val _steps = MutableLiveData(0)
     private val _heartRate = MutableLiveData(0)
     private val _currentWorkoutId = MutableLiveData<Long?>(null)
@@ -42,60 +42,61 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     val heartRate: LiveData<Int> = _heartRate
     val currentWorkoutId: LiveData<Long?> = _currentWorkoutId
 
-    // 获取步频
+    // Get cadence
     fun getCadence(): Int = cadence
 
-    // 获取传感器状态信息
+    // Get sensor status information
     fun getSensorInfo(): String {
         val hasAccel = accelerometer != null
         val hasGyro = gyroscope != null
         val hasStepDetector = stepDetector != null
-        return "传感器: 加速度计($hasAccel) 陀螺仪($hasGyro) 步数检测器($hasStepDetector)"
+        return "Sensors: Accelerometer($hasAccel) Gyroscope($hasGyro) StepDetector($hasStepDetector)"
     }
 
-    // 根据速度判断运动类型
-    // 参考研究:
-    // Walking: ~90 m/min (1.5 m/s)
-    // Jogging: 1.5-2.5 m/s (~5.4-9.0 km/h)
-    // Running: >2.5 m/s (>9.0 km/h)
+    // Determine workout type based on speed
+    // Reference research:
+    // Walking: ~90 m/min (1.5 m/s), Brisk Walking: ~112 m/min (1.87 m/s)
+    // Jogging: >134 m/min (2.23 m/s), Running: 2.5-4.5 m/s
     private fun determineWorkoutType(speedMps: Double): String {
         return when {
-            speedMps < 1.5 -> "Walking"    // < 1.5 m/s (~5.4 km/h)
-            speedMps < 2.5 -> "Jogging"    // 1.5-2.5 m/s (~5.4-9.0 km/h)
-            else -> "Running"              // >= 2.5 m/s (>= 9.0 km/h)
+            speedMps < 1.5 -> "Walking"           // < 1.5 m/s (~5.4 km/h)
+            speedMps < 2.23 -> "Brisk Walking"    // 1.5-2.23 m/s (~5.4-8.0 km/h)
+            speedMps < 2.5 -> "Jogging"           // 2.23-2.5 m/s (~8.0-9.0 km/h)
+            speedMps < 3.5 -> "Running"           // 2.5-3.5 m/s (~9.0-12.6 km/h)
+            else -> "Fast Running"                // > 3.5 m/s (>12.6 km/h)
         }
     }
 
-    // 状态
+    // State
     private var running = false
     private var totalDistance = 0.0
     private var lastLocation: Location? = null
     private val fusedLocationClient =
         LocationServices.getFusedLocationProviderClient(application)
 
-    // 传感器
+    // Sensors
     private val sensorManager = application.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private var accelerometer: Sensor? = null
     private var gyroscope: Sensor? = null
     private var stepDetector: Sensor? = null
 
-    // 计时
+    // Timing
     private var startTime: Long = 0L
     private var pauseOffset: Long = 0L
 
-    // 用户参数 hardcoding
+    // User parameters (hardcoded)
     private val userWeightKg = 65.0
     private val metValue = 8.0
-    private val stepLength = 0.75  // 平均步幅（米）
+    private val stepLength = 0.75  // Average step length (meters)
 
-    // 步数
+    // Step count
     private var stepCount = 0
 
-    // GPS 控制
+    // GPS control
     private var lastGpsUpdateTime: Long = 0L
     private var useGps = true
 
-    // 动态数据采样 - 用于JSON存储
+    // Dynamic data sampling - for JSON storage
     private val routePoints = mutableListOf<RoutePoint>()
     private val speedSamples = mutableListOf<SpeedSample>()
     private val heartRateSamples = mutableListOf<HeartRateSample>()
@@ -106,20 +107,20 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     private var routeSequence = 0
     private var lastRouteLocation: Location? = null
-    private var lastRouteDistance = 0.0 // 上次记录路线点时的距离
-    private val minDistanceForRoute = 2.0 // 最小10米间隔记录路线点
+    private var lastRouteDistance = 0.0 // Last recorded route point distance
+    private val minDistanceForRoute = 2.0 // Minimum 2m interval for recording route points
 
-    // 改进的传感器数据
+    // Improved sensor data
     private var lastAcceleration = 0.0
     private var accelerationHistory = mutableListOf<Double>()
-    private var simulatedDistance = 0.0 // 模拟器用距离
-    private var isSimulatorMode = false // 检测是否是模拟器环境
+    private var simulatedDistance = 0.0 // Distance for simulator
+    private var isSimulatorMode = false // Detect if running in simulator
 
-    // 步频分析
+    // Cadence analysis
     private var stepTimestamps = mutableListOf<Long>()
-    private var cadence = 0 // 步频 (步/分钟)
+    private var cadence = 0 // Cadence (steps/minute)
 
-    // 陀螺仪数据
+    // Gyroscope data
     private var rotationRateX = 0.0
     private var rotationRateY = 0.0
     private var rotationRateZ = 0.0
@@ -138,15 +139,15 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         useGps = true
         simulatedDistance = 0.0
 
-        // 重置路线追踪相关变量
+        // Reset route tracking variables
         clearWorkoutData()
 
-        // 重置传感器数据
+        // Reset sensor data
         stepTimestamps.clear()
         accelerationHistory.clear()
         cadence = 0
 
-        // 不再检测模拟器环境，允许在所有设备上正常工作
+        // No longer detect simulator environment, allow normal operation on all devices
         isSimulatorMode = false
 
         startLocationTracking()
@@ -157,7 +158,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    /** 每秒调用一次 */
+    /** Called every second */
     fun tick() {
         if (!running) return
 
@@ -170,20 +171,20 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val secs = seconds % 60
         _time.value = String.format("%02d:%02d:%02d", hours, minutes, secs)
 
-        // 卡路里计算
+        // Calorie calculation
         val hoursFloat = seconds / 3600.0
         val distanceBasedCalories = (totalDistance / 1000) * userWeightKg * 0.8
         val timeBasedCalories = metValue * userWeightKg * hoursFloat
         val cal = maxOf(distanceBasedCalories, timeBasedCalories)
         _calories.value = String.format("%.0f kcal", cal)
 
-        // 心率模拟（无心率传感器时）
+        // Heart rate simulation (when no heart rate sensor available)
         if (_heartRate.value == null || _heartRate.value == 0) {
             val simulatedHeartRate = (120 + Math.sin(seconds * 0.05) * 20).toInt()
             _heartRate.value = simulatedHeartRate
         }
 
-        // 每5秒记录一次动态数据（用于图表，不是UI实时显示）
+        // Record dynamic data every 5 seconds (for charts, not real-time UI display)
         if (seconds > 0 && seconds % 5 == 0) {
             val heartRate = _heartRate.value ?: 0
             val latestSpeed = _speed.value?.replace(" m/s", "")?.toFloatOrNull() ?: 0f
@@ -192,7 +193,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     }
 
-    /** 启动 GPS 定位 */
+    /** Start GPS tracking */
     fun startLocationTracking() {
         val context = getApplication<Application>()
 
@@ -205,41 +206,41 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                 if (!running) return
                 for (location in result.locations) {
                     if (lastLocation != null) {
-                        val distance = lastLocation!!.distanceTo(location) // 米
+                        val distance = lastLocation!!.distanceTo(location) // meters
 
                         // =============================
-                        // 🚫 跳点过滤逻辑
+                        // GPS jump filtering logic
                         // =============================
                         if (distance > 50f) {
                             _debugInfo.value =
                                 "GPS jump ignored (${String.format("%.1f", distance)} m, no line)"
-                            // ✅ 不计入距离、不画线，但仍更新位置
+                            // Update position but don't count distance or draw line
                             lastLocation = location
                             lastGpsUpdateTime = System.currentTimeMillis()
                             useGps = true
-                            continue // 跳过本次后续逻辑
+                            continue // Skip subsequent logic for this iteration
                         }
 
                         // =============================
-                        // ✅ 正常点：更新距离和速度
+                        // Normal point: update distance and speed
                         // =============================
                         totalDistance += distance
                         _distance.value = String.format("%.2f m", totalDistance)
 
-                        val timeDiff = (location.time - lastLocation!!.time) / 1000.0 // 秒
+                        val timeDiff = (location.time - lastLocation!!.time) / 1000.0 // seconds
                         if (timeDiff > 0) {
                             val speedMps = distance / timeDiff
                             _speed.value = if (speedMps < 0.5) "0.00 m/s" else String.format("%.2f m/s", speedMps)
                             _workoutType.value = determineWorkoutType(speedMps)
                         }
 
-                        // ✅ 仅正常点才画线
+                        // Draw line only for normal points
                         recordRoutePoint(location)
                     } else {
                         _speed.value = "0.00 m/s"
                     }
 
-                    //总是更新 lastLocation（包括跳点）
+                    // Always update lastLocation (including jump points)
                     lastLocation = location
                     lastGpsUpdateTime = System.currentTimeMillis()
                     useGps = true
@@ -263,21 +264,21 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    /** 启动加速度传感器 */
+    /** Start accelerometer sensor */
     private fun startStepSensors() {
-        // 加速度计
+        // Accelerometer
 //        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 //        accelerometer?.let {
 //            sensorManager.registerListener(accelListener, it, SensorManager.SENSOR_DELAY_GAME)
 //        }
 
-        // 陀螺仪
+        // Gyroscope
 //        gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
 //        gyroscope?.let {
 //            sensorManager.registerListener(gyroListener, it, SensorManager.SENSOR_DELAY_GAME)
 //        }
 
-        // 步数检测器
+        // Step detector
         stepDetector = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
         stepDetector?.let {
             sensorManager.registerListener(stepListener, it, SensorManager.SENSOR_DELAY_FASTEST)
@@ -300,25 +301,25 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 //            val accel = magnitude - SensorManager.GRAVITY_EARTH
 //            val now = System.currentTimeMillis()
 //
-//            // 添加到加速度历史
+//            // Add to acceleration history
 //            accelerationHistory.add(accel)
 //            if (accelerationHistory.size > 50) {
 //                accelerationHistory.removeAt(0)
 //            }
 //
-//            // 改进的步数检测算法（峰值检测）
+//            // Improved step detection algorithm (peak detection)
 //            if (accelerationHistory.size >= 3 && now - lastUpdate > 250) {
 //                val current = accelerationHistory[accelerationHistory.size - 1]
 //                val previous = accelerationHistory[accelerationHistory.size - 2]
 //                val beforePrevious = accelerationHistory[accelerationHistory.size - 3]
 //
-//                // 寻找局部峰值
+//                // Find local peak
 //                if (previous > current && previous > beforePrevious && previous > 2.0) {
 //                    stepCount++
 //                    _steps.value = stepCount
 //                    lastUpdate = now
 //
-//                    // 记录步数时间戳用于步频计算
+//                    // Record step timestamp for cadence calculation
 //                    stepTimestamps.add(now)
 //                    calculateCadence()
 //                }
@@ -330,7 +331,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 //        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 //    }
 
-    /** 陀螺仪监听器 */
+    /** Gyroscope listener */
 //    private val gyroListener = object : SensorEventListener {
 //        override fun onSensorChanged(event: SensorEvent) {
 //            if (!running) return
@@ -338,26 +339,26 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 //            rotationRateY = event.values[1].toDouble()
 //            rotationRateZ = event.values[2].toDouble()
 //
-//            // 陀螺仪数据可用于检测跑步姿态和稳定性
+//            // Gyroscope data can be used to detect running posture and stability
 //            val totalRotation = Math.sqrt(rotationRateX * rotationRateX +
 //                                        rotationRateY * rotationRateY +
 //                                        rotationRateZ * rotationRateZ)
 //
-//            // 基于运动状态调整步长
+//            // Adjust step length based on motion state
 //            if (totalRotation > 1.0) {
-//                // 不稳定运动，可能在快速跑步
-//                // 可以调整步长或其他参数，目前没有用到
+//                // Unstable motion, possibly fast running
+//                // Can adjust step length or other parameters, currently not used
 //            }
 //        }
 //
 //        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 //    }
 
-    /** 硬件步数检测器（更准确） */
+    /** Hardware step detector (more accurate) */
     private val stepListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
             if (running && stepDetector != null) {
-                // 使用硬件步数检测器，更准确
+                // Use hardware step detector for better accuracy
                 stepCount++
                 _steps.value = stepCount
 
@@ -370,17 +371,17 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
     }
 
-    /** 计算步频 */
+    /** Calculate cadence */
     private fun calculateCadence() {
         val now = System.currentTimeMillis()
-        // 保留最近1分钟的步数时间戳
+        // Keep only timestamps from the last 1 minute
         stepTimestamps.removeAll { it < now - 60000 }
 
-        // 计算步频（步/分钟）
+        // Calculate cadence (steps/minute)
         cadence = stepTimestamps.size
     }
 
-    // 控制函数
+    // Control functions
     fun pauseWorkout() {
         if (running) {
             running = false
@@ -399,17 +400,17 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         running = false
         stepCount = 0
 
-        // 卸载所有传感器监听器
+        // Unregister all sensor listeners
 //        sensorManager.unregisterListener(accelListener)
 //        sensorManager.unregisterListener(gyroListener)
         sensorManager.unregisterListener(stepListener)
 
-        // 停止GPS追踪
+        // Stop GPS tracking
         if (::locationCallback.isInitialized) {
             fusedLocationClient.removeLocationUpdates(locationCallback)
         }
 
-        // 重置所有状态
+        // Reset all states
         startTime = 0L
         pauseOffset = 0L
         totalDistance = 0.0
@@ -427,15 +428,15 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         _debugInfo.value = "Stopped"
     }
 
-    // 记录路线点 - 按距离取样而非时间取样
+    // Record route point - sample by distance rather than time
     private fun recordRoutePoint(location: Location) {
         if (!running) return
 
-        // 检查距离间隔：只有移动了足够距离才记录新的路线点
+        // Check distance interval: only record new route point if moved enough distance
         val shouldRecord = lastRouteLocation?.let { lastLoc ->
             val distance = lastLoc.distanceTo(location)
             distance >= minDistanceForRoute
-        } ?: true // 第一个点总是记录
+        } ?: true // Always record the first point
 
         if (shouldRecord) {
             val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
@@ -444,21 +445,21 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                 lat = location.latitude,
                 lng = location.longitude,
                 altitude = if (location.hasAltitude()) location.altitude else null,
-                timestamp = sdf.format(Date(location.time)), // 兼容 API 24
+                timestamp = sdf.format(Date(location.time)), // Compatible with API 24
                 sequence = ++routeSequence
             )
 
             routePoints.add(routePoint)
             lastRouteLocation = location
-            lastRouteDistance = totalDistance // 同步更新距离记录
+            lastRouteDistance = totalDistance // Sync update distance record
 
-            // 记录GPS精度
+            // Record GPS accuracy
 
             if (location.hasAccuracy()) {
                 accuracySamples.add(
                     AccuracySample(
                         accuracy = location.accuracy.toDouble(),
-                        timestamp = sdf.format(Date(location.time)) // 兼容 API 24
+                        timestamp = sdf.format(Date(location.time)) // Compatible with API 24
                     )
                 )
             }
@@ -468,28 +469,28 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                 elevationSamples.add(
                     ElevationSample(
                         elevation = location.altitude,
-                        timestamp = sdf.format(Date(location.time)) // 兼容 API 24
+                        timestamp = sdf.format(Date(location.time)) // Compatible with API 24
                     )
                 )
             }
 
-            // 调试信息
+            // Debug info
             _debugInfo.value = "GPS Mode - ${routePoints.size} route points"
         }
     }
 
-    // 记录动态数据（定期采样）
+    // Record dynamic data (periodic sampling)
     private fun recordDynamicData(currentSpeed: Float, currentHeartRate: Int, elapsedSeconds: Int) {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         val timestamp = sdf.format(Date())
 
-        // 记录速度
+        // Record speed
         speedSamples.add(SpeedSample(
             speed = currentSpeed,
             timestamp = timestamp
         ))
 
-        // 记录心率
+        // Record heart rate
         if (currentHeartRate > 0) {
             heartRateSamples.add(HeartRateSample(
                 heartRate = currentHeartRate,
@@ -497,16 +498,16 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             ))
         }
 
-        // 记录配速
+        // Record pace
         if (currentSpeed > 0) {
-            val pace = (3600 / currentSpeed).toInt() // 秒/公里
+            val pace = (3600 / currentSpeed).toInt() // seconds/kilometer
             paceSamples.add(PaceSample(
                 pace = pace,
                 timestamp = timestamp
             ))
         }
 
-        // 记录步频
+        // Record cadence
         if (cadence > 0) {
             cadenceSamples.add(CadenceSample(
                 cadence = cadence,
@@ -515,7 +516,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    // 获取完整的运动动态数据
+    // Get complete workout dynamic data
     fun getWorkoutDynamicData(): WorkoutDynamicData {
         return WorkoutDynamicData(
             route = routePoints.toList(),
@@ -528,12 +529,12 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         )
     }
 
-    // 获取当前运动的路线数据（兼容性）
+    // Get current workout route data (compatibility)
     fun getRoutePoints(): List<RoutePoint> {
         return routePoints.toList()
     }
 
-    // 清除所有动态数据
+    // Clear all dynamic data
     fun clearWorkoutData() {
         routePoints.clear()
         speedSamples.clear()
@@ -567,16 +568,16 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         } else 0
 
         return if (distanceM > 0) {
-            (durationSeconds / distanceM).toInt() // 秒/米
+            (durationSeconds / distanceM).toInt() // seconds/meter
         } else null
     }
 
     private fun checkGoalAchievement(distanceM: Double, durationSeconds: Int): Boolean {
-        return distanceM >= 1000 || durationSeconds >= 900 // 1km或15分钟
+        return distanceM >= 1000 || durationSeconds >= 900 // 1km or 15 minutes
     }
 }
 
-// 动态数据类定义 - 对应后端JSON结构
+// Dynamic data class definitions - corresponding to backend JSON structure
 data class RoutePoint(
     val lat: Double,
     val lng: Double,
@@ -615,7 +616,7 @@ data class AccuracySample(
     val timestamp: String
 )
 
-// 完整的运动动态数据结构
+// Complete workout dynamic data structure
 data class WorkoutDynamicData(
     val route: List<RoutePoint>,
     val speedSamples: List<SpeedSample>,
