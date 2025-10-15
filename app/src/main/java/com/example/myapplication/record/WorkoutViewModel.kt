@@ -86,8 +86,19 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     // User parameters (hardcoded)
     private val userWeightKg = 65.0
-    private val metValue = 8.0
     private val stepLength = 0.75  // Average step length (meters)
+    
+    // MET values for different workout types (based on ACSM standards)
+    private fun getMetValue(workoutType: String): Double {
+        return when (workoutType) {
+            "Walking" -> 3.5           // Slow walking
+            "Brisk Walking" -> 4.5     // Brisk walking
+            "Jogging" -> 7.0           // Jogging
+            "Running" -> 9.8           // Running
+            "Fast Running" -> 12.3     // Fast running
+            else -> 8.0                // Default
+        }
+    }
 
     // Step count
     private var stepCount = 0
@@ -171,11 +182,34 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val secs = seconds % 60
         _time.value = String.format("%02d:%02d:%02d", hours, minutes, secs)
 
-        // Calorie calculation
+        // Calorie calculation - using scientifically proven formulas
         val hoursFloat = seconds / 3600.0
-        val distanceBasedCalories = (totalDistance / 1000) * userWeightKg * 0.8
+        val distanceKm = totalDistance / 1000.0
+        val currentWorkoutType = _workoutType.value ?: "Running"
+        
+        // Method 1: Distance-based formula (most accurate for running)
+        // For walking: 0.57 × weight × distance (km)
+        // For running: 1.036 × weight × distance (km)
+        val avgSpeed = if (seconds > 0) totalDistance / seconds else 0.0
+        val distanceBasedCalories = if (avgSpeed < 2.23) {
+            // Walking formula
+            0.57 * userWeightKg * distanceKm
+        } else {
+            // Running formula (widely used in exercise physiology)
+            userWeightKg * distanceKm * 1.036
+        }
+        
+        // Method 2: MET-based formula (time-based, adjusted by workout type)
+        val metValue = getMetValue(currentWorkoutType)
         val timeBasedCalories = metValue * userWeightKg * hoursFloat
-        val cal = maxOf(distanceBasedCalories, timeBasedCalories)
+        
+        // Use distance-based as primary, time-based as fallback for minimal movement
+        val cal = if (distanceKm > 0.01) {
+            distanceBasedCalories
+        } else {
+            timeBasedCalories
+        }
+        
         _calories.value = String.format("%.0f kcal", cal)
 
         // Heart rate simulation (when no heart rate sensor available)
@@ -548,7 +582,24 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     private fun calculateCalories(durationSeconds: Int): Double? {
         val hours = durationSeconds / 3600.0
-        return metValue * userWeightKg * hours
+        val distanceKm = totalDistance / 1000.0
+        val currentWorkoutType = _workoutType.value ?: "Running"
+        
+        // Use distance-based formula if we have distance data
+        val avgSpeed = if (durationSeconds > 0) totalDistance / durationSeconds else 0.0
+        return if (distanceKm > 0.01) {
+            if (avgSpeed < 2.23) {
+                // Walking formula
+                0.57 * userWeightKg * distanceKm
+            } else {
+                // Running formula
+                userWeightKg * distanceKm * 1.036
+            }
+        } else {
+            // Fallback to MET-based formula
+            val metValue = getMetValue(currentWorkoutType)
+            metValue * userWeightKg * hours
+        }
     }
 
     private fun calculateAvgSpeed(): Double? {
