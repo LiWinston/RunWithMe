@@ -60,10 +60,11 @@
         </LinearLayout>
 
         <ImageView
+                android:id="@+id/ivWorkoutIcon"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:src="@drawable/done"
-                android:contentDescription="Tempo Icon" />
+                android:src="@drawable/running"
+                android:contentDescription="Workout Icon" />
     </LinearLayout>
 
     <!-- 地图占位（白色边框） -->

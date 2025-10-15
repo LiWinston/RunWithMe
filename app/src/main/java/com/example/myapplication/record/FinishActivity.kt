@@ -3,6 +3,7 @@ package com.example.myapplication.record
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -27,6 +28,7 @@ class FinishActivity : AppCompatActivity() {
         val tvCalories = findViewById<TextView>(R.id.tvCalories)
         val tvSpeed = findViewById<TextView>(R.id.tvPace)  // 用 speed 填 pace 的格子
         val tvWorkoutType = findViewById<TextView>(R.id.tvWorkoutType)
+        val ivWorkoutIcon = findViewById<ImageView>(R.id.ivWorkoutIcon)
         val btnDone = findViewById<Button>(R.id.btnDone)
 
         // 取出传递过来的数据
@@ -40,7 +42,26 @@ class FinishActivity : AppCompatActivity() {
         tvDuration.text = duration
         tvCalories.text = calories
         tvSpeed.text = speed  // 直接显示速度
-        tvWorkoutType.text = workoutType
+        
+        // 设置运动类型和对应图标
+        when (workoutType) {
+            "Walking" -> {
+                tvWorkoutType.text = "Walking"
+                ivWorkoutIcon.setImageResource(R.drawable.walking)
+            }
+            "Jogging" -> {
+                tvWorkoutType.text = "Jogging"
+                ivWorkoutIcon.setImageResource(R.drawable.jogging)
+            }
+            "Running" -> {
+                tvWorkoutType.text = "Running"
+                ivWorkoutIcon.setImageResource(R.drawable.running)
+            }
+            else -> {
+                tvWorkoutType.text = workoutType
+                ivWorkoutIcon.setImageResource(R.drawable.jogging) // 默认使用跑步图标
+            }
+        }
 
         btnDone.setOnClickListener {
             // 暂时注释掉数据库操作，待异步处理

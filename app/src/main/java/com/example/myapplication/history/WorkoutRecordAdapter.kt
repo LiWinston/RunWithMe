@@ -3,6 +3,7 @@ package com.example.myapplication.history
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -35,6 +36,7 @@ class WorkoutRecordAdapter(
         private val onItemClick: (Workout) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
 
+        private val ivWorkoutIcon: ImageView = itemView.findViewById(R.id.ivWorkoutIcon)
         private val tvWorkoutType: TextView = itemView.findViewById(R.id.tvWorkoutType)
         private val tvStartTime: TextView = itemView.findViewById(R.id.tvStartTime)
         private val tvDistance: TextView = itemView.findViewById(R.id.tvDistance)
@@ -46,14 +48,24 @@ class WorkoutRecordAdapter(
             // 调试信息 - 打印每个workout的信息
             android.util.Log.d("WorkoutRecordAdapter", "绑定Workout ID: ${workout.id}, 类型: ${workout.workoutType}, 开始时间: ${workout.startTime}")
             
-            // 运动类型
-            tvWorkoutType.text = when (workout.workoutType) {
-                "OUTDOOR_RUN" -> "户外跑步"
-                "TREADMILL" -> "跑步机"
-                "WALK" -> "步行"
-                "CYCLING" -> "骑行"
-                "SWIMMING" -> "游泳"
-                else -> "其他运动"
+            // 运动类型和图标
+            when (workout.workoutType) {
+                "Walking", "WALK" -> {
+                    tvWorkoutType.text = "Walking"
+                    ivWorkoutIcon.setImageResource(R.drawable.walking)
+                }
+                "Jogging" -> {
+                    tvWorkoutType.text = "Jogging"
+                    ivWorkoutIcon.setImageResource(R.drawable.jogging)
+                }
+                "Running", "OUTDOOR_RUN", "TREADMILL" -> {
+                    tvWorkoutType.text = "Running"
+                    ivWorkoutIcon.setImageResource(R.drawable.running)
+                }
+                else -> {
+                    tvWorkoutType.text = "Other"
+                    ivWorkoutIcon.setImageResource(R.drawable.running) // 暂时使用running图标
+                }
             }
 
             // 开始时间 - 将UTC时间转换为本地时间
