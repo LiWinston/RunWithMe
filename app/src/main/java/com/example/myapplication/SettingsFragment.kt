@@ -42,19 +42,19 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         
         // Goals
         view.findViewById<TextView>(R.id.set_slogan).setOnClickListener {
-            Toast.makeText(context, "Set Slogan clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Show dialog to set personal slogan
+            val intent = Intent(requireContext(), SetSloganActivity::class.java)
+            startActivity(intent)
         }
         
         view.findViewById<TextView>(R.id.create_goal).setOnClickListener {
-            Toast.makeText(context, "Create Goal clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Show dialog to create goal with time span (weekly/monthly)
+            val intent = Intent(requireContext(), AdjustGoalActivity::class.java)
+            startActivity(intent)
         }
         
         // Personal Profile - Change Password
         view.findViewById<TextView>(R.id.change_password).setOnClickListener {
-            Toast.makeText(context, "Change Password clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Navigate to change password page
+            val intent = Intent(requireContext(), ChangePasswordActivity::class.java)
+            startActivity(intent)
         }
         
         // Permissions

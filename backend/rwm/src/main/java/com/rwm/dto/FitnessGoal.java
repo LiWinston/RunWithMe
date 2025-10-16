@@ -20,6 +20,9 @@ public class FitnessGoal {
     // optional: calories target per week
     private Integer weeklyCalories;
 
+    // optional: personal fitness slogan/motto
+    private String slogan;
+
     // extensible custom field bag if needed
     private Object extras;
 }

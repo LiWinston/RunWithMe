@@ -29,8 +29,11 @@ data class UserProfile(
 )
 
 data class FitnessGoal(
-    val goal: String?,
-    val targetWeight: Double?,
-    val targetDate: String?
+    val weeklyDistanceKm: Double?,
+    val weeklyWorkouts: Int?,
+    val targetAvgPaceSecPerKm: Int?,
+    val weeklyCalories: Int?,
+    val slogan: String?,
+    val extras: Any?
 )
 

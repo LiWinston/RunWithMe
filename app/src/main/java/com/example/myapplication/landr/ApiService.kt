@@ -6,6 +6,11 @@ import com.example.myapplication.landr.profile.UpdateProfileRequest
 import com.example.myapplication.landr.profile.UserProfileResponse
 import com.example.myapplication.landr.workout.WorkoutStatsResponse
 import com.example.myapplication.landr.workout.WorkoutListResponse
+import com.example.myapplication.landr.password.ChangePasswordRequest
+import com.example.myapplication.landr.password.ChangePasswordResponse
+import com.example.myapplication.landr.goal.FitnessGoalResponse
+import com.example.myapplication.landr.goal.UpdateFitnessGoalRequest
+import com.example.myapplication.landr.goal.UpdateSloganRequest
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -27,6 +32,19 @@ interface ApiService {
     
     @PUT("api/user/profile")
     suspend fun updateUserProfile(@Body request: UpdateProfileRequest): Response<UserProfileResponse>
+    
+    @PUT("api/user/change-password")
+    suspend fun changePassword(@Body request: ChangePasswordRequest): Response<ChangePasswordResponse>
+    
+    // Goal APIs
+    @GET("api/user/fitness-goal")
+    suspend fun getFitnessGoal(): Response<FitnessGoalResponse>
+    
+    @PUT("api/user/slogan")
+    suspend fun updateSlogan(@Body request: UpdateSloganRequest): Response<FitnessGoalResponse>
+    
+    @PUT("api/user/fitness-goal")
+    suspend fun updateFitnessGoal(@Body request: UpdateFitnessGoalRequest): Response<FitnessGoalResponse>
     
     // Workout APIs
     @GET("api/workouts/user/{userId}/stats")

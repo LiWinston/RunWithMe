@@ -1,8 +1,10 @@
 package com.rwm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.rwm.dto.FitnessGoal;
 import com.rwm.dto.request.LoginRequest;
 import com.rwm.dto.request.RegisterRequest;
+import com.rwm.dto.request.UpdateFitnessGoalRequest;
 import com.rwm.dto.request.UpdateProfileRequest;
 import com.rwm.dto.response.LoginResponse;
 import com.rwm.entity.User;
@@ -210,6 +212,115 @@ public class UserServiceImpl implements UserService {
             return user;
         } else {
             throw new RuntimeException("Failed to update user profile");
+        }
+    }
+    
+    @Override
+    public boolean changePassword(Long userId, String currentPassword, String newPassword) {
+        log.info("修改密码，用户ID: {}", userId);
+        
+        // 查找用户
+        User user = findById(userId);
+        if (user == null) {
+            log.error("用户不存在，ID: {}", userId);
+            throw new RuntimeException("User not found");
+        }
+        
+        // 验证当前密码是否正确
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            log.warn("当前密码错误，用户: {}", user.getUsername());
+            return false;
+        }
+        
+        // 加密新密码
+        String encodedNewPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(encodedNewPassword);
+        user.setUpdatedAt(LocalDateTime.now());
+        
+        // 保存更新
+        int result = userMapper.updateById(user);
+        if (result > 0) {
+            log.info("密码修改成功，用户: {}", user.getUsername());
+            return true;
+        } else {
+            log.error("密码修改失败，用户: {}", user.getUsername());
+            throw new RuntimeException("Failed to change password");
+        }
+    }
+    
+    @Override
+    public FitnessGoal updateSlogan(Long userId, String slogan) {
+        log.info("更新健身口号，用户ID: {}", userId);
+        
+        User user = findById(userId);
+        if (user == null) {
+            log.error("用户不存在，ID: {}", userId);
+            throw new RuntimeException("User not found");
+        }
+        
+        // 获取或创建FitnessGoal对象
+        FitnessGoal fitnessGoal = user.getFitnessGoal();
+        if (fitnessGoal == null) {
+            fitnessGoal = new FitnessGoal();
+        }
+        
+        // 更新slogan（保留其他字段）
+        fitnessGoal.setSlogan(slogan);
+        user.setFitnessGoal(fitnessGoal);
+        user.setUpdatedAt(LocalDateTime.now());
+        
+        // 保存更新
+        int result = userMapper.updateById(user);
+        if (result > 0) {
+            log.info("健身口号更新成功，用户: {}, 口号: {}", user.getUsername(), slogan);
+            return fitnessGoal;
+        } else {
+            log.error("健身口号更新失败，用户: {}", user.getUsername());
+            throw new RuntimeException("Failed to update slogan");
+        }
+    }
+    
+    @Override
+    public FitnessGoal updateFitnessGoal(Long userId, UpdateFitnessGoalRequest goalRequest) {
+        log.info("更新健身目标，用户ID: {}", userId);
+        
+        User user = findById(userId);
+        if (user == null) {
+            log.error("用户不存在，ID: {}", userId);
+            throw new RuntimeException("User not found");
+        }
+        
+        // 获取或创建FitnessGoal对象
+        FitnessGoal fitnessGoal = user.getFitnessGoal();
+        if (fitnessGoal == null) {
+            fitnessGoal = new FitnessGoal();
+        }
+        
+        // 更新目标值（保留slogan和其他字段）
+        if (goalRequest.getWeeklyDistanceKm() != null) {
+            fitnessGoal.setWeeklyDistanceKm(goalRequest.getWeeklyDistanceKm());
+        }
+        if (goalRequest.getWeeklyWorkouts() != null) {
+            fitnessGoal.setWeeklyWorkouts(goalRequest.getWeeklyWorkouts());
+        }
+        if (goalRequest.getTargetAvgPaceSecPerKm() != null) {
+            fitnessGoal.setTargetAvgPaceSecPerKm(goalRequest.getTargetAvgPaceSecPerKm());
+        }
+        if (goalRequest.getWeeklyCalories() != null) {
+            fitnessGoal.setWeeklyCalories(goalRequest.getWeeklyCalories());
+        }
+        
+        user.setFitnessGoal(fitnessGoal);
+        user.setUpdatedAt(LocalDateTime.now());
+        
+        // 保存更新
+        int result = userMapper.updateById(user);
+        if (result > 0) {
+            log.info("健身目标更新成功，用户: {}", user.getUsername());
+            return fitnessGoal;
+        } else {
+            log.error("健身目标更新失败，用户: {}", user.getUsername());
+            throw new RuntimeException("Failed to update fitness goal");
         }
     }
 }
