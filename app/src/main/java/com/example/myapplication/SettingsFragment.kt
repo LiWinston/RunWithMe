@@ -31,8 +31,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun setupClickListeners(view: View) {
         // Personal Profile
         view.findViewById<TextView>(R.id.view_profile).setOnClickListener {
-            Toast.makeText(context, "View/Edit Profile clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Navigate to profile page with total stats
+            val intent = Intent(requireContext(), ProfileActivity::class.java)
+            startActivity(intent)
         }
         
         view.findViewById<TextView>(R.id.exercise_records).setOnClickListener {

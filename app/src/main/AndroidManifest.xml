@@ -116,6 +116,13 @@
             android:screenOrientation="portrait">
         </activity>
 
+        <!-- ProfileActivity - 个人资料 -->
+        <activity
+            android:name=".ProfileActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
+
         <!-- gsh StartActivity -->
 <!--        <activity-->
 <!--            android:name=".record.StartRecordActivity"-->

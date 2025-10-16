@@ -2,6 +2,7 @@ package com.rwm.service;
 
 import com.rwm.dto.request.LoginRequest;
 import com.rwm.dto.request.RegisterRequest;
+import com.rwm.dto.request.UpdateProfileRequest;
 import com.rwm.dto.response.LoginResponse;
 import com.rwm.entity.User;
 
@@ -34,4 +35,9 @@ public interface UserService {
      * 根据用户ID查找用户
      */
     User findById(Long userId);
+    
+    /**
+     * 更新用户资料
+     */
+    User updateProfile(Long userId, UpdateProfileRequest updateRequest);
 }

@@ -3,6 +3,7 @@ package com.rwm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.rwm.dto.request.LoginRequest;
 import com.rwm.dto.request.RegisterRequest;
+import com.rwm.dto.request.UpdateProfileRequest;
 import com.rwm.dto.response.LoginResponse;
 import com.rwm.entity.User;
 import com.rwm.mapper.UserMapper;
@@ -145,5 +146,70 @@ public class UserServiceImpl implements UserService {
     @Override
     public User findById(Long userId) {
         return userMapper.selectById(userId);
+    }
+    
+    @Override
+    public User updateProfile(Long userId, UpdateProfileRequest updateRequest) {
+        // 查找用户
+        User user = findById(userId);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+        
+        // 如果更新邮箱，检查邮箱是否已被其他用户使用
+        if (updateRequest.getEmail() != null && !updateRequest.getEmail().trim().isEmpty()) {
+            if (!updateRequest.getEmail().equals(user.getEmail())) {
+                QueryWrapper<User> emailQuery = new QueryWrapper<>();
+                emailQuery.eq("email", updateRequest.getEmail());
+                emailQuery.ne("id", userId);
+                User existingEmailUser = userMapper.selectOne(emailQuery);
+                if (existingEmailUser != null) {
+                    throw new RuntimeException("Email already in use");
+                }
+            }
+        }
+        
+        // 更新用户信息
+        if (updateRequest.getEmail() != null) {
+            user.setEmail(updateRequest.getEmail());
+        }
+        if (updateRequest.getFirstName() != null) {
+            user.setFirstName(updateRequest.getFirstName());
+        }
+        if (updateRequest.getLastName() != null) {
+            user.setLastName(updateRequest.getLastName());
+        }
+        if (updateRequest.getGender() != null) {
+            user.setGender(updateRequest.getGender());
+        }
+        if (updateRequest.getAge() != null) {
+            user.setAge(updateRequest.getAge());
+        }
+        if (updateRequest.getPhoneNumber() != null) {
+            user.setPhoneNumber(updateRequest.getPhoneNumber());
+        }
+        if (updateRequest.getFitnessLevel() != null) {
+            user.setFitnessLevel(updateRequest.getFitnessLevel());
+        }
+        if (updateRequest.getHeight() != null) {
+            user.setHeight(updateRequest.getHeight());
+        }
+        if (updateRequest.getWeight() != null) {
+            user.setWeight(updateRequest.getWeight());
+        }
+        if (updateRequest.getWeeklyAvailability() != null) {
+            user.setWeeklyAvailability(updateRequest.getWeeklyAvailability());
+        }
+        
+        user.setUpdatedAt(LocalDateTime.now());
+        
+        // 保存更新
+        int result = userMapper.updateById(user);
+        if (result > 0) {
+            log.info("用户资料更新成功: {}", user.getUsername());
+            return user;
+        } else {
+            throw new RuntimeException("Failed to update user profile");
+        }
     }
 }

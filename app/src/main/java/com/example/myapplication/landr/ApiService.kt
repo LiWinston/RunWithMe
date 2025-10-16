@@ -2,10 +2,10 @@ package com.example.myapplication.landr
 import com.example.myapplication.landr.registerapp.models.*
 import com.example.myapplication.landr.loginapp.models.LoginRequest
 import com.example.myapplication.landr.loginapp.models.LoginResponse
+import com.example.myapplication.landr.profile.UpdateProfileRequest
+import com.example.myapplication.landr.profile.UserProfileResponse
 import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.Header
-import retrofit2.http.POST
+import retrofit2.http.*
 
 interface ApiService {
     @POST("api/auth/login")
@@ -19,4 +19,10 @@ interface ApiService {
 
     @POST("api/auth/logout")
     suspend fun logout(@Header("Authorization") accessToken: String): Response<Any>
+    
+    @GET("api/user/profile")
+    suspend fun getUserProfile(): Response<UserProfileResponse>
+    
+    @PUT("api/user/profile")
+    suspend fun updateUserProfile(@Body request: UpdateProfileRequest): Response<UserProfileResponse>
 }
