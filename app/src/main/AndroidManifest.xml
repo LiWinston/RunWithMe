@@ -123,6 +123,20 @@
             android:screenOrientation="portrait">
         </activity>
 
+        <!-- ExerciseRecordingActivity - 运动统计 -->
+        <activity
+            android:name=".ExerciseRecordingActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- WorkoutListActivity - 运动记录列表 -->
+        <activity
+            android:name=".WorkoutListActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
+
         <!-- gsh StartActivity -->
 <!--        <activity-->
 <!--            android:name=".record.StartRecordActivity"-->

@@ -4,6 +4,8 @@ import com.example.myapplication.landr.loginapp.models.LoginRequest
 import com.example.myapplication.landr.loginapp.models.LoginResponse
 import com.example.myapplication.landr.profile.UpdateProfileRequest
 import com.example.myapplication.landr.profile.UserProfileResponse
+import com.example.myapplication.landr.workout.WorkoutStatsResponse
+import com.example.myapplication.landr.workout.WorkoutListResponse
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -25,4 +27,15 @@ interface ApiService {
     
     @PUT("api/user/profile")
     suspend fun updateUserProfile(@Body request: UpdateProfileRequest): Response<UserProfileResponse>
+    
+    // Workout APIs
+    @GET("api/workouts/user/{userId}/stats")
+    suspend fun getUserWorkoutStats(@Path("userId") userId: Long): Response<WorkoutStatsResponse>
+    
+    @GET("api/workouts/user/{userId}")
+    suspend fun getUserWorkouts(
+        @Path("userId") userId: Long,
+        @Query("page") page: Int = 1,
+        @Query("size") size: Int = 20
+    ): Response<WorkoutListResponse>
 }

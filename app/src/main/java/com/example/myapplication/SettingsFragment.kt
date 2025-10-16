@@ -36,8 +36,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         }
         
         view.findViewById<TextView>(R.id.exercise_records).setOnClickListener {
-            Toast.makeText(context, "Exercise Recording clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Navigate to exercise records with details (distance, time, calories, single record browsing)
+            val intent = Intent(requireContext(), ExerciseRecordingActivity::class.java)
+            startActivity(intent)
         }
         
         // Goals
@@ -76,7 +76,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         
         // Logout Button
         view.findViewById<Button>(R.id.btn_logout).setOnClickListener {
-            logout()
+            showLogoutConfirmation()
         }
     }
     
@@ -102,6 +102,17 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             Toast.makeText(context, "Location/GPS ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
             // TODO: Request/revoke location permission
         }
+    }
+    
+    private fun showLogoutConfirmation() {
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Logout")
+            .setMessage("Are you sure you want to logout?")
+            .setPositiveButton("Yes") { _, _ ->
+                logout()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
     
     private fun logout() {
