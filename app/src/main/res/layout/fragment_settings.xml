@@ -18,28 +18,15 @@
         android:paddingTop="20dp"
         android:paddingBottom="20dp">
 
-        <!-- 标题 -->
         <TextView
             android:id="@+id/settings_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Settings"
+            android:text="My"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"
             android:layout_centerInParent="true" />
-
-        <!-- 可选菜单按钮 -->
-        <ImageButton
-            android:id="@+id/btn_menu"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_menu"
-            app:tint="@android:color/black"
-            android:visibility="gone" /> <!-- 如果不需要显示，可隐藏 -->
 
     </RelativeLayout>
 
@@ -57,7 +44,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Account Settings Section -->
+            <!-- Personal Profile Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -69,7 +56,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Account"
+                    android:text="Personal Profile"
                     android:textColor="@android:color/black"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -82,12 +69,26 @@
                     android:alpha="0.3"
                     android:layout_marginBottom="12dp" />
 
-                <!-- Profile Settings -->
+                <!-- View/Edit Profile -->
                 <TextView
-                    android:id="@+id/edit_profile"
+                    android:id="@+id/view_profile"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
-                    android:text="Edit Profile"
+                    android:text="View/Edit Profile"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp"
+                    android:gravity="center_vertical"
+                    android:paddingStart="8dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <!-- Exercise Recording -->
+                <TextView
+                    android:id="@+id/exercise_records"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="Exercise Recording"
                     android:textColor="@android:color/black"
                     android:textSize="16sp"
                     android:gravity="center_vertical"
@@ -112,7 +113,7 @@
 
             </LinearLayout>
 
-            <!-- App Settings Section -->
+            <!-- Goals Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -124,7 +125,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="App Settings"
+                    android:text="Goals"
                     android:textColor="@android:color/black"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -137,7 +138,62 @@
                     android:alpha="0.3"
                     android:layout_marginBottom="12dp" />
 
-                <!-- Notifications -->
+                <!-- Slogan -->
+                <TextView
+                    android:id="@+id/set_slogan"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="Set Slogan"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp"
+                    android:gravity="center_vertical"
+                    android:paddingStart="8dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <!-- Create Goal -->
+                <TextView
+                    android:id="@+id/create_goal"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="Create Goal"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp"
+                    android:gravity="center_vertical"
+                    android:paddingStart="8dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+            </LinearLayout>
+
+            <!-- Permissions Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/settings_card_background"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Permissions"
+                    android:textColor="@android:color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@android:color/black"
+                    android:alpha="0.3"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Push Notifications -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
@@ -148,7 +204,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Notifications"
+                        android:text="Push Notifications"
                         android:textColor="@android:color/black"
                         android:textSize="16sp"
                         android:paddingStart="8dp" />
@@ -161,7 +217,21 @@
 
                 </LinearLayout>
 
-                <!-- Dark Mode -->
+                <!-- Privacy Settings -->
+                <TextView
+                    android:id="@+id/privacy_settings"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="Privacy Settings"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp"
+                    android:gravity="center_vertical"
+                    android:paddingStart="8dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <!-- Voice Permission -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
@@ -172,36 +242,46 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Dark Mode"
+                        android:text="Voice Enabled"
                         android:textColor="@android:color/black"
                         android:textSize="16sp"
                         android:paddingStart="8dp" />
 
                     <Switch
-                        android:id="@+id/switch_dark_mode"
+                        android:id="@+id/switch_voice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:checked="false" />
 
                 </LinearLayout>
 
-                <!-- Units -->
-                <TextView
-                    android:id="@+id/measurement_units"
+                <!-- Location/GPS Permission -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
-                    android:text="Measurement Units"
-                    android:textColor="@android:color/black"
-                    android:textSize="16sp"
-                    android:gravity="center_vertical"
-                    android:paddingStart="8dp"
-                    android:background="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Location/GPS Enabled"
+                        android:textColor="@android:color/black"
+                        android:textSize="16sp"
+                        android:paddingStart="8dp" />
+
+                    <Switch
+                        android:id="@+id/switch_location"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
-            <!-- Privacy & Support Section -->
+            <!-- Help Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -213,7 +293,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Privacy &amp; Support"
+                    android:text="Help"
                     android:textColor="@android:color/black"
                     android:textSize="18sp"
                     android:textStyle="bold"
@@ -226,12 +306,12 @@
                     android:alpha="0.3"
                     android:layout_marginBottom="12dp" />
 
-                <!-- Privacy Policy -->
+                <!-- Contact Support -->
                 <TextView
-                    android:id="@+id/privacy_policy"
+                    android:id="@+id/contact_support"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
-                    android:text="Privacy Policy"
+                    android:text="Contact Support"
                     android:textColor="@android:color/black"
                     android:textSize="16sp"
                     android:gravity="center_vertical"
@@ -240,40 +320,12 @@
                     android:clickable="true"
                     android:focusable="true" />
 
-                <!-- Terms of Service -->
+                <!-- FAQ -->
                 <TextView
-                    android:id="@+id/terms_of_service"
+                    android:id="@+id/faq"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
-                    android:text="Terms of Service"
-                    android:textColor="@android:color/black"
-                    android:textSize="16sp"
-                    android:gravity="center_vertical"
-                    android:paddingStart="8dp"
-                    android:background="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true" />
-
-                <!-- Help & Support -->
-                <TextView
-                    android:id="@+id/help_support"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:text="Help &amp; Support"
-                    android:textColor="@android:color/black"
-                    android:textSize="16sp"
-                    android:gravity="center_vertical"
-                    android:paddingStart="8dp"
-                    android:background="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true" />
-
-                <!-- About -->
-                <TextView
-                    android:id="@+id/about"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:text="About"
+                    android:text="Frequently Asked Questions (FAQ)"
                     android:textColor="@android:color/black"
                     android:textSize="16sp"
                     android:gravity="center_vertical"

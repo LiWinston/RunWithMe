@@ -29,42 +29,49 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
     
     private fun setupClickListeners(view: View) {
-        // Account Settings
-        view.findViewById<TextView>(R.id.edit_profile).setOnClickListener {
-            Toast.makeText(context, "Edit Profile clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Implement edit profile functionality
+        // Personal Profile
+        view.findViewById<TextView>(R.id.view_profile).setOnClickListener {
+            Toast.makeText(context, "View/Edit Profile clicked", Toast.LENGTH_SHORT).show()
+            // TODO: Navigate to profile page with total stats
         }
         
+        view.findViewById<TextView>(R.id.exercise_records).setOnClickListener {
+            Toast.makeText(context, "Exercise Recording clicked", Toast.LENGTH_SHORT).show()
+            // TODO: Navigate to exercise records with details (distance, time, calories, single record browsing)
+        }
+        
+        // Goals
+        view.findViewById<TextView>(R.id.set_slogan).setOnClickListener {
+            Toast.makeText(context, "Set Slogan clicked", Toast.LENGTH_SHORT).show()
+            // TODO: Show dialog to set personal slogan
+        }
+        
+        view.findViewById<TextView>(R.id.create_goal).setOnClickListener {
+            Toast.makeText(context, "Create Goal clicked", Toast.LENGTH_SHORT).show()
+            // TODO: Show dialog to create goal with time span (weekly/monthly)
+        }
+        
+        // Personal Profile - Change Password
         view.findViewById<TextView>(R.id.change_password).setOnClickListener {
             Toast.makeText(context, "Change Password clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Implement change password functionality
+            // TODO: Navigate to change password page
         }
         
-        // App Settings
-        view.findViewById<TextView>(R.id.measurement_units).setOnClickListener {
-            Toast.makeText(context, "Measurement Units clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Implement units selection dialog
+        // Permissions
+        view.findViewById<TextView>(R.id.privacy_settings).setOnClickListener {
+            Toast.makeText(context, "Privacy Settings clicked", Toast.LENGTH_SHORT).show()
+            // TODO: Navigate to privacy settings (default sharing permission for messages)
         }
         
-        // Privacy & Support
-        view.findViewById<TextView>(R.id.privacy_policy).setOnClickListener {
-            Toast.makeText(context, "Privacy Policy clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Open privacy policy
+        // Help
+        view.findViewById<TextView>(R.id.contact_support).setOnClickListener {
+            Toast.makeText(context, "Contact Support clicked", Toast.LENGTH_SHORT).show()
+            // TODO: Navigate to contact support page (describe issue + add image)
         }
         
-        view.findViewById<TextView>(R.id.terms_of_service).setOnClickListener {
-            Toast.makeText(context, "Terms of Service clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Open terms of service
-        }
-        
-        view.findViewById<TextView>(R.id.help_support).setOnClickListener {
-            Toast.makeText(context, "Help & Support clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Open help & support
-        }
-        
-        view.findViewById<TextView>(R.id.about).setOnClickListener {
-            Toast.makeText(context, "About clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Show about dialog
+        view.findViewById<TextView>(R.id.faq).setOnClickListener {
+            Toast.makeText(context, "FAQ clicked", Toast.LENGTH_SHORT).show()
+            // TODO: Navigate to FAQ page
         }
         
         // Logout Button
@@ -75,16 +82,25 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     
     private fun setupSwitches(view: View) {
         val notificationSwitch = view.findViewById<Switch>(R.id.switch_notifications)
-        val darkModeSwitch = view.findViewById<Switch>(R.id.switch_dark_mode)
+        val voiceSwitch = view.findViewById<Switch>(R.id.switch_voice)
+        val locationSwitch = view.findViewById<Switch>(R.id.switch_location)
         
+        // Push Notifications
         notificationSwitch.setOnCheckedChangeListener { _, isChecked ->
-            Toast.makeText(context, "Notifications ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
-            // TODO: Implement notification settings
+            Toast.makeText(context, "Push Notifications ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+            // TODO: Update notification preference in backend
         }
         
-        darkModeSwitch.setOnCheckedChangeListener { _, isChecked ->
-            Toast.makeText(context, "Dark Mode ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
-            // TODO: Implement dark mode toggle
+        // Voice Permission
+        voiceSwitch.setOnCheckedChangeListener { _, isChecked ->
+            Toast.makeText(context, "Voice ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+            // TODO: Request/revoke voice permission
+        }
+        
+        // Location/GPS Permission
+        locationSwitch.setOnCheckedChangeListener { _, isChecked ->
+            Toast.makeText(context, "Location/GPS ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+            // TODO: Request/revoke location permission
         }
     }
     
