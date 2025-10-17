@@ -1,6 +1,7 @@
 package com.example.myapplication.history
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
+import com.example.myapplication.landr.TokenManager
 import com.example.myapplication.record.Workout
 import kotlinx.coroutines.launch
 
@@ -123,10 +125,17 @@ class HistoryWeekFragment : Fragment() {
 
     private fun loadWeekData() {
         lifecycleScope.launch {
-            // Load user profile first
-            historyViewModel.loadUserProfile()
-            // Then load week data
-            historyViewModel.loadWeekData(1L)
+            val userId = TokenManager.getInstance(requireContext()).getUserId()
+            Log.d("HistoryWeekFragment", "Loading week data for user: $userId")
+            
+            if (userId > 0) {
+                // Load user profile first
+                historyViewModel.loadUserProfile()
+                // Then load week data
+                historyViewModel.loadWeekData(userId)
+            } else {
+                Log.e("HistoryWeekFragment", "Invalid user ID: $userId")
+            }
         }
     }
 

@@ -28,6 +28,9 @@ public class User {
     @TableField("email")
     private String email;
     
+    @TableField("email_verified")
+    private Boolean emailVerified = false;
+    
     @TableField("first_name")
     private String firstName;
     
