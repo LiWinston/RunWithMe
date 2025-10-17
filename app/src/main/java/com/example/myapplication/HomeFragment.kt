@@ -106,6 +106,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         // 加载组动态审计 Feed
         loadGroupFeed(view)
+
+        // 点击动态卡片打开 Modal 展示完整 Feed
+        view.findViewById<com.google.android.material.card.MaterialCardView>(R.id.dynamic_card)?.setOnClickListener {
+            val sheet = com.example.myapplication.feed.FeedBottomSheet()
+            sheet.show(parentFragmentManager, "feedBottomSheet")
+        }
     }
 
     private fun loadGroupFeed(view: View) {

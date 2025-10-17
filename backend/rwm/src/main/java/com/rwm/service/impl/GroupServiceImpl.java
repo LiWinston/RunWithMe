@@ -560,10 +560,10 @@ public class GroupServiceImpl implements GroupService {
                 workouts = workoutMapper.selectList(wq);
             }
 
-            // 组内的互动记录（LIKE/REMIND），基于通知（包含 group_id/actor/target）
+                        // 组内的互动记录（LIKE/REMIND/WEEKLY_GOAL_ACHIEVED），基于通知（包含 group_id/actor/target）
             QueryWrapper<Notification> iq = new QueryWrapper<>();
             iq.eq("group_id", gid)
-              .in("type", java.util.List.of("LIKE", "REMIND"))
+                            .in("type", java.util.List.of("LIKE", "REMIND", "WEEKLY_GOAL_ACHIEVED"))
               .orderByDesc("created_at")
               .last("LIMIT " + lim);
             interactions = notificationMapper.selectList(iq);
