@@ -60,24 +60,29 @@ class HistoryTodayFragment : Fragment() {
     }
 
     private fun initViews(view: View) {
-        // 统计卡片
-        tvTotalDistance = view.findViewById(R.id.tvTotalDistance)
-        tvTotalDuration = view.findViewById(R.id.tvTotalDuration)
-        tvTotalPace = view.findViewById(R.id.tvTotalPace)
-        tvTotalCalories = view.findViewById(R.id.tvTotalCalories)
-        tvTotalSteps = view.findViewById(R.id.tvTotalSteps)
+        try {
+            // 统计卡片
+            tvTotalDistance = view.findViewById(R.id.tvTotalDistance) ?: throw NullPointerException("tvTotalDistance not found")
+            tvTotalDuration = view.findViewById(R.id.tvTotalDuration) ?: throw NullPointerException("tvTotalDuration not found")
+            tvTotalPace = view.findViewById(R.id.tvTotalPace) ?: throw NullPointerException("tvTotalPace not found")
+            tvTotalCalories = view.findViewById(R.id.tvTotalCalories) ?: throw NullPointerException("tvTotalCalories not found")
+            tvTotalSteps = view.findViewById(R.id.tvTotalSteps) ?: throw NullPointerException("tvTotalSteps not found")
 
-        // 运动记录列表
-        rvWorkoutRecords = view.findViewById(R.id.rvWorkoutRecords)
-        
-        // AI建议相关
-        btnGenerateTodayAdvice = view.findViewById(R.id.btnGenerateTodayAdvice)
-        tvTodayAdvice = view.findViewById(R.id.tvTodayAdvice)
-        pbAdviceLoading = view.findViewById(R.id.pbAdviceLoading)
-        
-        // 设置按钮点击事件
-        btnGenerateTodayAdvice.setOnClickListener {
-            historyViewModel.generateTodayAdvice()
+            // 运动记录列表
+            rvWorkoutRecords = view.findViewById(R.id.rvWorkoutRecords) ?: throw NullPointerException("rvWorkoutRecords not found")
+            
+            // AI建议相关
+            btnGenerateTodayAdvice = view.findViewById(R.id.btnGenerateTodayAdvice) ?: throw NullPointerException("btnGenerateTodayAdvice not found")
+            tvTodayAdvice = view.findViewById(R.id.tvTodayAdvice) ?: throw NullPointerException("tvTodayAdvice not found")
+            pbAdviceLoading = view.findViewById(R.id.pbAdviceLoading) ?: throw NullPointerException("pbAdviceLoading not found")
+            
+            // 设置按钮点击事件
+            btnGenerateTodayAdvice.setOnClickListener {
+                historyViewModel.generateTodayAdvice()
+            }
+        } catch (e: NullPointerException) {
+            Log.e("HistoryTodayFragment", "Failed to initialize views: ${e.message}", e)
+            throw e
         }
     }
 

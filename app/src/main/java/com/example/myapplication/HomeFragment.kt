@@ -112,6 +112,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             val sheet = com.example.myapplication.feed.FeedBottomSheet()
             sheet.show(parentFragmentManager, "feedBottomSheet")
         }
+        
+        // 加载本周最佳运动记录
+        loadWeekBestWorkout(view)
     }
 
     private fun loadGroupFeed(view: View) {
@@ -190,6 +193,107 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 // 保持占位符
             }
         })
+    }
+
+    private fun loadWeekBestWorkout(view: View) {
+        val tvPbDate = view.findViewById<TextView>(R.id.tvPbDate)
+        val distanceText = view.findViewById<TextView>(R.id.distance)
+        val paceText = view.findViewById<TextView>(R.id.Pace)
+        val durationText = view.findViewById<TextView>(R.id.duration)
+        val caloriesText = view.findViewById<TextView>(R.id.tvLabelCalories)
+        
+        lifecycleScope.launch {
+            try {
+                val userId = com.example.myapplication.landr.TokenManager.getInstance(requireContext()).getUserId()
+                if (userId <= 0) {
+                    Log.e(TAG, "Invalid user ID for personal best")
+                    return@launch
+                }
+                
+                val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.record.RecordApi::class.java)
+                val response = api.getWeekBestWorkout(userId)
+                
+                if (response.isSuccessful && response.body() != null) {
+                    val result = response.body()!!
+                    if (result.code == 0 && result.data != null) {
+                        val workout = result.data
+                        
+                        // 格式化日期
+                        try {
+                            val startTime = workout.startTime
+                            if (startTime.length >= 10) {
+                                tvPbDate.text = startTime.substring(5, 10).replace('-', '/')
+                            }
+                        } catch (e: Exception) {
+                            tvPbDate.text = "--"
+                        }
+                        
+                        // 显示距离
+                        val distance = workout.distance?.toDoubleOrNull() ?: 0.0
+                        distanceText.text = String.format("📍%.2f km", distance)
+                        
+                        // 显示时长
+                        val duration = workout.duration ?: 0
+                        val hours = duration / 3600
+                        val minutes = (duration % 3600) / 60
+                        val seconds = duration % 60
+                        val timeStr = if (hours > 0) {
+                            String.format("⏱️%dh %dm", hours, minutes)
+                        } else if (minutes > 0) {
+                            String.format("⏱️%dm %ds", minutes, seconds)
+                        } else {
+                            String.format("⏱️%ds", seconds)
+                        }
+                        durationText.text = timeStr
+                        
+                        // 显示配速
+                        val avgPace = workout.avgPace ?: 0
+                        if (avgPace > 0) {
+                            val paceMinutes = avgPace / 60
+                            val paceSeconds = avgPace % 60
+                            paceText.text = String.format("🏃%d'%02d\"/km", paceMinutes, paceSeconds)
+                        } else {
+                            paceText.text = "🏃--"
+                        }
+                        
+                        // 显示卡路里
+                        val calories = workout.calories?.toDoubleOrNull() ?: 0.0
+                        caloriesText.text = String.format("🔥%d kcal", calories.toInt())
+                        
+                        Log.d(TAG, "Personal best loaded successfully")
+                    } else {
+                        // 没有本周数据，显示默认值
+                        setDefaultPersonalBest(tvPbDate, distanceText, paceText, durationText, caloriesText)
+                    }
+                } else {
+                    Log.e(TAG, "Failed to get week best workout: ${response.code()}")
+                    setDefaultPersonalBest(tvPbDate, distanceText, paceText, durationText, caloriesText)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading personal best", e)
+                setDefaultPersonalBest(
+                    view.findViewById(R.id.tvPbDate),
+                    view.findViewById(R.id.distance),
+                    view.findViewById(R.id.Pace),
+                    view.findViewById(R.id.duration),
+                    view.findViewById(R.id.tvLabelCalories)
+                )
+            }
+        }
+    }
+    
+    private fun setDefaultPersonalBest(
+        tvPbDate: TextView,
+        distanceText: TextView,
+        paceText: TextView,
+        durationText: TextView,
+        caloriesText: TextView
+    ) {
+        tvPbDate.text = "--"
+        distanceText.text = "📍--"
+        paceText.text = "🏃--"
+        durationText.text = "⏱️--"
+        caloriesText.text = "🔥--"
     }
 
     private fun setupLocationServices() {

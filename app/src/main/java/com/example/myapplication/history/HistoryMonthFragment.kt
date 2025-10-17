@@ -60,21 +60,26 @@ class HistoryMonthFragment : Fragment() {
     }
 
     private fun initViews(view: View) {
-        tvMonthDistance = view.findViewById(R.id.tvMonthDistance)
-        tvMonthDuration = view.findViewById(R.id.tvMonthDuration)
-        tvMonthPace = view.findViewById(R.id.tvMonthPace)
-        tvMonthCalories = view.findViewById(R.id.tvMonthCalories)
-        tvMonthSteps = view.findViewById(R.id.tvMonthSteps)
-        rvMonthWorkouts = view.findViewById(R.id.rvMonthWorkouts)
-        
-        // AI建议相关
-        btnGenerateMonthAdvice = view.findViewById(R.id.btnGenerateMonthAdvice)
-        tvMonthAdvice = view.findViewById(R.id.tvMonthAdvice)
-        pbAdviceLoading = view.findViewById(R.id.pbAdviceLoading)
-        
-        // 设置按钮点击事件
-        btnGenerateMonthAdvice.setOnClickListener {
-            historyViewModel.generateMonthAdvice()
+        try {
+            tvMonthDistance = view.findViewById(R.id.tvMonthDistance) ?: throw NullPointerException("tvMonthDistance not found")
+            tvMonthDuration = view.findViewById(R.id.tvMonthDuration) ?: throw NullPointerException("tvMonthDuration not found")
+            tvMonthPace = view.findViewById(R.id.tvMonthPace) ?: throw NullPointerException("tvMonthPace not found")
+            tvMonthCalories = view.findViewById(R.id.tvMonthCalories) ?: throw NullPointerException("tvMonthCalories not found")
+            tvMonthSteps = view.findViewById(R.id.tvMonthSteps) ?: throw NullPointerException("tvMonthSteps not found")
+            rvMonthWorkouts = view.findViewById(R.id.rvMonthWorkouts) ?: throw NullPointerException("rvMonthWorkouts not found")
+            
+            // AI建议相关
+            btnGenerateMonthAdvice = view.findViewById(R.id.btnGenerateMonthAdvice) ?: throw NullPointerException("btnGenerateMonthAdvice not found")
+            tvMonthAdvice = view.findViewById(R.id.tvMonthAdvice) ?: throw NullPointerException("tvMonthAdvice not found")
+            pbAdviceLoading = view.findViewById(R.id.pbAdviceLoading) ?: throw NullPointerException("pbAdviceLoading not found")
+            
+            // 设置按钮点击事件
+            btnGenerateMonthAdvice.setOnClickListener {
+                historyViewModel.generateMonthAdvice()
+            }
+        } catch (e: NullPointerException) {
+            Log.e("HistoryMonthFragment", "Failed to initialize views: ${e.message}", e)
+            throw e
         }
     }
 

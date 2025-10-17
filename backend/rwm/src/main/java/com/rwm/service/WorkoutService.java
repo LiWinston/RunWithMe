@@ -1,13 +1,13 @@
 package com.rwm.service;
 
-import com.rwm.entity.Workout;
-import com.rwm.dto.request.WorkoutCreateRequest;
-import com.rwm.dto.request.WorkoutUpdateRequest;
-import com.rwm.dto.response.WorkoutStatsResponse;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+
+import com.rwm.dto.request.WorkoutCreateRequest;
+import com.rwm.dto.request.WorkoutUpdateRequest;
+import com.rwm.dto.response.WorkoutStatsResponse;
+import com.rwm.entity.Workout;
 
 /**
  * 运动记录服务接口
@@ -103,4 +103,10 @@ public interface WorkoutService {
      * 获取用户连续签到天数
      */
     int getUserStreakDays(Long userId);
+    
+    /**
+     * 获取用户本周最佳运动记录
+     * 根据距离（优先）和卡路里判断最佳记录
+     */
+    Workout getUserWeekBestWorkout(Long userId);
 }

@@ -630,4 +630,55 @@ public class WorkoutServiceImpl implements WorkoutService {
         
         return streak;
     }
+    
+    @Override
+    public Workout getUserWeekBestWorkout(Long userId) {
+        log.info("获取用户本周最佳运动记录，用户ID: {}", userId);
+        
+        // 使用UTC时区保持与数据库一致
+        ZoneId utcZone = ZoneId.of("UTC");
+        LocalDate today = LocalDate.now(utcZone);
+        LocalDate weekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
+        LocalDateTime startOfWeek = weekStart.atStartOfDay();
+        LocalDateTime endOfWeek = today.atTime(23, 59, 59);
+        
+        log.info("UTC本周时间范围: {} 到 {}", startOfWeek, endOfWeek);
+        
+        QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", userId)
+                   .between("start_time", startOfWeek, endOfWeek)
+                   .eq("status", "COMPLETED");
+        
+        List<Workout> workouts = workoutMapper.selectList(queryWrapper);
+        
+        if (workouts.isEmpty()) {
+            log.info("本周无运动记录");
+            return null;
+        }
+        
+        // 找出最佳记录：优先距离最长，其次卡路里最高
+        Workout bestWorkout = workouts.stream()
+                .max((w1, w2) -> {
+                    // 比较距离
+                    BigDecimal d1 = w1.getDistance() != null ? w1.getDistance() : BigDecimal.ZERO;
+                    BigDecimal d2 = w2.getDistance() != null ? w2.getDistance() : BigDecimal.ZERO;
+                    int distanceCompare = d1.compareTo(d2);
+                    
+                    if (distanceCompare != 0) {
+                        return distanceCompare;
+                    }
+                    
+                    // 距离相同，比较卡路里
+                    BigDecimal c1 = w1.getCalories() != null ? w1.getCalories() : BigDecimal.ZERO;
+                    BigDecimal c2 = w2.getCalories() != null ? w2.getCalories() : BigDecimal.ZERO;
+                    return c1.compareTo(c2);
+                })
+                .orElse(null);
+        
+        log.info("找到最佳记录，ID: {}, 距离: {} km", 
+                bestWorkout != null ? bestWorkout.getId() : "null",
+                bestWorkout != null && bestWorkout.getDistance() != null ? bestWorkout.getDistance() : "0");
+        
+        return bestWorkout;
+    }
 }
