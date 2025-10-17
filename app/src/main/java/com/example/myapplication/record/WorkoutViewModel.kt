@@ -300,6 +300,18 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     /** Start accelerometer sensor */
     fun startStepSensors() {
+        val context = getApplication<Application>()
+        
+        // Check if ACTIVITY_RECOGNITION permission is granted (required for Android Q+)
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.ACTIVITY_RECOGNITION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            android.util.Log.w("WorkoutViewModel", "ACTIVITY_RECOGNITION permission not granted, step counting disabled")
+            return
+        }
+
         // Accelerometer
 //        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 //        accelerometer?.let {
@@ -314,8 +326,11 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
         // Step detector
         stepDetector = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
-        stepDetector?.let {
-            sensorManager.registerListener(stepListener, it, SensorManager.SENSOR_DELAY_FASTEST)
+        if (stepDetector != null) {
+            sensorManager.registerListener(stepListener, stepDetector, SensorManager.SENSOR_DELAY_FASTEST)
+            android.util.Log.d("WorkoutViewModel", "Step detector sensor registered successfully")
+        } else {
+            android.util.Log.w("WorkoutViewModel", "Step detector sensor not available on this device")
         }
     }
 
