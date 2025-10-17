@@ -175,4 +175,19 @@ public class HistoryController {
             return Result.error("获取运动记录失败: " + e.getMessage());
         }
     }
+
+    /**
+     * 获取用户本周最佳运动记录
+     */
+    @GetMapping("/best/week/{userId}")
+    public Result<Workout> getWeekBestWorkout(@PathVariable Long userId) {
+        log.info("获取用户{}本周最佳运动记录", userId);
+        try {
+            Workout bestWorkout = workoutService.getUserWeekBestWorkout(userId);
+            return Result.ok(bestWorkout);
+        } catch (Exception e) {
+            log.error("获取本周最佳运动记录失败", e);
+            return Result.error("获取最佳运动记录失败: " + e.getMessage());
+        }
+    }
 }

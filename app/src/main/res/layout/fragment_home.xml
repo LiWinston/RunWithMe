@@ -182,190 +182,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 色块 + 动态 两列 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:orientation="horizontal">
-
-                <!-- 色块卡片 -->
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="1dp"
-                    android:layout_height="160dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    app:cardBackgroundColor="#E8F6F1"
-                    app:cardCornerRadius="22dp"
-                    app:cardElevation="1dp"
-                    app:layout_constraintDimensionRatio="1:1">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:orientation="vertical">
-
-                        <!-- 三行色块 -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="8dp"
-                            android:gravity="center"
-                            android:orientation="horizontal">
-
-                            <com.google.android.material.card.MaterialCardView
-                                style="@style/ColorTileSmall"
-                                app:cardBackgroundColor="#89C7B8" />
-
-                            <com.google.android.material.card.MaterialCardView
-                                style="@style/ColorTileSmall"
-                                app:cardBackgroundColor="#89C7B8" />
-
-                            <com.google.android.material.card.MaterialCardView
-                                style="@style/ColorTileSmall"
-                                app:cardBackgroundColor="#D4F4ED" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginBottom="8dp"
-                            android:gravity="center"
-                            android:orientation="horizontal">
-
-                            <com.google.android.material.card.MaterialCardView
-                                style="@style/ColorTileSmall"
-                                app:cardBackgroundColor="#89C7B8" />
-
-                            <com.google.android.material.card.MaterialCardView
-                                style="@style/ColorTileSmall"
-                                app:cardBackgroundColor="#2E6F64" />
-
-                            <com.google.android.material.card.MaterialCardView
-                                style="@style/ColorTileSmall"
-                                app:cardBackgroundColor="#2E6F64" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:orientation="horizontal">
-
-                            <com.google.android.material.card.MaterialCardView
-                                style="@style/ColorTileSmall"
-                                app:cardBackgroundColor="#2E6F64" />
-
-                            <com.google.android.material.card.MaterialCardView
-                                style="@style/ColorTileSmall"
-                                app:cardBackgroundColor="#89C7B8" />
-
-                            <com.google.android.material.card.MaterialCardView
-                                style="@style/ColorTileSmall"
-                                app:cardBackgroundColor="#D4F4ED" />
-                        </LinearLayout>
-
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- 动态卡片 -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/dynamic_card"
-                    android:layout_width="0dp"
-                    android:layout_height="170dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1.5"
-                    app:cardBackgroundColor="#E8F6F1"
-                    app:cardCornerRadius="22dp"
-                    app:cardElevation="1dp">
-
-                    <LinearLayout
-                        android:layout_width="229dp"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:paddingVertical="4dp">
-
-                            <TextView
-                                android:id="@+id/todayDate"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="dd/mm/yy"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/todayDeed"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="2"
-                                android:text="--" />
-                        </LinearLayout>
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:background="#22000000" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:paddingVertical="4dp">
-
-                            <TextView
-                                android:id="@+id/yesterdayDate"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="dd/yy/mm"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/yesterdayDeed"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="2"
-                                android:text="--" />
-                        </LinearLayout>
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:background="#22000000" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:paddingVertical="4dp">
-
-                            <TextView
-                                android:id="@+id/thirdDate"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="dd/yy/mm"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/thirdDeed"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="2"
-                                android:text="--" />
-                        </LinearLayout>
-
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-            </LinearLayout>
-
             <!-- Personal Best 卡片 -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -491,6 +307,101 @@
                             </LinearLayout>
                         </LinearLayout>
                     </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 动态卡片 -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/dynamic_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                app:cardBackgroundColor="#E8F6F1"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="4dp">
+
+                        <TextView
+                            android:id="@+id/todayDate"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="dd/mm/yy"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/todayDeed"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="2"
+                            android:text="--" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#22000000" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="4dp">
+
+                        <TextView
+                            android:id="@+id/yesterdayDate"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="dd/yy/mm"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/yesterdayDeed"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="2"
+                            android:text="--" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#22000000" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="4dp">
+
+                        <TextView
+                            android:id="@+id/thirdDate"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="dd/yy/mm"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/thirdDeed"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="2"
+                            android:text="--" />
+                    </LinearLayout>
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

@@ -61,6 +61,10 @@ interface RecordApi {
     @GET("/api/history/chart/month/{userId}")
     suspend fun getMonthChart(@Path("userId") userId: Long): Response<ApiResponse<Map<String, Any>>>
     
+    // History API - 获取本周最佳运动记录
+    @GET("/api/history/best/week/{userId}")
+    suspend fun getWeekBestWorkout(@Path("userId") userId: Long): Response<ApiResponse<Workout>>
+    
     // User API - 获取用户信息
     @GET("/api/user/profile")
     suspend fun getUserProfile(): Response<ApiResponse<User>>
