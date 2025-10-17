@@ -154,8 +154,9 @@ public class WorkoutServiceImpl implements WorkoutService {
     
     @Override
     public boolean checkTodayGoalAchievement(Long userId) {
-        // 使用服务器本地时区（与数据库 DATETIME 存储一致）
-        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        // 使用UTC时区与数据库serverTimezone=UTC一致
+        ZoneId utcZone = ZoneId.of("UTC");
+        LocalDate today = LocalDate.now(utcZone);
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.atTime(23, 59, 59);
         
@@ -284,11 +285,12 @@ public class WorkoutServiceImpl implements WorkoutService {
     public Map<String, Object> getUserTodayStats(Long userId) {
         log.info("获取用户今日统计，用户ID: {}", userId);
         
-        // 使用本地时区与数据库一致的日期范围
-        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        // 使用UTC时区与数据库serverTimezone=UTC一致
+        ZoneId utcZone = ZoneId.of("UTC");
+        LocalDate today = LocalDate.now(utcZone);
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.atTime(23, 59, 59);
-        log.info("本地今日时间范围: {} 到 {}", startOfDay, endOfDay);
+        log.info("UTC今日时间范围: {} 到 {}", startOfDay, endOfDay);
         
         QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId)
@@ -374,13 +376,14 @@ public class WorkoutServiceImpl implements WorkoutService {
     public Map<String, Object> getUserWeekStats(Long userId) {
         log.info("获取用户本周统计，用户ID: {}", userId);
         
-        // 本地时区的周一作为起点
-        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        // 使用UTC时区的周一作为起点
+        ZoneId utcZone = ZoneId.of("UTC");
+        LocalDate today = LocalDate.now(utcZone);
         LocalDate weekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
         LocalDateTime startOfWeek = weekStart.atStartOfDay();
         LocalDateTime endOfWeek = today.atTime(23, 59, 59);
         
-        log.info("本地本周时间范围: {} 到 {}", startOfWeek, endOfWeek);
+        log.info("UTC本周时间范围: {} 到 {}", startOfWeek, endOfWeek);
         
         QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId)
@@ -396,13 +399,14 @@ public class WorkoutServiceImpl implements WorkoutService {
     public Map<String, Object> getUserMonthStats(Long userId) {
         log.info("获取用户本月统计，用户ID: {}", userId);
         
-        // 本地时区的月度范围
-        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        // 使用UTC时区的月度范围
+        ZoneId utcZone = ZoneId.of("UTC");
+        LocalDate today = LocalDate.now(utcZone);
         LocalDate monthStart = today.withDayOfMonth(1);
         LocalDateTime startOfMonth = monthStart.atStartOfDay();
         LocalDateTime endOfMonth = today.atTime(23, 59, 59);
         
-        log.info("本地本月时间范围: {} 到 {}", startOfMonth, endOfMonth);
+        log.info("UTC本月时间范围: {} 到 {}", startOfMonth, endOfMonth);
         
         QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId)
@@ -438,8 +442,9 @@ public class WorkoutServiceImpl implements WorkoutService {
     public Map<String, Object> getUserWeeklyChart(Long userId) {
         log.info("获取用户本周图表数据，用户ID: {}", userId);
         
-        // 本地时区周数据
-        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        // UTC时区周数据
+        ZoneId utcZone = ZoneId.of("UTC");
+        LocalDate today = LocalDate.now(utcZone);
         LocalDate weekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
         LocalDate weekEnd = weekStart.plusDays(6);
         
@@ -493,8 +498,9 @@ public class WorkoutServiceImpl implements WorkoutService {
     public Map<String, Object> getUserMonthlyChart(Long userId) {
         log.info("获取用户本月图表数据，用户ID: {}", userId);
         
-        // 本地时区月数据
-        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        // UTC时区月数据
+        ZoneId utcZone = ZoneId.of("UTC");
+        LocalDate today = LocalDate.now(utcZone);
         LocalDate monthStart = today.withDayOfMonth(1);
         
         // 获取本月所有运动记录

@@ -295,6 +295,16 @@
         </LinearLayout>
     </GridLayout>
 
+    <!-- Progress Bar (hidden by default) -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/btnDone"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone" />
+
     <!-- Done 按钮 -->
     <Button
         android:id="@+id/btnDone"

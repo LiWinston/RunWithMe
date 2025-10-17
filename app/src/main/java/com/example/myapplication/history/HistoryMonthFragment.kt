@@ -69,6 +69,13 @@ class HistoryMonthFragment : Fragment() {
         loadMonthData()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Refresh data when user returns to this fragment
+        Log.d("HistoryMonthFragment", "onResume - refreshing month data")
+        loadMonthData()
+    }
+
     private fun initViews(view: View) {
         try {
             tvMonthDistance = view.findViewById(R.id.tvMonthDistance) ?: throw NullPointerException("tvMonthDistance not found")

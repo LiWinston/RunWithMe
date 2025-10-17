@@ -69,6 +69,13 @@ class HistoryWeekFragment : Fragment() {
         loadWeekData()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Refresh data when user returns to this fragment
+        Log.d("HistoryWeekFragment", "onResume - refreshing week data")
+        loadWeekData()
+    }
+
     private fun initViews(view: View) {
         try {
             tvWeekDistance = view.findViewById(R.id.tvWeekDistance) ?: throw NullPointerException("tvWeekDistance not found")
