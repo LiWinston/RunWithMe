@@ -161,11 +161,16 @@ CREATE TABLE IF NOT EXISTS `user_weekly_contributions` (
 CREATE TABLE IF NOT EXISTS `notifications` (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
+    actor_user_id BIGINT NULL,
+    target_user_id BIGINT NULL,
+    group_id BIGINT NULL,
     type VARCHAR(30) NOT NULL,
     title VARCHAR(100),
     content VARCHAR(500),
     `read` BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_notifications_user (user_id),
+    INDEX idx_notifications_actor (actor_user_id),
+    INDEX idx_notifications_target (target_user_id),
     INDEX idx_notifications_type (type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知表';

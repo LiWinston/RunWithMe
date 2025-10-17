@@ -315,28 +315,60 @@ public class GroupServiceImpl implements GroupService {
         if (actorGroupId == null || !Objects.equals(actorGroupId, targetGroupId)) {
             throw new RuntimeException("Not in same group");
         }
-        // update weekly counters
+        // update weekly counters (weekly unique per actor-target-action)
         QueryWrapper<GroupMember> qActor = new QueryWrapper<>();
         qActor.eq("user_id", targetUserId).eq("group_id", actorGroupId).eq("deleted", false);
         GroupMember target = groupMemberMapper.selectOne(qActor);
         if (target == null) throw new RuntimeException("Target not found");
 
-        if ("LIKE".equalsIgnoreCase(action)) {
-            target.setWeeklyLikeCount((target.getWeeklyLikeCount() == null ? 0 : target.getWeeklyLikeCount()) + 1);
-            groupMemberMapper.updateById(target);
-            sendNotification(targetUserId, "LIKE", "New like", "Someone liked your progress");
-        } else if ("REMIND".equalsIgnoreCase(action)) {
-            target.setWeeklyRemindCount((target.getWeeklyRemindCount() == null ? 0 : target.getWeeklyRemindCount()) + 1);
-            groupMemberMapper.updateById(target);
-            sendNotification(targetUserId, "REMIND", "Reminder", "Please keep up with your plan");
-        } else {
+        LocalDate ws = weekStartUtc(LocalDate.now());
+        String actionUpper = action.toUpperCase();
+        if (!"LIKE".equals(actionUpper) && !"REMIND".equals(actionUpper)) {
             throw new RuntimeException("Invalid action");
         }
+
+        // 检查当周是否已计数（同一 actor -> target 的同一动作）
+        QueryWrapper<Notification> nq = new QueryWrapper<>();
+        nq.eq("actor_user_id", actorUserId)
+          .eq("target_user_id", targetUserId)
+          .eq("type", actionUpper)
+          .ge("created_at", ws.atStartOfDay());
+    Long cnt = notificationMapper.selectCount(nq);
+    boolean alreadyCountedThisWeek = cnt != null && cnt > 0;
+
+        if (!alreadyCountedThisWeek) {
+            if ("LIKE".equals(actionUpper)) {
+                target.setWeeklyLikeCount((target.getWeeklyLikeCount() == null ? 0 : target.getWeeklyLikeCount()) + 1);
+            } else {
+                target.setWeeklyRemindCount((target.getWeeklyRemindCount() == null ? 0 : target.getWeeklyRemindCount()) + 1);
+            }
+            groupMemberMapper.updateById(target);
+        }
+
+        // 始终记录通知事件（用于审计/时间线）
+        sendNotificationDetailed(targetUserId, actorUserId, targetUserId, actorGroupId, actionUpper,
+                "LIKE".equals(actionUpper) ? "New like" : "Reminder",
+                "LIKE".equals(actionUpper) ? "Someone liked your progress" : "Please keep up with your plan");
     }
 
     private void sendNotification(Long userId, String type, String title, String content) {
         Notification n = new Notification();
         n.setUserId(userId);
+        n.setType(type);
+        n.setTitle(title);
+        n.setContent(content);
+        n.setRead(false);
+        n.setCreatedAt(LocalDateTime.now());
+        notificationMapper.insert(n);
+    }
+
+    private void sendNotificationDetailed(Long recipientUserId, Long actorUserId, Long targetUserId, Long groupId,
+                                          String type, String title, String content) {
+        Notification n = new Notification();
+        n.setUserId(recipientUserId);
+        n.setActorUserId(actorUserId);
+        n.setTargetUserId(targetUserId);
+        n.setGroupId(groupId);
         n.setType(type);
         n.setTitle(title);
         n.setContent(content);
@@ -493,5 +525,50 @@ public class GroupServiceImpl implements GroupService {
         QueryWrapper<Notification> nq = new QueryWrapper<>();
         nq.eq("user_id", userId).orderByDesc("created_at").last("LIMIT " + Math.max(1, limit));
         return notificationMapper.selectList(nq);
+    }
+
+    @Override
+    public com.rwm.dto.response.FeedResponse feed(Long userId, int limit) {
+        Long gid = getUserCurrentGroupId(userId);
+        int lim = Math.max(1, limit);
+        java.util.List<com.rwm.entity.Workout> workouts;
+        java.util.List<Notification> interactions = java.util.List.of();
+
+        if (gid == null) {
+            // 无组：仅返回自己的 workouts
+            QueryWrapper<com.rwm.entity.Workout> wq = new QueryWrapper<>();
+            wq.eq("user_id", userId)
+              .eq("status", "COMPLETED")
+              .orderByDesc("start_time")
+              .last("LIMIT " + lim);
+            workouts = workoutMapper.selectList(wq);
+        } else {
+            // 有组：返回组员 workouts
+            java.util.Set<Long> memberIds = new java.util.HashSet<>();
+            QueryWrapper<GroupMember> mq = new QueryWrapper<>();
+            mq.eq("group_id", gid).eq("deleted", false);
+            for (GroupMember m : groupMemberMapper.selectList(mq)) memberIds.add(m.getUserId());
+
+            if (memberIds.isEmpty()) {
+                workouts = java.util.List.of();
+            } else {
+                QueryWrapper<com.rwm.entity.Workout> wq = new QueryWrapper<>();
+                wq.in("user_id", memberIds)
+                  .eq("status", "COMPLETED")
+                  .orderByDesc("start_time")
+                  .last("LIMIT " + lim);
+                workouts = workoutMapper.selectList(wq);
+            }
+
+            // 组内的互动记录（LIKE/REMIND），基于通知（包含 group_id/actor/target）
+            QueryWrapper<Notification> iq = new QueryWrapper<>();
+            iq.eq("group_id", gid)
+              .in("type", java.util.List.of("LIKE", "REMIND"))
+              .orderByDesc("created_at")
+              .last("LIMIT " + lim);
+            interactions = notificationMapper.selectList(iq);
+        }
+
+        return new com.rwm.dto.response.FeedResponse(workouts, interactions);
     }
 }
