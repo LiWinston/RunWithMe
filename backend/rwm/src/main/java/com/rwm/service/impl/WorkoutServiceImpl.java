@@ -149,10 +149,10 @@ public class WorkoutServiceImpl implements WorkoutService {
     
     @Override
     public boolean checkTodayGoalAchievement(Long userId) {
-        // 使用UTC时区保持与数据库一致
-        ZoneId utcZone = ZoneId.of("UTC");
-        LocalDateTime startOfDay = LocalDate.now(utcZone).atStartOfDay();
-        LocalDateTime endOfDay = LocalDate.now(utcZone).atTime(23, 59, 59);
+        // 使用服务器本地时区（与数据库 DATETIME 存储一致）
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(23, 59, 59);
         
         QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId)
@@ -165,7 +165,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     
     @Override
     public List<Workout> getUserWorkoutsByDate(Long userId, LocalDate date) {
-        // 传入的LocalDate按照UTC时区处理
+        // 直接按本地时区的日期起止（数据库为本地时间）
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(23, 59, 59);
         
@@ -278,22 +278,15 @@ public class WorkoutServiceImpl implements WorkoutService {
     public Map<String, Object> getUserTodayStats(Long userId) {
         log.info("获取用户今日统计，用户ID: {}", userId);
         
-        // 使用墨尔本时区（用户实际时区）
-        ZoneId melbourneZone = ZoneId.of("Australia/Melbourne");
-        LocalDateTime startOfDay = LocalDate.now(melbourneZone).atStartOfDay();
-        LocalDateTime endOfDay = LocalDate.now(melbourneZone).atTime(23, 59, 59);
-        
-        // 转换为UTC时间用于数据库查询
-        ZoneId utcZone = ZoneId.of("UTC");
-        LocalDateTime utcStartOfDay = startOfDay.atZone(melbourneZone).withZoneSameInstant(utcZone).toLocalDateTime();
-        LocalDateTime utcEndOfDay = endOfDay.atZone(melbourneZone).withZoneSameInstant(utcZone).toLocalDateTime();
-        
-        log.info("墨尔本今日时间范围: {} 到 {}", startOfDay, endOfDay);
-        log.info("转换为UTC时间范围: {} 到 {}", utcStartOfDay, utcEndOfDay);
+        // 使用本地时区与数据库一致的日期范围
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(23, 59, 59);
+        log.info("本地今日时间范围: {} 到 {}", startOfDay, endOfDay);
         
         QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId)
-                   .between("start_time", utcStartOfDay, utcEndOfDay)
+                   .between("start_time", startOfDay, endOfDay)
                    .eq("status", "COMPLETED");
         
         List<Workout> workouts = workoutMapper.selectList(queryWrapper);
@@ -380,14 +373,13 @@ public class WorkoutServiceImpl implements WorkoutService {
     public Map<String, Object> getUserWeekStats(Long userId) {
         log.info("获取用户本周统计，用户ID: {}", userId);
         
-        // 使用UTC时区保持与数据库一致
-        ZoneId utcZone = ZoneId.of("UTC");
-        LocalDate today = LocalDate.now(utcZone);
+        // 本地时区的周一作为起点
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
         LocalDate weekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
         LocalDateTime startOfWeek = weekStart.atStartOfDay();
         LocalDateTime endOfWeek = today.atTime(23, 59, 59);
         
-        log.info("UTC本周时间范围: {} 到 {}", startOfWeek, endOfWeek);
+        log.info("本地本周时间范围: {} 到 {}", startOfWeek, endOfWeek);
         
         QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId)
@@ -403,14 +395,13 @@ public class WorkoutServiceImpl implements WorkoutService {
     public Map<String, Object> getUserMonthStats(Long userId) {
         log.info("获取用户本月统计，用户ID: {}", userId);
         
-        // 使用UTC时区保持与数据库一致
-        ZoneId utcZone = ZoneId.of("UTC");
-        LocalDate today = LocalDate.now(utcZone);
+        // 本地时区的月度范围
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
         LocalDate monthStart = today.withDayOfMonth(1);
         LocalDateTime startOfMonth = monthStart.atStartOfDay();
         LocalDateTime endOfMonth = today.atTime(23, 59, 59);
         
-        log.info("UTC本月时间范围: {} 到 {}", startOfMonth, endOfMonth);
+        log.info("本地本月时间范围: {} 到 {}", startOfMonth, endOfMonth);
         
         QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId)
@@ -426,23 +417,14 @@ public class WorkoutServiceImpl implements WorkoutService {
     public List<Workout> getUserWorkoutsByDateRange(Long userId, LocalDate startDate, LocalDate endDate) {
         log.info("获取用户指定日期范围运动记录，用户ID: {}, 开始: {}, 结束: {}", userId, startDate, endDate);
         
-        // 假设传入的日期是墨尔本时区的日期，转换为UTC时区用于数据库查询
-        ZoneId melbourneZone = ZoneId.of("Australia/Melbourne");
-        ZoneId utcZone = ZoneId.of("UTC");
-        
+        // 直接使用本地日期的起止时间（与数据库一致）
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-        
-        // 转换为UTC时间
-        LocalDateTime utcStartDateTime = startDateTime.atZone(melbourneZone).withZoneSameInstant(utcZone).toLocalDateTime();
-        LocalDateTime utcEndDateTime = endDateTime.atZone(melbourneZone).withZoneSameInstant(utcZone).toLocalDateTime();
-        
-        log.info("墨尔本日期范围: {} 到 {}", startDateTime, endDateTime);
-        log.info("UTC日期范围查询: {} 到 {}", utcStartDateTime, utcEndDateTime);
+        log.info("本地日期范围查询: {} 到 {}", startDateTime, endDateTime);
         
         QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId)
-                   .between("start_time", utcStartDateTime, utcEndDateTime)
+                   .between("start_time", startDateTime, endDateTime)
                    .orderByDesc("start_time");
         
         List<Workout> workouts = workoutMapper.selectList(queryWrapper);
@@ -455,9 +437,8 @@ public class WorkoutServiceImpl implements WorkoutService {
     public Map<String, Object> getUserWeeklyChart(Long userId) {
         log.info("获取用户本周图表数据，用户ID: {}", userId);
         
-        // 使用UTC时区保持与数据库一致
-        ZoneId utcZone = ZoneId.of("UTC");
-        LocalDate today = LocalDate.now(utcZone);
+        // 本地时区周数据
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
         LocalDate weekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
         LocalDate weekEnd = weekStart.plusDays(6);
         
@@ -512,9 +493,8 @@ public class WorkoutServiceImpl implements WorkoutService {
     public Map<String, Object> getUserMonthlyChart(Long userId) {
         log.info("获取用户本月图表数据，用户ID: {}", userId);
         
-        // 使用UTC时区保持与数据库一致
-        ZoneId utcZone = ZoneId.of("UTC");
-        LocalDate today = LocalDate.now(utcZone);
+        // 本地时区月数据
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
         LocalDate monthStart = today.withDayOfMonth(1);
         
         Map<String, Object> chartData = new HashMap<>();
