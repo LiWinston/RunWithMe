@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -431,7 +432,8 @@ public class WorkoutServiceImpl implements WorkoutService {
         ZoneId utcZone = ZoneId.of("UTC");
         
         LocalDateTime startDateTime = startDate.atStartOfDay();
-        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+        // 使用第二天的开始时间作为结束，确保包含当天所有记录
+        LocalDateTime endDateTime = endDate.plusDays(1).atStartOfDay();
         
         // 转换为UTC时间
         LocalDateTime utcStartDateTime = startDateTime.atZone(melbourneZone).withZoneSameInstant(utcZone).toLocalDateTime();
@@ -442,7 +444,8 @@ public class WorkoutServiceImpl implements WorkoutService {
         
         QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId)
-                   .between("start_time", utcStartDateTime, utcEndDateTime)
+                   .ge("start_time", utcStartDateTime)  // >= 开始时间
+                   .lt("start_time", utcEndDateTime)     // < 结束时间（第二天00:00）
                    .orderByDesc("start_time");
         
         List<Workout> workouts = workoutMapper.selectList(queryWrapper);
@@ -475,35 +478,34 @@ public class WorkoutServiceImpl implements WorkoutService {
         List<Workout> weekWorkouts = workoutMapper.selectList(queryWrapper);
         log.info("本周图表数据查询到{}条记录", weekWorkouts.size());
         
-        Map<String, Object> chartData = new HashMap<>();
-        Map<String, Double> dailyDistance = new HashMap<>();
-        Map<String, Integer> dailyDuration = new HashMap<>();
-        
-        // 初始化所有日期为0
-        for (int i = 0; i < 7; i++) {
-            LocalDate date = weekStart.plusDays(i);
-            String dayName = getDayName(date.getDayOfWeek().getValue());
-            dailyDistance.put(dayName, 0.0);
-            dailyDuration.put(dayName, 0);
-        }
+        // 初始化7天的数据
+        List<Map<String, Object>> dailyData = new ArrayList<>();
+        double[] dailyDistance = new double[7];
         
         // 按日期分组统计
         for (Workout workout : weekWorkouts) {
             LocalDate workoutDate = workout.getStartTime().toLocalDate();
-            String dayName = getDayName(workoutDate.getDayOfWeek().getValue());
+            int dayIndex = workoutDate.getDayOfWeek().getValue() - 1; // 0=Monday, 6=Sunday
             
             if (workout.getDistance() != null) {
-                dailyDistance.put(dayName, dailyDistance.get(dayName) + workout.getDistance().doubleValue());
-            }
-            
-            if (workout.getDuration() != null) {
-                dailyDuration.put(dayName, dailyDuration.get(dayName) + workout.getDuration());
+                dailyDistance[dayIndex] += workout.getDistance().doubleValue();
             }
         }
         
-        chartData.put("dailyDistance", dailyDistance);
-        chartData.put("dailyDuration", dailyDuration);
-        chartData.put("labels", new String[]{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"});
+        // 构建返回数据
+        String[] dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+        for (int i = 0; i < 7; i++) {
+            Map<String, Object> dayData = new HashMap<>();
+            dayData.put("day", i + 1);
+            dayData.put("dayName", dayNames[i]);
+            dayData.put("distance", dailyDistance[i]);
+            dailyData.add(dayData);
+        }
+        
+        Map<String, Object> chartData = new HashMap<>();
+        chartData.put("daily", dailyData);
+        
+        log.info("本周图表数据生成完成: {}", chartData);
         
         return chartData;
     }
@@ -517,33 +519,41 @@ public class WorkoutServiceImpl implements WorkoutService {
         LocalDate today = LocalDate.now(utcZone);
         LocalDate monthStart = today.withDayOfMonth(1);
         
-        Map<String, Object> chartData = new HashMap<>();
-        Map<String, Double> weeklyDistance = new HashMap<>();
+        // 获取本月所有运动记录
+        List<Workout> monthWorkouts = getUserWorkoutsByDateRange(userId, monthStart, today);
+        log.info("本月图表数据查询到{}条记录", monthWorkouts.size());
         
-        // 按周统计本月数据
-        LocalDate currentWeekStart = monthStart;
-        int weekNumber = 1;
+        // 初始化每日数据
+        int daysInMonth = today.getDayOfMonth();
+        Map<Integer, Double> dailyDistanceMap = new HashMap<>();
         
-        while (currentWeekStart.isBefore(today) || currentWeekStart.isEqual(today)) {
-            LocalDate weekEnd = currentWeekStart.plusDays(6);
-            if (weekEnd.isAfter(today)) {
-                weekEnd = today;
+        // 按日期分组统计
+        for (Workout workout : monthWorkouts) {
+            LocalDate workoutDate = workout.getStartTime().toLocalDate();
+            int day = workoutDate.getDayOfMonth();
+            
+            if (workout.getDistance() != null) {
+                dailyDistanceMap.put(day, 
+                    dailyDistanceMap.getOrDefault(day, 0.0) + workout.getDistance().doubleValue());
             }
-            
-            List<Workout> weekWorkouts = getUserWorkoutsByDateRange(userId, currentWeekStart, weekEnd);
-            double totalDistance = weekWorkouts.stream()
-                    .filter(w -> w.getDistance() != null)
-                    .mapToDouble(w -> w.getDistance().doubleValue())
-                    .sum();
-            
-            weeklyDistance.put("Week " + weekNumber, totalDistance);
-            
-            currentWeekStart = currentWeekStart.plusDays(7);
-            weekNumber++;
         }
         
-        chartData.put("weeklyDistance", weeklyDistance);
+        // 构建返回数据 - 只包含有数据的日期
+        List<Map<String, Object>> dailyData = new ArrayList<>();
+        for (int day = 1; day <= daysInMonth; day++) {
+            if (dailyDistanceMap.containsKey(day) && dailyDistanceMap.get(day) > 0) {
+                Map<String, Object> dayData = new HashMap<>();
+                dayData.put("day", day);
+                dayData.put("distance", dailyDistanceMap.get(day));
+                dailyData.add(dayData);
+            }
+        }
+        
+        Map<String, Object> chartData = new HashMap<>();
+        chartData.put("daily", dailyData);
         chartData.put("period", today.getMonth().toString() + " " + today.getYear());
+        
+        log.info("本月图表数据生成完成: {} 个数据点", dailyData.size());
         
         return chartData;
     }
