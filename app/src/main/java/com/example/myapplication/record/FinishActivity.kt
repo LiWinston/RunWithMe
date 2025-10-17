@@ -111,10 +111,22 @@ class FinishActivity : AppCompatActivity() {
         android.util.Log.d("FinishActivity", "Saving workout with steps: $steps")
 
         val dynamicData = workoutViewModel.getWorkoutDynamicData()
+        
+        // Create SimpleDateFormat with UTC timezone to match database serverTimezone=UTC
         val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
-        val endTimeStr = sdf.format(java.util.Date())
+        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        
+        // Log the device timezone for debugging
+        val deviceTimezone = java.util.TimeZone.getDefault().id
+        android.util.Log.d("FinishActivity", "Device timezone: $deviceTimezone, Using UTC for backend")
+        
+        val endTime = java.util.Date()
+        val endTimeStr = sdf.format(endTime)
         val durationSeconds = parseDuration(duration)?.toLong() ?: 0L
-        val startTimeStr = sdf.format(java.util.Date(System.currentTimeMillis() - durationSeconds * 1000))
+        val startTime = java.util.Date(System.currentTimeMillis() - durationSeconds * 1000)
+        val startTimeStr = sdf.format(startTime)
+        
+        android.util.Log.d("FinishActivity", "Start time (UTC): $startTimeStr, End time (UTC): $endTimeStr")
 
         // 从登录态读取当前用户ID
         val userIdFromToken = TokenManager.getInstance(applicationContext).getUserId()
