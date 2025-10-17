@@ -208,6 +208,7 @@ class RecordingFragment : Fragment(), OnMapReadyCallback {
             putExtra("calories", workoutViewModel.calories.value ?: "0 kcal")
             putExtra("speed", workoutViewModel.speed.value ?: "0.00 m/s")
             putExtra("workoutType", workoutViewModel.workoutType.value ?: "Running")
+            putExtra("steps", workoutViewModel.steps.value ?: 0)
         }
         startActivity(intent)
         activity?.finish()

@@ -109,7 +109,7 @@ class FinishActivity : AppCompatActivity() {
             workoutType = "OUTDOOR_RUN",
             distance = parseDistance(distance),
             duration = parseDuration(duration),
-            steps = workoutViewModel.steps.value,
+            steps = intent.getIntExtra("steps", workoutViewModel.steps.value ?: 0),
             calories = parseCalories(calories),
             avgSpeed = parseSpeed(speed),
             avgPace = calculateAvgPace(parseDistance(distance), parseDuration(duration)),
