@@ -122,4 +122,7 @@ dependencies {
     
     // Google Generative AI (Gemini)
     implementation("com.google.genai:google-genai:1.22.0")
+    
+    // MPAndroidChart for charts
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 }
