@@ -8,6 +8,7 @@ import com.rwm.dto.response.WorkoutStatsResponse;
 import com.rwm.entity.*;
 import com.rwm.mapper.*;
 import com.rwm.service.WorkoutService;
+import com.rwm.service.GroupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -38,6 +39,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     private final NotificationMapper notificationMapper;
     private final UserWeeklyContributionMapper userWeeklyContributionMapper;
     private final UserMapper userMapper;
+    private final GroupService groupService;
     
     @Override
     @Transactional
@@ -308,11 +310,9 @@ public class WorkoutServiceImpl implements WorkoutService {
         GroupMember gm = groupMemberMapper.selectOne(new QueryWrapper<GroupMember>().eq("user_id", userId).eq("deleted", false));
         Long gid = gm == null ? null : gm.getGroupId();
 
-        // 只在有组时做通知（feed 按 group_id 汇总）
-        if (gid == null) return;
-
         java.time.LocalDate ws = weekStartUtc(java.time.LocalDate.now());
         java.time.LocalDateTime weekStart = ws.atStartOfDay();
+        java.time.LocalDateTime weekEndLdt = ws.plusDays(6).atTime(23,59,59);
 
         // 汇总本周已完成的距离（单位：km，database stores in km）
         QueryWrapper<Workout> wq = new QueryWrapper<>();
@@ -335,39 +335,36 @@ public class WorkoutServiceImpl implements WorkoutService {
         boolean reached = totalKm.doubleValue() >= goalKm;
         if (!reached) return;
 
-        // 查看是否已标记完成
-        UserWeeklyContribution c = userWeeklyContributionMapper.selectOne(new QueryWrapper<UserWeeklyContribution>().eq("user_id", userId).eq("week_start", ws));
-        if (c != null && Boolean.TRUE.equals(c.getIndividualCompleted())) {
-            return; // 已完成过
+        // 触发组内加分与防刷分逻辑（仅当用户在组内时），由 GroupService 完成幂等处理
+        if (gid != null) {
+            try {
+                groupService.completeWeeklyPlan(userId);
+            } catch (Exception ex) {
+                // 不中断主流程，仅记录警告
+                log.warn("completeWeeklyPlan failed for user {}: {}", userId, ex.getMessage());
+            }
         }
 
-        // upsert 标记完成
-        java.time.LocalDate we = ws.plusDays(6);
-        if (c == null) {
-            c = new UserWeeklyContribution();
-            c.setUserId(userId);
-            c.setGroupId(gid);
-            c.setWeekStart(ws);
-            c.setWeekEnd(we);
-            c.setIndividualCompleted(true);
-            userWeeklyContributionMapper.insert(c);
-        } else {
-            c.setIndividualCompleted(true);
-            userWeeklyContributionMapper.updateById(c);
+        // 幂等通知：同一自然周内仅发送一次 WEEKLY_GOAL_ACHIEVED
+        QueryWrapper<Notification> nq = new QueryWrapper<>();
+        nq.eq("actor_user_id", userId)
+          .eq("type", "WEEKLY_GOAL_ACHIEVED")
+          .between("created_at", weekStart, weekEndLdt);
+        Notification existed = notificationMapper.selectOne(nq);
+        if (existed == null) {
+            Notification n = new Notification();
+            // 收件人：自己；groupId 可为空（未入组）
+            n.setUserId(userId);
+            n.setActorUserId(userId);
+            n.setTargetUserId(userId);
+            n.setGroupId(gid);
+            n.setType("WEEKLY_GOAL_ACHIEVED");
+            n.setTitle("Weekly goal achieved");
+            n.setContent("User reached their weekly goal");
+            n.setRead(false);
+            n.setCreatedAt(java.time.LocalDateTime.now());
+            notificationMapper.insert(n);
         }
-
-        // 发送组内通知（用于 feed 展示）
-        Notification n = new Notification();
-        n.setUserId(userId); // 收件人可设为自己（feed 以 group_id 汇聚）
-        n.setActorUserId(userId);
-        n.setTargetUserId(userId);
-        n.setGroupId(gid);
-        n.setType("WEEKLY_GOAL_ACHIEVED");
-        n.setTitle("Weekly goal achieved");
-        n.setContent("User reached their weekly goal");
-        n.setRead(false);
-        n.setCreatedAt(java.time.LocalDateTime.now());
-        notificationMapper.insert(n);
     }
     
     @Override
