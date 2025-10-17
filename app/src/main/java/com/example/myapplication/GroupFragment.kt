@@ -575,9 +575,9 @@ class GroupFragment : Fragment() {
             // - 他人：只显示一个按钮；若已完成则显示点赞，否则显示提醒；并可点击
             // 数量文案：Like {count} / Remind {count}，为0时也显示0，避免误解
 
-            // 先统一更新数量文案
-            holder.tvLikeText.text = "Like ${member.weeklyLikeCount}"
-            holder.tvRemindText.text = "Remind ${member.weeklyRemindCount}"
+            // 先统一更新数量文案（只显示数字，不显示文字标签）
+            holder.tvLikeText.text = member.weeklyLikeCount.toString()
+            holder.tvRemindText.text = member.weeklyRemindCount.toString()
 
             if (member.isSelf) {
                 // 自己：两个都可见，不可点击
@@ -590,6 +590,10 @@ class GroupFragment : Fragment() {
                 holder.btnRemind.setOnClickListener(null)
                 holder.btnLike.alpha = 0.6f
                 holder.btnRemind.alpha = 0.6f
+
+                // 自己：显示数字但禁用点击
+                holder.tvLikeText.visibility = View.VISIBLE
+                holder.tvRemindText.visibility = View.VISIBLE
             } else {
                 holder.actionsContainer.visibility = View.VISIBLE
                 val showLike = member.completed
@@ -602,6 +606,10 @@ class GroupFragment : Fragment() {
 
                 holder.btnLike.setOnClickListener { onActionClick(member, ActionType.LIKE) }
                 holder.btnRemind.setOnClickListener { onActionClick(member, ActionType.REMIND) }
+
+                // 他人：显示数字
+                holder.tvLikeText.visibility = View.VISIBLE
+                holder.tvRemindText.visibility = View.VISIBLE
             }
 
         }
