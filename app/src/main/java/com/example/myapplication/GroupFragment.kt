@@ -338,8 +338,14 @@ class GroupFragment : Fragment() {
     private fun setupProgressCard(view: View) {
         val info = groupInfo ?: return
         
-        // Week
-        view.findViewById<TextView>(R.id.tv_week)?.text = "Week ${info.week}"
+        // Week: show as "YYYY · Week NN" (ISO week)
+        run {
+            val now = java.time.LocalDate.now()
+            val weekFields = java.time.temporal.WeekFields.ISO
+            val week = now.get(weekFields.weekOfWeekBasedYear())
+            val year = now.get(weekFields.weekBasedYear())
+            view.findViewById<TextView>(R.id.tv_week)?.text = String.format("%d · Week %02d", year, week)
+        }
 
         // Score
         view.findViewById<TextView>(R.id.tv_score)?.text = info.score.toString()
@@ -347,8 +353,8 @@ class GroupFragment : Fragment() {
         // 检查是否达到100，如果达到则清零并增加优惠券
         checkProgressMilestone()
 
-    // Progress text - 显示 "Weekly Progress" + progressScore
-    val progressText = "Weekly Progress ${info.progressScore}"
+    // Progress text - 显示 "Coffee Progress x/100"
+    val progressText = "Coffee Progress ${info.progressScore}/100"
         view.findViewById<TextView>(R.id.tv_progress)?.text = progressText
 
         // Progress bar - 显示 progressScore/100 的比例
@@ -442,7 +448,7 @@ class GroupFragment : Fragment() {
         
         // 更新UI
         view?.let { v ->
-            v.findViewById<TextView>(R.id.tv_progress)?.text = "Weekly Progress ${info.progressScore}"
+            v.findViewById<TextView>(R.id.tv_progress)?.text = "Coffee Progress ${info.progressScore}/100"
             v.findViewById<ProgressBar>(R.id.progress_bar)?.progress = info.progressScore
             v.findViewById<TextView>(R.id.tv_coupon_count)?.text = info.couponCount.toString()
         }
