@@ -58,89 +58,40 @@
             android:layout_marginBottom="16dp"
             android:visibility="gone"/>
 
-        <!-- Weekly Distance -->
+        <!-- Description Text -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Weekly Distance Goal (km)"
+            android:text="Set your weekly running distance goal. This goal is used for group challenges and progress tracking."
             android:textSize="14sp"
             android:textColor="#666666"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"/>
-
-        <EditText
-            android:id="@+id/et_weekly_distance"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="e.g., 10.0"
-            android:inputType="numberDecimal"
-            android:padding="12dp"
-            android:background="@drawable/edittext_background"
-            android:layout_marginBottom="16dp"/>
-
-        <!-- Weekly Workouts -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Weekly Workouts Target"
-            android:textSize="14sp"
-            android:textColor="#666666"
-            android:layout_marginBottom="8dp"/>
-
-        <EditText
-            android:id="@+id/et_weekly_workouts"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="e.g., 5"
-            android:inputType="number"
-            android:padding="12dp"
-            android:background="@drawable/edittext_background"
-            android:layout_marginBottom="16dp"/>
-
-        <!-- Target Pace -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Target Average Pace (min/km)"
-            android:textSize="14sp"
-            android:textColor="#666666"
-            android:layout_marginBottom="8dp"/>
-
-        <EditText
-            android:id="@+id/et_target_pace"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="e.g., 6.0 (= 360 seconds)"
-            android:inputType="numberDecimal"
-            android:padding="12dp"
-            android:background="@drawable/edittext_background"
-            android:layout_marginBottom="16dp"/>
-
-        <!-- Weekly Calories -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Weekly Calories Goal"
-            android:textSize="14sp"
-            android:textColor="#666666"
-            android:layout_marginBottom="8dp"/>
-
-        <EditText
-            android:id="@+id/et_weekly_calories"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="e.g., 2000"
-            android:inputType="number"
-            android:padding="12dp"
-            android:background="@drawable/edittext_background"
             android:layout_marginBottom="24dp"/>
+
+        <!-- Weekly Distance Goal -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Weekly Distance Goal"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:layout_marginBottom="12dp"/>
+
+        <Spinner
+            android:id="@+id/spinner_weekly_distance"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@drawable/edittext_background"
+            android:padding="12dp"
+            android:layout_marginBottom="32dp"/>
 
         <!-- Save Button -->
         <Button
             android:id="@+id/btn_save_goal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Save Goals"
+            android:text="Save Goal"
             android:background="@drawable/button_primary"
             android:textColor="@android:color/white"
             android:textSize="16sp"

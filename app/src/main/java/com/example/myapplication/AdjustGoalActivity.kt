@@ -17,10 +17,7 @@ import kotlinx.coroutines.withContext
 
 class AdjustGoalActivity : AppCompatActivity() {
 
-    private lateinit var etWeeklyDistance: EditText
-    private lateinit var etWeeklyWorkouts: EditText
-    private lateinit var etTargetPace: EditText
-    private lateinit var etWeeklyCalories: EditText
+    private lateinit var spinnerWeeklyDistance: Spinner
     private lateinit var btnSaveGoal: Button
     private lateinit var loadingProgress: ProgressBar
     private lateinit var messageText: TextView
@@ -32,21 +29,36 @@ class AdjustGoalActivity : AppCompatActivity() {
 
         tokenManager = TokenManager.getInstance(this)
         initViews()
+        setupWeeklyDistanceSpinner()
         loadCurrentGoal()
     }
 
     private fun initViews() {
         findViewById<android.widget.ImageButton>(R.id.btn_back).setOnClickListener { finish() }
 
-        etWeeklyDistance = findViewById(R.id.et_weekly_distance)
-        etWeeklyWorkouts = findViewById(R.id.et_weekly_workouts)
-        etTargetPace = findViewById(R.id.et_target_pace)
-        etWeeklyCalories = findViewById(R.id.et_weekly_calories)
+        spinnerWeeklyDistance = findViewById(R.id.spinner_weekly_distance)
         btnSaveGoal = findViewById(R.id.btn_save_goal)
         loadingProgress = findViewById(R.id.loading_progress)
         messageText = findViewById(R.id.message_text)
 
         btnSaveGoal.setOnClickListener { saveGoal() }
+    }
+
+    private fun setupWeeklyDistanceSpinner() {
+        // Weekly distance options in km
+        val distanceOptions = arrayOf(
+            "5 km",
+            "10 km",
+            "15 km",
+            "20 km",
+            "25 km",
+            "30 km",
+            "40 km",
+            "50 km"
+        )
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, distanceOptions)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerWeeklyDistance.adapter = adapter
     }
 
     private fun loadCurrentGoal() {
@@ -58,10 +70,21 @@ class AdjustGoalActivity : AppCompatActivity() {
                     hideLoading()
                     if (response.isSuccessful && response.body()?.code == 0) {
                         response.body()?.data?.let { goal ->
-                            goal.weeklyDistanceKm?.let { etWeeklyDistance.setText(it.toString()) }
-                            goal.weeklyWorkouts?.let { etWeeklyWorkouts.setText(it.toString()) }
-                            goal.targetAvgPaceSecPerKm?.let { etTargetPace.setText((it / 60.0).toString()) }
-                            goal.weeklyCalories?.let { etWeeklyCalories.setText(it.toString()) }
+                            goal.weeklyDistanceKm?.let { distance ->
+                                // Set spinner selection based on current goal
+                                val position = when (distance.toInt()) {
+                                    5 -> 0
+                                    10 -> 1
+                                    15 -> 2
+                                    20 -> 3
+                                    25 -> 4
+                                    30 -> 5
+                                    40 -> 6
+                                    50 -> 7
+                                    else -> 1 // default to 10km
+                                }
+                                spinnerWeeklyDistance.setSelection(position)
+                            }
                         }
                     }
                 }
@@ -75,26 +98,28 @@ class AdjustGoalActivity : AppCompatActivity() {
     }
 
     private fun saveGoal() {
-        val distanceText = etWeeklyDistance.text.toString().trim()
-        val workoutsText = etWeeklyWorkouts.text.toString().trim()
-        val paceText = etTargetPace.text.toString().trim()
-        val caloriesText = etWeeklyCalories.text.toString().trim()
-
-        val distance = distanceText.toDoubleOrNull()
-        val workouts = workoutsText.toIntOrNull()
-        val paceMinutes = paceText.toDoubleOrNull()
-        val pace = paceMinutes?.let { (it * 60).toInt() }
-        val calories = caloriesText.toIntOrNull()
-
-        if (distance == null && workouts == null && pace == null && calories == null) {
-            showError("Please enter at least one goal")
-            return
+        // Get selected weekly distance from spinner
+        val distance = when (spinnerWeeklyDistance.selectedItemPosition) {
+            0 -> 5.0
+            1 -> 10.0
+            2 -> 15.0
+            3 -> 20.0
+            4 -> 25.0
+            5 -> 30.0
+            6 -> 40.0
+            7 -> 50.0
+            else -> 10.0
         }
 
         showLoading()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val request = UpdateFitnessGoalRequest(distance, workouts, pace, calories)
+                val request = UpdateFitnessGoalRequest(
+                    weeklyDistanceKm = distance,
+                    weeklyWorkouts = null,
+                    targetAvgPaceSecPerKm = null,
+                    weeklyCalories = null
+                )
                 val response = RetrofitClient.api.updateFitnessGoal(request)
 
                 withContext(Dispatchers.Main) {
@@ -138,7 +163,7 @@ class AdjustGoalActivity : AppCompatActivity() {
     private fun showSuccessDialog() {
         AlertDialog.Builder(this)
             .setTitle("Success")
-            .setMessage("Your fitness goals have been updated successfully!")
+            .setMessage("Your weekly distance goal has been updated successfully!")
             .setPositiveButton("OK") { dialog, _ ->
                 dialog.dismiss()
                 finish()
