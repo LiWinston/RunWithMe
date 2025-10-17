@@ -136,8 +136,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
                     feed.workouts?.take(3)?.forEach { w ->
                         val dateStr = w.startTime ?: ""
+                        val name = w.userName?.takeIf { it.isNotBlank() } ?: "Someone"
                         val summary = w.summary ?: buildString {
                             append("🏃 ")
+                            append(name)
+                            append(" · ")
                             append((w.distanceKm ?: 0.0).let { String.format("%.1f km", it) })
                             if (!w.workoutType.isNullOrBlank()) append(" · ").append(w.workoutType)
                         }
