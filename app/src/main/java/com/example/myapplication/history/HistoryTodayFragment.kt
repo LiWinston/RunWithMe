@@ -59,6 +59,13 @@ class HistoryTodayFragment : Fragment() {
         loadTodayData()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Refresh data when user returns to this fragment
+        Log.d("HistoryTodayFragment", "onResume - refreshing today data")
+        loadTodayData()
+    }
+
     private fun initViews(view: View) {
         try {
             // 统计卡片
