@@ -11,7 +11,7 @@ data class RegisterRequest(
     val phoneNumber: String? = null,
     val height: Double? = null,
     val weight: Double? = null,
-    val fitnessGoal: String? = null,
+    val fitnessGoal: FitnessGoal? = null,
     val fitnessLevel: String? = null,
     val weeklyAvailability: String? = null
 )

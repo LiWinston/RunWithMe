@@ -93,13 +93,8 @@ class WeatherExpandedActivity : AppCompatActivity() {
         heatIndexValue = findViewById(R.id.heat_index_value_expanded)
         hourlyForecastRecycler = findViewById(R.id.hourly_forecast_recycler)
 
-        // 初始化Repository
-        val retrofit = Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        val apiService = retrofit.create(WeatherApiService::class.java)
+        // 初始化Repository：复用带鉴权的统一 Retrofit
+        val apiService = com.example.myapplication.landr.RetrofitClient.create(WeatherApiService::class.java)
         weatherRepository = WeatherRepository(apiService)
 
         // 设置每小时预报RecyclerView
@@ -266,15 +261,15 @@ class WeatherExpandedActivity : AppCompatActivity() {
             .into(weatherIcon)
 
         // 更新主要信息
-        locationText.text = "墨尔本, 卡尔顿"
-        weatherDescription.text = "${WeatherIconUtils.getWeatherDescription(currentWeather.condition.type)}，适合户外运动"
+        locationText.text = "Melbourne, Carlton"
+        weatherDescription.text = "${WeatherIconUtils.getWeatherDescription(currentWeather.condition.type)}, perfect for outdoor activities"
         temperatureText.text = "${currentWeather.temperature.degrees.toInt()}°"
 
         // 更新详细信息
         humidityValue.text = "${currentWeather.humidity}%"
         feelsLikeValue.text = "${currentWeather.feelsLikeTemperature.degrees.toInt()}°C"
         windValue.text = "${currentWeather.wind.speed.value.toInt()} ${currentWeather.wind.speed.unit} ${currentWeather.wind.direction.cardinal}"
-        windGustValue.text = currentWeather.wind.gust?.let { "${it.value.toInt()} ${it.unit}" } ?: "无"
+        windGustValue.text = currentWeather.wind.gust?.let { "${it.value.toInt()} ${it.unit}" } ?: "N/A"
         pressureValue.text = "${currentWeather.pressure.meanSeaLevelMillibars.toInt()} hPa"
         visibilityValue.text = "${currentWeather.visibility.distance.toInt()} ${currentWeather.visibility.unit}"
         uvIndexValue.text = "${currentWeather.uvIndex} ${getUvDescription(currentWeather.uvIndex)}"
@@ -292,11 +287,11 @@ class WeatherExpandedActivity : AppCompatActivity() {
 
     private fun getUvDescription(uvIndex: Int): String {
         return when {
-            uvIndex <= 2 -> "低"
-            uvIndex <= 5 -> "中等"
-            uvIndex <= 7 -> "高"
-            uvIndex <= 10 -> "很高"
-            else -> "极高"
+            uvIndex <= 2 -> "Low"
+            uvIndex <= 5 -> "Moderate"
+            uvIndex <= 7 -> "High"
+            uvIndex <= 10 -> "Very High"
+            else -> "Extreme"
         }
     }
 

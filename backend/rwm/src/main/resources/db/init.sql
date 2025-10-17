@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     fitness_level ENUM('BEGINNER', 'INTERMEDIATE', 'ADVANCED') COMMENT '健身水平',
     height DECIMAL(5,2) COMMENT '身高(cm)',
     weight DECIMAL(5,2) COMMENT '体重(kg)',
-    fitness_goal TEXT COMMENT '健身目标',
+    fitness_goal JSON COMMENT '健身目标(JSON): {"weeklyDistanceKm":10.0,...}',
     weekly_availability VARCHAR(500) COMMENT '每周可用时间',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -82,3 +82,95 @@ CREATE TABLE IF NOT EXISTS workouts (
 
 -- 删除旧的路线轨迹表
 DROP TABLE IF EXISTS workout_routes;
+
+-- 群组表
+CREATE TABLE IF NOT EXISTS `groups` (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    owner_id BIGINT NOT NULL,
+    member_limit INT DEFAULT 6,
+    coupon_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted BOOLEAN DEFAULT FALSE,
+    INDEX idx_groups_owner (owner_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='群组表';
+
+-- 群组成员表
+CREATE TABLE IF NOT EXISTS `group_members` (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    group_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    role ENUM('ADMIN','MEMBER') DEFAULT 'MEMBER',
+    joined_at DATETIME,
+    weekly_like_count INT DEFAULT 0,
+    weekly_remind_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted BOOLEAN DEFAULT FALSE,
+    UNIQUE KEY uk_group_user (group_id, user_id),
+    INDEX idx_group_members_group (group_id),
+    INDEX idx_group_members_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='群组成员表';
+
+-- 入群申请表
+CREATE TABLE IF NOT EXISTS `group_join_applications` (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    group_id BIGINT NOT NULL,
+    applicant_user_id BIGINT NOT NULL,
+    inviter_user_id BIGINT NULL,
+    status ENUM('PENDING','APPROVED','REJECTED') DEFAULT 'PENDING',
+    reason VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted BOOLEAN DEFAULT FALSE,
+    INDEX idx_group_join_app_group (group_id),
+    INDEX idx_group_join_app_applicant (applicant_user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='入群申请表';
+
+-- 群组每周统计
+CREATE TABLE IF NOT EXISTS `group_weekly_stats` (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    group_id BIGINT NOT NULL,
+    week_start DATE NOT NULL,
+    week_end DATE NOT NULL,
+    weekly_points INT DEFAULT 0,
+    total_points INT DEFAULT 0,
+    coupon_earned INT DEFAULT 0,
+    full_attendance_bonus_applied BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_group_week (group_id, week_start),
+    INDEX idx_group_weekly_stats_group (group_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='群组每周统计';
+
+-- 用户每周贡献约束（防刷分）
+CREATE TABLE IF NOT EXISTS `user_weekly_contributions` (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    group_id BIGINT NOT NULL,
+    week_start DATE NOT NULL,
+    week_end DATE NOT NULL,
+    individual_completed BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_user_week (user_id, week_start)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户每周贡献约束';
+
+-- 通知表
+CREATE TABLE IF NOT EXISTS `notifications` (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    actor_user_id BIGINT NULL,
+    target_user_id BIGINT NULL,
+    group_id BIGINT NULL,
+    type VARCHAR(30) NOT NULL,
+    title VARCHAR(100),
+    content VARCHAR(500),
+    `read` BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_notifications_user (user_id),
+    INDEX idx_notifications_actor (actor_user_id),
+    INDEX idx_notifications_target (target_user_id),
+    INDEX idx_notifications_type (type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知表';

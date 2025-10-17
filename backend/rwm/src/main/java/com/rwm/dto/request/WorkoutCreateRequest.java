@@ -20,22 +20,22 @@ public class WorkoutCreateRequest {
     private String workoutType;
     
     @DecimalMin(value = "0.0", message = "距离不能为负数")
-    private BigDecimal distance;
+    private BigDecimal distance; // 距离(km)
     
     @Min(value = 0, message = "持续时间不能为负数")
-    private Integer duration;
+    private Integer duration; // 持续时间(秒)
     
     @Min(value = 0, message = "步数不能为负数")
     private Integer steps;
     
     @DecimalMin(value = "0.0", message = "卡路里不能为负数")
-    private BigDecimal calories;
+    private BigDecimal calories; // 卡路里(kcal)
     
     @DecimalMin(value = "0.0", message = "平均速度不能为负数")
-    private BigDecimal avgSpeed;
+    private BigDecimal avgSpeed; // 平均速度(km/h)
     
     @Min(value = 0, message = "平均配速不能为负数")
-    private Integer avgPace;
+    private Integer avgPace; // 平均配速(秒/km)
     
     @Min(value = 0, message = "平均心率不能为负数")
     @Max(value = 250, message = "平均心率超出正常范围")

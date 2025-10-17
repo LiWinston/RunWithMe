@@ -271,6 +271,7 @@
 
                 <!-- 动态卡片 -->
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/dynamic_card"
                     android:layout_width="0dp"
                     android:layout_height="170dp"
                     android:layout_marginStart="8dp"

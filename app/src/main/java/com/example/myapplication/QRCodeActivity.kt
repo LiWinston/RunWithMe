@@ -216,16 +216,39 @@ class QRCodeActivity : AppCompatActivity() {
     }
 
     private fun requestJoinGroup(scannedGroupId: String) {
-        // TODO: 调用数据库API申请加入group
-        // sendJoinRequest(scannedGroupId)
-        
-        Toast.makeText(this, "Join request sent! (TODO: API call)", Toast.LENGTH_SHORT).show()
-        
-        // 返回结果
-        val resultIntent = Intent()
-        resultIntent.putExtra("join_requested_group_id", scannedGroupId)
-        setResult(RESULT_OK, resultIntent)
-        finish()
+        val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.group.GroupApi::class.java)
+        val gid = scannedGroupId.toLongOrNull()
+        if (gid == null) {
+            Toast.makeText(this, "Invalid group id", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val body = com.example.myapplication.group.JoinGroupBody(groupId = gid, inviterUserId = null)
+        api.join(body).enqueue(object: retrofit2.Callback<com.example.myapplication.group.Result<Any>> {
+            override fun onResponse(
+                call: retrofit2.Call<com.example.myapplication.group.Result<Any>>,
+                response: retrofit2.Response<com.example.myapplication.group.Result<Any>>
+            ) {
+                val res = response.body()
+                if (response.isSuccessful && res != null && res.code == 0) {
+                    Toast.makeText(this@QRCodeActivity, res.message, Toast.LENGTH_SHORT).show()
+                    val resultIntent = Intent()
+                    resultIntent.putExtra("join_requested_group_id", scannedGroupId)
+                    setResult(RESULT_OK, resultIntent)
+                    finish()
+                } else {
+                    Toast.makeText(this@QRCodeActivity, res?.message ?: "Join failed", Toast.LENGTH_SHORT).show()
+                    barcodeScanner.resume()
+                }
+            }
+
+            override fun onFailure(
+                call: retrofit2.Call<com.example.myapplication.group.Result<Any>>,
+                t: Throwable
+            ) {
+                Toast.makeText(this@QRCodeActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
+                barcodeScanner.resume()
+            }
+        })
     }
 
     override fun onRequestPermissionsResult(

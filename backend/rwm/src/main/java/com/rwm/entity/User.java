@@ -1,6 +1,8 @@
 package com.rwm.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.rwm.dto.FitnessGoal;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -26,6 +28,9 @@ public class User {
     @TableField("email")
     private String email;
     
+    @TableField("email_verified")
+    private Boolean emailVerified = false;
+    
     @TableField("first_name")
     private String firstName;
     
@@ -50,8 +55,8 @@ public class User {
     @TableField("weight")
     private Double weight;
     
-    @TableField("fitness_goal")
-    private String fitnessGoal;
+    @TableField(value = "fitness_goal", typeHandler = JacksonTypeHandler.class)
+    private FitnessGoal fitnessGoal;
     
     @TableField("weekly_availability")
     private String weeklyAvailability;

@@ -6,6 +6,13 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.myapplication.group.CreateGroupBody
+import com.example.myapplication.group.GroupApi
+import com.example.myapplication.group.Result
+import com.example.myapplication.landr.RetrofitClient
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 /**
  * 创建Group的Activity
@@ -52,20 +59,33 @@ class CreateGroupActivity : AppCompatActivity() {
             return
         }
 
-        // TODO: 调用数据库API创建Group
-        // val groupId = createGroupInDatabase(groupName)
-        
-        // Mock: 模拟创建成功
-        val mockGroupId = "group_${System.currentTimeMillis()}"
-        
-        Toast.makeText(this, "Group created successfully!", Toast.LENGTH_SHORT).show()
-        
-        // 返回结果给GroupFragment
-        val resultIntent = Intent()
-        resultIntent.putExtra("group_id", mockGroupId)
-        resultIntent.putExtra("group_name", groupName)
-        setResult(RESULT_OK, resultIntent)
-        finish()
+        val api = RetrofitClient.create(GroupApi::class.java)
+        val body = CreateGroupBody(name = groupName, memberLimit = 6)
+        api.create(body).enqueue(object: Callback<Result<com.example.myapplication.group.GroupInfo>> {
+            override fun onResponse(
+                call: Call<Result<com.example.myapplication.group.GroupInfo>>,
+                response: Response<Result<com.example.myapplication.group.GroupInfo>>
+            ) {
+                val res = response.body()
+                if (response.isSuccessful && res != null && res.code == 0 && res.data != null) {
+                    Toast.makeText(this@CreateGroupActivity, "Group created successfully!", Toast.LENGTH_SHORT).show()
+                    val resultIntent = Intent()
+                    resultIntent.putExtra("group_id", res.data.id.toString())
+                    resultIntent.putExtra("group_name", res.data.name)
+                    setResult(RESULT_OK, resultIntent)
+                    finish()
+                } else {
+                    Toast.makeText(this@CreateGroupActivity, res?.message ?: "Create failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(
+                call: Call<Result<com.example.myapplication.group.GroupInfo>>,
+                t: Throwable
+            ) {
+                Toast.makeText(this@CreateGroupActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 }
 

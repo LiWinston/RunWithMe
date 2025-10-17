@@ -5,8 +5,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rwm.dto.request.WorkoutCreateRequest;
 import com.rwm.dto.request.WorkoutUpdateRequest;
 import com.rwm.dto.response.WorkoutStatsResponse;
-import com.rwm.entity.Workout;
-import com.rwm.mapper.WorkoutMapper;
+import com.rwm.entity.*;
+import com.rwm.mapper.*;
 import com.rwm.service.WorkoutService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +33,10 @@ import java.util.Map;
 public class WorkoutServiceImpl implements WorkoutService {
     
     private final WorkoutMapper workoutMapper;
+    private final GroupMemberMapper groupMemberMapper;
+    private final NotificationMapper notificationMapper;
+    private final UserWeeklyContributionMapper userWeeklyContributionMapper;
+    private final UserMapper userMapper;
     
     @Override
     @Transactional
@@ -53,6 +57,8 @@ public class WorkoutServiceImpl implements WorkoutService {
         int result = workoutMapper.insert(workout);
         if (result > 0) {
             log.info("运动记录创建成功，ID: {}", workout.getId());
+            // 如果是完成状态或者距离/时长有变化，尝试检查本周目标达成
+            try { checkAndNotifyWeeklyGoalAchieved(workout.getUserId()); } catch (Exception ex) { log.warn("check weekly goal failed: {}", ex.getMessage()); }
             return workout;
         } else {
             throw new RuntimeException("创建运动记录失败");
@@ -94,6 +100,7 @@ public class WorkoutServiceImpl implements WorkoutService {
         
         workoutMapper.updateById(existingWorkout);
         log.info("运动记录更新成功，ID: {}", workoutId);
+        try { checkAndNotifyWeeklyGoalAchieved(existingWorkout.getUserId()); } catch (Exception ex) { log.warn("check weekly goal failed: {}", ex.getMessage()); }
         return existingWorkout;
     }
     
@@ -263,6 +270,7 @@ public class WorkoutServiceImpl implements WorkoutService {
         
         workoutMapper.updateById(workout);
         log.info("运动状态更新成功，ID: {}", workoutId);
+        try { checkAndNotifyWeeklyGoalAchieved(workout.getUserId()); } catch (Exception ex) { log.warn("check weekly goal failed: {}", ex.getMessage()); }
         return workout;
     }
     
@@ -293,6 +301,79 @@ public class WorkoutServiceImpl implements WorkoutService {
         log.info("查询到{}条今日记录", workouts.size());
         
         return aggregateWorkoutStats(workouts);
+    }
+
+    // ===== Weekly goal detection & notification =====
+    private java.time.LocalDate weekStartUtc(java.time.LocalDate date) {
+        return date.with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+    }
+
+    private void checkAndNotifyWeeklyGoalAchieved(Long userId) {
+        if (userId == null) return;
+        // 找到用户当前组
+        GroupMember gm = groupMemberMapper.selectOne(new QueryWrapper<GroupMember>().eq("user_id", userId).eq("deleted", false));
+        Long gid = gm == null ? null : gm.getGroupId();
+
+        // 只在有组时做通知（feed 按 group_id 汇总）
+        if (gid == null) return;
+
+        java.time.LocalDate ws = weekStartUtc(java.time.LocalDate.now());
+        java.time.LocalDateTime weekStart = ws.atStartOfDay();
+
+        // 汇总本周已完成的距离（单位：km，database stores in km）
+        QueryWrapper<Workout> wq = new QueryWrapper<>();
+        wq.eq("user_id", userId).ge("start_time", weekStart).eq("status", "COMPLETED");
+        List<Workout> workouts = workoutMapper.selectList(wq);
+        java.math.BigDecimal totalKm = java.math.BigDecimal.ZERO;
+        for (Workout w : workouts) { 
+            if (w.getDistance() != null) totalKm = totalKm.add(w.getDistance()); 
+        }
+
+        // 读取用户周目标（单位：km）
+        User u = userMapper.selectById(userId);
+        Double goalKm = null;
+        if (u != null && u.getFitnessGoal() != null && u.getFitnessGoal().getWeeklyDistanceKm() != null) {
+            goalKm = u.getFitnessGoal().getWeeklyDistanceKm();
+        }
+        if (goalKm == null || goalKm <= 0) return;
+
+        // 单位统一：km vs km
+        boolean reached = totalKm.doubleValue() >= goalKm;
+        if (!reached) return;
+
+        // 查看是否已标记完成
+        UserWeeklyContribution c = userWeeklyContributionMapper.selectOne(new QueryWrapper<UserWeeklyContribution>().eq("user_id", userId).eq("week_start", ws));
+        if (c != null && Boolean.TRUE.equals(c.getIndividualCompleted())) {
+            return; // 已完成过
+        }
+
+        // upsert 标记完成
+        java.time.LocalDate we = ws.plusDays(6);
+        if (c == null) {
+            c = new UserWeeklyContribution();
+            c.setUserId(userId);
+            c.setGroupId(gid);
+            c.setWeekStart(ws);
+            c.setWeekEnd(we);
+            c.setIndividualCompleted(true);
+            userWeeklyContributionMapper.insert(c);
+        } else {
+            c.setIndividualCompleted(true);
+            userWeeklyContributionMapper.updateById(c);
+        }
+
+        // 发送组内通知（用于 feed 展示）
+        Notification n = new Notification();
+        n.setUserId(userId); // 收件人可设为自己（feed 以 group_id 汇聚）
+        n.setActorUserId(userId);
+        n.setTargetUserId(userId);
+        n.setGroupId(gid);
+        n.setType("WEEKLY_GOAL_ACHIEVED");
+        n.setTitle("Weekly goal achieved");
+        n.setContent("User reached their weekly goal");
+        n.setRead(false);
+        n.setCreatedAt(java.time.LocalDateTime.now());
+        notificationMapper.insert(n);
     }
     
     @Override

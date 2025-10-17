@@ -44,7 +44,7 @@ class LoginActivity : AppCompatActivity() {
             val password = passwordEt.text.toString().trim()
             
             if (username.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "请输入用户名和密码", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Please enter username and password", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -68,19 +68,19 @@ class LoginActivity : AppCompatActivity() {
                                     loginResponse.data.userInfo.username
                                 )
                                 
-                                Toast.makeText(this@LoginActivity, "登录成功", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this@LoginActivity, "Login Successful", Toast.LENGTH_SHORT).show()
                                 navigateToMain()
                             } else {
                                 Toast.makeText(
                                     this@LoginActivity,
-                                    loginResponse?.message ?: "登录失败",
+                                    loginResponse?.message ?: "Login Failed",
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
                         } else {
                             Toast.makeText(
                                 this@LoginActivity,
-                                "网络错误: ${response.code()}",
+                                "Internet Error: ${response.code()}",
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -88,7 +88,7 @@ class LoginActivity : AppCompatActivity() {
                 } catch (e: Exception) {
                     e.printStackTrace()
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@LoginActivity, "网络错误: ${e.message}", Toast.LENGTH_SHORT)
+                        Toast.makeText(this@LoginActivity, "Internet Error: ${e.message}", Toast.LENGTH_SHORT)
                             .show()
                     }
                 }

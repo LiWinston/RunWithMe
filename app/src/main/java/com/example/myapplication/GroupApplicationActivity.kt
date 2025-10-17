@@ -38,18 +38,16 @@ class GroupApplicationActivity : AppCompatActivity() {
         PENDING, APPROVED, REJECTED
     }
 
-    enum class ApplicationType {
-        RECEIVED, SENT
-    }
+    enum class ApplicationType { RECEIVED }
 
     private lateinit var tabLayout: TabLayout
     private lateinit var recyclerView: RecyclerView
     private lateinit var btnBack: Button
     private lateinit var tvEmpty: TextView
 
-    private var currentTab = 0 // 0: Received, 1: Sent
+    private var currentTab = 0 // only Received remains
     private lateinit var receivedApplications: MutableList<Application>
-    private lateinit var sentApplications: MutableList<Application>
+    // removed sent list per product decision
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,72 +60,47 @@ class GroupApplicationActivity : AppCompatActivity() {
     }
 
     private fun initMockData() {
-        // Mock received applications
-        receivedApplications = mutableListOf(
-            Application(
-                id = "app1",
-                userId = "user1",
-                userName = "Alice",
-                userAvatar = R.drawable.ic_profile,
-                groupId = "group1",
-                groupName = "My Running Group",
-                timestamp = System.currentTimeMillis() - 3600000,
-                status = ApplicationStatus.PENDING,
-                type = ApplicationType.RECEIVED
-            ),
-            Application(
-                id = "app2",
-                userId = "user2",
-                userName = "Bob",
-                userAvatar = R.drawable.ic_profile,
-                groupId = "group1",
-                groupName = "My Running Group",
-                timestamp = System.currentTimeMillis() - 7200000,
-                status = ApplicationStatus.PENDING,
-                type = ApplicationType.RECEIVED
-            )
-        )
+        receivedApplications = mutableListOf()
+        val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.group.GroupApi::class.java)
+        api.receivedApplications().enqueue(object: retrofit2.Callback<com.example.myapplication.group.Result<List<com.example.myapplication.group.ApplicationItem>>> {
+            override fun onResponse(
+                call: retrofit2.Call<com.example.myapplication.group.Result<List<com.example.myapplication.group.ApplicationItem>>>,
+                response: retrofit2.Response<com.example.myapplication.group.Result<List<com.example.myapplication.group.ApplicationItem>>>
+            ) {
+                val res = response.body()
+                if (response.isSuccessful && res != null && res.code == 0 && res.data != null) {
+                    val mapped = res.data.map {
+                        Application(
+                            id = it.id.toString(),
+                            userId = it.userId.toString(),
+                            userName = it.userName,
+                            userAvatar = R.drawable.ic_profile,
+                            groupId = it.groupId.toString(),
+                            groupName = it.groupName,
+                            timestamp = it.timestamp,
+                            status = when (it.status) {
+                                "APPROVED" -> ApplicationStatus.APPROVED
+                                "REJECTED" -> ApplicationStatus.REJECTED
+                                else -> ApplicationStatus.PENDING
+                            },
+                            type = ApplicationType.RECEIVED
+                        )
+                    }
+                    receivedApplications.clear()
+                    receivedApplications.addAll(mapped)
+                    updateDisplay()
+                } else {
+                    updateDisplay()
+                }
+            }
 
-        // Mock sent applications
-        sentApplications = mutableListOf(
-            Application(
-                id = "app3",
-                userId = "me",
-                userName = "Me",
-                userAvatar = R.drawable.ic_profile,
-                groupId = "group2",
-                groupName = "Elite Runners",
-                timestamp = System.currentTimeMillis() - 86400000,
-                status = ApplicationStatus.PENDING,
-                type = ApplicationType.SENT
-            ),
-            Application(
-                id = "app4",
-                userId = "me",
-                userName = "Me",
-                userAvatar = R.drawable.ic_profile,
-                groupId = "group3",
-                groupName = "Morning Joggers",
-                timestamp = System.currentTimeMillis() - 172800000,
-                status = ApplicationStatus.APPROVED,
-                type = ApplicationType.SENT
-            ),
-            Application(
-                id = "app5",
-                userId = "me",
-                userName = "Me",
-                userAvatar = R.drawable.ic_profile,
-                groupId = "group4",
-                groupName = "Weekend Warriors",
-                timestamp = System.currentTimeMillis() - 259200000,
-                status = ApplicationStatus.REJECTED,
-                type = ApplicationType.SENT
-            )
-        )
-
-        // TODO: 从数据库获取真实数据
-        // receivedApplications = fetchReceivedApplications()
-        // sentApplications = fetchSentApplications()
+            override fun onFailure(
+                call: retrofit2.Call<com.example.myapplication.group.Result<List<com.example.myapplication.group.ApplicationItem>>>,
+                t: Throwable
+            ) {
+                updateDisplay()
+            }
+        })
     }
 
     private fun initViews() {
@@ -139,8 +112,7 @@ class GroupApplicationActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         // 设置TabLayout
-        tabLayout.addTab(tabLayout.newTab().setText("Received"))
-        tabLayout.addTab(tabLayout.newTab().setText("Sent"))
+    tabLayout.addTab(tabLayout.newTab().setText("Received"))
     }
 
     private fun setupListeners() {
@@ -160,23 +132,19 @@ class GroupApplicationActivity : AppCompatActivity() {
     }
 
     private fun updateDisplay() {
-        val applications = if (currentTab == 0) receivedApplications else sentApplications
+    val applications = receivedApplications
         
         if (applications.isEmpty()) {
             recyclerView.visibility = View.GONE
             tvEmpty.visibility = View.VISIBLE
-            tvEmpty.text = if (currentTab == 0) {
-                "No received applications"
-            } else {
-                "No sent applications"
-            }
+            tvEmpty.text = "No received applications"
         } else {
             recyclerView.visibility = View.VISIBLE
             tvEmpty.visibility = View.GONE
             
             recyclerView.adapter = ApplicationAdapter(
                 applications,
-                currentTab == 0,
+                true,
                 onApprove = { app -> approveApplication(app) },
                 onReject = { app -> rejectApplication(app) }
             )
@@ -184,19 +152,55 @@ class GroupApplicationActivity : AppCompatActivity() {
     }
 
     private fun approveApplication(application: Application) {
-        // TODO: 调用数据库API批准申请
-        Toast.makeText(this, "Approved ${application.userName}", Toast.LENGTH_SHORT).show()
-        
-        application.status = ApplicationStatus.APPROVED
-        updateDisplay()
+        val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.group.GroupApi::class.java)
+        val body = com.example.myapplication.group.ModerateBody(applicationId = application.id.toLong(), approve = true, reason = null)
+        api.moderate(body).enqueue(object: retrofit2.Callback<com.example.myapplication.group.Result<String>> {
+            override fun onResponse(
+                call: retrofit2.Call<com.example.myapplication.group.Result<String>>,
+                response: retrofit2.Response<com.example.myapplication.group.Result<String>>
+            ) {
+                if (response.isSuccessful && response.body()?.code == 0) {
+                    Toast.makeText(this@GroupApplicationActivity, "Approved ${application.userName}", Toast.LENGTH_SHORT).show()
+                    application.status = ApplicationStatus.APPROVED
+                    updateDisplay()
+                } else {
+                    Toast.makeText(this@GroupApplicationActivity, response.body()?.message ?: "Failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(
+                call: retrofit2.Call<com.example.myapplication.group.Result<String>>,
+                t: Throwable
+            ) {
+                Toast.makeText(this@GroupApplicationActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 
     private fun rejectApplication(application: Application) {
-        // TODO: 调用数据库API拒绝申请
-        Toast.makeText(this, "Rejected ${application.userName}", Toast.LENGTH_SHORT).show()
-        
-        application.status = ApplicationStatus.REJECTED
-        updateDisplay()
+        val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.group.GroupApi::class.java)
+        val body = com.example.myapplication.group.ModerateBody(applicationId = application.id.toLong(), approve = false, reason = null)
+        api.moderate(body).enqueue(object: retrofit2.Callback<com.example.myapplication.group.Result<String>> {
+            override fun onResponse(
+                call: retrofit2.Call<com.example.myapplication.group.Result<String>>,
+                response: retrofit2.Response<com.example.myapplication.group.Result<String>>
+            ) {
+                if (response.isSuccessful && response.body()?.code == 0) {
+                    Toast.makeText(this@GroupApplicationActivity, "Rejected ${application.userName}", Toast.LENGTH_SHORT).show()
+                    application.status = ApplicationStatus.REJECTED
+                    updateDisplay()
+                } else {
+                    Toast.makeText(this@GroupApplicationActivity, response.body()?.message ?: "Failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(
+                call: retrofit2.Call<com.example.myapplication.group.Result<String>>,
+                t: Throwable
+            ) {
+                Toast.makeText(this@GroupApplicationActivity, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 
     // RecyclerView Adapter
@@ -229,22 +233,16 @@ class GroupApplicationActivity : AppCompatActivity() {
 
             holder.ivAvatar.setImageResource(app.userAvatar)
             
-            if (currentTab == 0) {
-                // Received: 显示申请人名字
-                holder.tvName.text = app.userName
-                holder.tvGroup.text = "wants to join ${app.groupName}"
-            } else {
-                // Sent: 显示group名字
-                holder.tvName.text = app.groupName
-                holder.tvGroup.text = "Your application"
-            }
+            // Received: show applicant name
+            holder.tvName.text = app.userName
+            holder.tvGroup.text = "wants to join ${app.groupName}"
             
             holder.tvTime.text = formatTimestamp(app.timestamp)
 
             // 显示状态或操作按钮
             when (app.status) {
                 ApplicationStatus.PENDING -> {
-                    if (showActions && currentTab == 0) {
+                    if (showActions) {
                         // Received tab: 显示批准/拒绝按钮
                         holder.tvStatus.visibility = View.GONE
                         holder.layoutActions.visibility = View.VISIBLE
@@ -256,12 +254,6 @@ class GroupApplicationActivity : AppCompatActivity() {
                         holder.btnReject.setOnClickListener {
                             onReject(app)
                         }
-                    } else {
-                        // Sent tab: 显示Pending状态
-                        holder.tvStatus.visibility = View.VISIBLE
-                        holder.layoutActions.visibility = View.GONE
-                        holder.tvStatus.text = "Pending"
-                        holder.tvStatus.setTextColor(resources.getColor(android.R.color.holo_orange_dark, null))
                     }
                 }
                 ApplicationStatus.APPROVED -> {
