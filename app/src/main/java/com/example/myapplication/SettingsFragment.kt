@@ -36,17 +36,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             startActivity(intent)
         }
         
-        view.findViewById<TextView>(R.id.exercise_records).setOnClickListener {
-            val intent = Intent(requireContext(), ExerciseRecordingActivity::class.java)
-            startActivity(intent)
-        }
-        
         // Goals
-        view.findViewById<TextView>(R.id.set_slogan).setOnClickListener {
-            val intent = Intent(requireContext(), SetSloganActivity::class.java)
-            startActivity(intent)
-        }
-        
         view.findViewById<TextView>(R.id.create_goal).setOnClickListener {
             val intent = Intent(requireContext(), AdjustGoalActivity::class.java)
             startActivity(intent)

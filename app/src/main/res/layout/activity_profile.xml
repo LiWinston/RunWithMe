@@ -200,11 +200,11 @@
                     android:textStyle="bold"
                     android:layout_marginBottom="12dp" />
 
-                <!-- Gender -->
+                <!-- Gender (Read Only) -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Gender"
+                    android:text="Gender (Cannot be changed)"
                     android:textColor="@android:color/black"
                     android:textSize="14sp"
                     android:layout_marginTop="8dp" />
@@ -216,7 +216,8 @@
                     android:background="@drawable/edittext_background"
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp"
-                    android:layout_marginTop="4dp" />
+                    android:layout_marginTop="4dp"
+                    android:alpha="0.6" />
 
                 <!-- Age -->
                 <TextView

@@ -65,6 +65,8 @@ class ProfileActivity : AppCompatActivity() {
         val genderAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, genderOptions)
         genderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerGender.adapter = genderAdapter
+        // Disable gender editing
+        spinnerGender.isEnabled = false
 
         // Fitness Level Spinner
         val fitnessOptions = arrayOf("Select Fitness Level", "BEGINNER", "INTERMEDIATE", "ADVANCED")
@@ -175,9 +177,8 @@ class ProfileActivity : AppCompatActivity() {
 
         // Get selected values
         val email = etEmail.text.toString().trim().takeIf { it.isNotEmpty() }
-        val gender = if (spinnerGender.selectedItemPosition > 0) {
-            spinnerGender.selectedItem.toString()
-        } else null
+        // Gender is not editable, use current profile value
+        val gender = currentProfile?.gender
 
         val age = etAge.text.toString().trim().toIntOrNull()
         val phone = etPhone.text.toString().trim().takeIf { it.isNotEmpty() }
