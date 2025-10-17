@@ -279,10 +279,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     Log.i(TAG, "位置精度: ${location.accuracy}米")
 
                     fusedLocationClient.removeLocationUpdates(locationCallback!!)
+                    locationCallback = null  // 设置为null，防止超时Handler再次触发
 
                     fetchWeatherData(location.latitude, location.longitude)
                 } else {
                     Log.w(TAG, "获取新位置失败，使用默认位置")
+                    locationCallback = null  // 清理callback
                     useDefaultLocation()
                 }
             }
@@ -303,12 +305,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 if (locationCallback != null) {
                     Log.w(TAG, "位置请求超时，使用默认位置")
                     fusedLocationClient.removeLocationUpdates(locationCallback!!)
+                    locationCallback = null  // 清理callback
                     useDefaultLocation()
                 }
             }, 5000)
 
         } catch (e: SecurityException) {
             Log.e(TAG, "位置权限被拒绝", e)
+            locationCallback = null
             useDefaultLocation()
         }
     }
@@ -350,7 +354,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         generateExerciseAdvice(currentWeather)
                     }
                     else -> {
-                        showError("获取天气数据失败")
+                        showError("Fail to get weather data")
                         Log.e(TAG, "获取天气数据失败", currentWeatherResult.exceptionOrNull())
                         
                         // Generate AI advice with default weather data
@@ -358,7 +362,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     }
                 }
             } catch (e: Exception) {
-                showError("网络连接失败")
+                showError("Internet Error")
                 Log.e(TAG, "获取天气数据异常", e)
                 
                 // Generate AI advice with default weather data
