@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -29,63 +30,129 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
     
     private fun setupClickListeners(view: View) {
-        // Account Settings
-        view.findViewById<TextView>(R.id.edit_profile).setOnClickListener {
-            Toast.makeText(context, "Edit Profile clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Implement edit profile functionality
+        // Personal Profile
+        view.findViewById<TextView>(R.id.view_profile).setOnClickListener {
+            val intent = Intent(requireContext(), ProfileActivity::class.java)
+            startActivity(intent)
         }
         
+        // Goals
+        view.findViewById<TextView>(R.id.create_goal).setOnClickListener {
+            val intent = Intent(requireContext(), AdjustGoalActivity::class.java)
+            startActivity(intent)
+        }
+        
+        // Personal Profile - Change Password
         view.findViewById<TextView>(R.id.change_password).setOnClickListener {
-            Toast.makeText(context, "Change Password clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Implement change password functionality
-        }
-        
-        // App Settings
-        view.findViewById<TextView>(R.id.measurement_units).setOnClickListener {
-            Toast.makeText(context, "Measurement Units clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Implement units selection dialog
-        }
-        
-        // Privacy & Support
-        view.findViewById<TextView>(R.id.privacy_policy).setOnClickListener {
-            Toast.makeText(context, "Privacy Policy clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Open privacy policy
-        }
-        
-        view.findViewById<TextView>(R.id.terms_of_service).setOnClickListener {
-            Toast.makeText(context, "Terms of Service clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Open terms of service
-        }
-        
-        view.findViewById<TextView>(R.id.help_support).setOnClickListener {
-            Toast.makeText(context, "Help & Support clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Open help & support
-        }
-        
-        view.findViewById<TextView>(R.id.about).setOnClickListener {
-            Toast.makeText(context, "About clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Show about dialog
+            val intent = Intent(requireContext(), ChangePasswordActivity::class.java)
+            startActivity(intent)
         }
         
         // Logout Button
         view.findViewById<Button>(R.id.btn_logout).setOnClickListener {
-            logout()
+            showLogoutConfirmation()
         }
     }
     
     private fun setupSwitches(view: View) {
         val notificationSwitch = view.findViewById<Switch>(R.id.switch_notifications)
-        val darkModeSwitch = view.findViewById<Switch>(R.id.switch_dark_mode)
+        val locationSwitch = view.findViewById<Switch>(R.id.switch_location)
         
+        // Load saved preferences
+        val sharedPreferences = requireContext().getSharedPreferences("app_permissions", Context.MODE_PRIVATE)
+        val notificationsEnabled = sharedPreferences.getBoolean("notifications_enabled", true)
+        val locationEnabled = sharedPreferences.getBoolean("location_enabled", true)
+        
+        notificationSwitch.isChecked = notificationsEnabled
+        locationSwitch.isChecked = locationEnabled
+        
+        // Push Notifications
         notificationSwitch.setOnCheckedChangeListener { _, isChecked ->
-            Toast.makeText(context, "Notifications ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
-            // TODO: Implement notification settings
+            sharedPreferences.edit().putBoolean("notifications_enabled", isChecked).apply()
+            Toast.makeText(context, "Push Notifications ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+            
+            // Update notification channel if needed
+            if (isChecked) {
+                // Enable notifications
+                enableNotifications()
+            } else {
+                // Disable notifications
+                disableNotifications()
+            }
         }
         
-        darkModeSwitch.setOnCheckedChangeListener { _, isChecked ->
-            Toast.makeText(context, "Dark Mode ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
-            // TODO: Implement dark mode toggle
+        // Location/GPS Permission
+        locationSwitch.setOnCheckedChangeListener { _, isChecked ->
+            sharedPreferences.edit().putBoolean("location_enabled", isChecked).apply()
+            Toast.makeText(context, "Location/GPS ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+            
+            if (isChecked) {
+                // Request location permission if not granted
+                requestLocationPermission()
+            }
         }
+    }
+    
+    private fun enableNotifications() {
+        // Enable notification channels
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val notificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            val channel = android.app.NotificationChannel(
+                "default_channel",
+                "General Notifications",
+                android.app.NotificationManager.IMPORTANCE_DEFAULT
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+    
+    private fun disableNotifications() {
+        // Note: We can't fully disable notifications programmatically
+        // Users need to do this in system settings
+        // We just update our app preference
+    }
+    
+    private fun requestLocationPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            if (requireContext().checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) 
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(
+                    arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                    LOCATION_PERMISSION_REQUEST_CODE
+                )
+            }
+        }
+    }
+    
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(context, "Location permission granted", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Location permission denied", Toast.LENGTH_SHORT).show()
+                // Update switch state
+                val locationSwitch = view?.findViewById<Switch>(R.id.switch_location)
+                locationSwitch?.isChecked = false
+                requireContext().getSharedPreferences("app_permissions", Context.MODE_PRIVATE)
+                    .edit().putBoolean("location_enabled", false).apply()
+            }
+        }
+    }
+    
+    companion object {
+        private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
+    }
+    
+    private fun showLogoutConfirmation() {
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Logout")
+            .setMessage("Are you sure you want to logout?")
+            .setPositiveButton("Yes") { _, _ ->
+                logout()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
     
     private fun logout() {

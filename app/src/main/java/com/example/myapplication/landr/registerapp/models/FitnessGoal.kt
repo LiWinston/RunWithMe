@@ -5,5 +5,6 @@ data class FitnessGoal(
     val weeklyWorkouts: Int? = null,
     val targetAvgPaceSecPerKm: Int? = null,
     val weeklyCalories: Int? = null,
+    val slogan: String? = null,
     val extras: Map<String, Any?>? = null
 )

@@ -33,7 +33,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var phoneEt: EditText
     private lateinit var heightEt: EditText
     private lateinit var weightEt: EditText
-    private lateinit var fitnessGoalEt: EditText
+    private lateinit var weeklyDistanceSpinner: Spinner
     private lateinit var fitnessLevelSpinner: Spinner
     private lateinit var registerBtn: Button
     private lateinit var backToLoginBtn: Button
@@ -47,6 +47,7 @@ class RegisterActivity : AppCompatActivity() {
 
         initViews()
         setupFitnessLevelSpinner()
+        setupWeeklyDistanceSpinner()
         setupGenderSelection()
         setupClickListeners()
     }
@@ -68,7 +69,7 @@ class RegisterActivity : AppCompatActivity() {
         phoneEt = findViewById(R.id.phoneEt)
         heightEt = findViewById(R.id.heightEt)
         weightEt = findViewById(R.id.weightEt)
-        fitnessGoalEt = findViewById(R.id.fitnessGoalEt)
+        weeklyDistanceSpinner = findViewById(R.id.weeklyDistanceSpinner)
         fitnessLevelSpinner = findViewById(R.id.fitnessLevelSpinner)
         registerBtn = findViewById(R.id.registerBtn)
         backToLoginBtn = findViewById(R.id.backToLoginBtn)
@@ -89,6 +90,24 @@ class RegisterActivity : AppCompatActivity() {
         )
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         fitnessLevelSpinner.adapter = adapter
+    }
+
+    private fun setupWeeklyDistanceSpinner() {
+        // Weekly distance options in km
+        val distanceOptions = arrayOf(
+            "Select Weekly Goal",
+            "5 km",
+            "10 km",
+            "15 km",
+            "20 km",
+            "25 km",
+            "30 km",
+            "40 km",
+            "50 km"
+        )
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, distanceOptions)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        weeklyDistanceSpinner.adapter = adapter
     }
 
     private fun setupGenderSelection() {
@@ -180,6 +199,12 @@ class RegisterActivity : AppCompatActivity() {
             return
         }
 
+        // 验证weekly distance goal必须选择
+        if (weeklyDistanceSpinner.selectedItemPosition == 0) {
+            Toast.makeText(this, "Please select a weekly distance goal", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val gender = when(genderDropdown.text.toString().trim().lowercase()) {
             "male" -> "MALE"
             "female" -> "FEMALE"
@@ -255,6 +280,19 @@ class RegisterActivity : AppCompatActivity() {
             fitnessLevelSpinner.selectedItem.toString().uppercase()
         } else null
 
+        // 获取每周距离目标 (从下拉菜单选项中提取数字，例如 "10 km" -> 10.0)
+        val weeklyDistanceKm = when (weeklyDistanceSpinner.selectedItemPosition) {
+            1 -> 5.0
+            2 -> 10.0
+            3 -> 15.0
+            4 -> 20.0
+            5 -> 25.0
+            6 -> 30.0
+            7 -> 40.0
+            8 -> 50.0
+            else -> null
+        }
+
         val request = RegisterRequest(
             username = username,
             password = password,
@@ -266,8 +304,7 @@ class RegisterActivity : AppCompatActivity() {
             phoneNumber = if (phoneNumber.isNotEmpty()) phoneNumber else null,
             height = height,
             weight = weight,
-            // Interpret the single field as weeklyDistanceKm for now
-            fitnessGoal = fitnessGoalText.toDoubleOrNull()?.let { FitnessGoal(weeklyDistanceKm = it) },
+            fitnessGoal = weeklyDistanceKm?.let { FitnessGoal(weeklyDistanceKm = it) },
             fitnessLevel = fitnessLevel,
             weeklyAvailability = null
         )

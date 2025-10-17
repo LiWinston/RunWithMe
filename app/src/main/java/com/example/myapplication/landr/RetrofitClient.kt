@@ -10,7 +10,12 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
+    // 使用本地服务器（模拟器）
     private const val BASE_URL = "http://10.0.2.2:8080/"
+    
+    // 使用云端服务器（如果已部署）- 取消注释下面这行并注释上面那行
+    // private const val BASE_URL = "https://your-backend-server.com/"
+    
     private lateinit var tokenManager: TokenManager
     private var retrofitInstance: Retrofit? = null
 

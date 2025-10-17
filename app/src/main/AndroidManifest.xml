@@ -116,6 +116,48 @@
             android:screenOrientation="portrait">
         </activity>
 
+        <!-- ProfileActivity - 个人资料 -->
+        <activity
+            android:name=".ProfileActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- ExerciseRecordingActivity - 运动统计 -->
+        <activity
+            android:name=".ExerciseRecordingActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- WorkoutListActivity - 运动记录列表 -->
+        <activity
+            android:name=".WorkoutListActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- ChangePasswordActivity - 修改密码 -->
+        <activity
+            android:name=".ChangePasswordActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- SetSloganActivity - 设置口号 -->
+        <activity
+            android:name=".SetSloganActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <!-- AdjustGoalActivity - 调整目标 -->
+        <activity
+            android:name=".AdjustGoalActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
+
         <!-- gsh StartActivity -->
 <!--        <activity-->
 <!--            android:name=".record.StartRecordActivity"-->
