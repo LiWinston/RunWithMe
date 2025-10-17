@@ -154,7 +154,6 @@ class RegisterActivity : AppCompatActivity() {
         val phoneNumber = phoneEt.text.toString().trim()
         val heightText = heightEt.text.toString().trim()
         val weightText = weightEt.text.toString().trim()
-        val fitnessGoalText = fitnessGoalEt.text.toString().trim()
 
         // Validate username (3-30 characters)
         if (username.isEmpty()) {

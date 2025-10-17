@@ -99,7 +99,7 @@ class ProfileActivity : AppCompatActivity() {
                     android.util.Log.d("ProfileActivity", "Response successful: ${response.isSuccessful}")
                     android.util.Log.d("ProfileActivity", "Response code: ${response.code()}")
                     android.util.Log.d("ProfileActivity", "Response body: ${response.body()}")
-                    android.util.Log.d("ProfileActivity", "Status: ${response.body()?.status}")
+                    android.util.Log.d("ProfileActivity", "Status/Code: ${response.body()?.status}")
                     android.util.Log.d("ProfileActivity", "Message: ${response.body()?.message}")
                     android.util.Log.d("ProfileActivity", "Data: ${response.body()?.data}")
 
