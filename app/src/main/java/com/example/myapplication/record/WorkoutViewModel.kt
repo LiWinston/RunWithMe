@@ -299,7 +299,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     }
 
     /** Start accelerometer sensor */
-    private fun startStepSensors() {
+    fun startStepSensors() {
         // Accelerometer
 //        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 //        accelerometer?.let {

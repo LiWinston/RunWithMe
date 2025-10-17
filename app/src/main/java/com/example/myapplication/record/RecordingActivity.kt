@@ -6,6 +6,9 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication.R
 import com.example.myapplication.record.RecordingFragment
 import com.example.myapplication.record.WorkoutViewModel
+import androidx.core.app.ActivityCompat
+import android.content.pm.PackageManager
+
 
 class RecordingActivity : AppCompatActivity() {
 
@@ -14,6 +17,15 @@ class RecordingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_recording)
+
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACTIVITY_RECOGNITION)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(android.Manifest.permission.ACTIVITY_RECOGNITION),
+                101
+            )
+        }
 
         workoutViewModel.startWorkout()
 
