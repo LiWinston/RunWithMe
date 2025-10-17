@@ -542,9 +542,11 @@ class GroupFragment : Fragment() {
             val avatar: ImageView = view.findViewById(R.id.iv_avatar)
             val name: TextView = view.findViewById(R.id.tv_name)
             val stats: TextView = view.findViewById(R.id.tv_stats)
-            val actionButton: LinearLayout = view.findViewById(R.id.btn_action)
-            val actionIcon: ImageView = view.findViewById(R.id.iv_action_icon)
-            val actionText: TextView = view.findViewById(R.id.tv_action_text)
+            val actionsContainer: LinearLayout = view.findViewById(R.id.actions_container)
+            val btnRemind: LinearLayout = view.findViewById(R.id.btn_remind)
+            val tvRemindText: TextView = view.findViewById(R.id.tv_remind_text)
+            val btnLike: LinearLayout = view.findViewById(R.id.btn_like)
+            val tvLikeText: TextView = view.findViewById(R.id.tv_like_text)
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MemberViewHolder {
@@ -568,23 +570,38 @@ class GroupFragment : Fragment() {
             }
             holder.stats.text = statusText
 
-            // 决策显示交互按钮。完成周目标后可点赞，否则可督促；自己不可对自己操作
-            val action = if (member.isSelf) null else if (member.completed) ActionType.LIKE else ActionType.REMIND
-            if (action == null) {
-                holder.actionButton.visibility = View.GONE
+            // 两个按钮的显示规则：
+            // - 自己：两个按钮都显示，但禁用点击，仅显示数量
+            // - 他人：只显示一个按钮；若已完成则显示点赞，否则显示提醒；并可点击
+            // 数量文案：Like {count} / Remind {count}，为0时也显示0，避免误解
+
+            // 先统一更新数量文案
+            holder.tvLikeText.text = "Like ${member.weeklyLikeCount}"
+            holder.tvRemindText.text = "Remind ${member.weeklyRemindCount}"
+
+            if (member.isSelf) {
+                // 自己：两个都可见，不可点击
+                holder.actionsContainer.visibility = View.VISIBLE
+                holder.btnLike.visibility = View.VISIBLE
+                holder.btnRemind.visibility = View.VISIBLE
+                holder.btnLike.isEnabled = false
+                holder.btnRemind.isEnabled = false
+                holder.btnLike.setOnClickListener(null)
+                holder.btnRemind.setOnClickListener(null)
+                holder.btnLike.alpha = 0.6f
+                holder.btnRemind.alpha = 0.6f
             } else {
-                holder.actionButton.visibility = View.VISIBLE
-                if (action == ActionType.LIKE) {
-                    holder.actionIcon.setImageResource(R.drawable.group_like)
-                    val likeText = if (member.weeklyLikeCount > 0) "Like ${member.weeklyLikeCount}" else "Like"
-                    holder.actionText.text = likeText
-                } else {
-                    holder.actionIcon.setImageResource(R.drawable.group_remind)
-                    val reminderText = if (member.weeklyRemindCount > 0) "Remind ${member.weeklyRemindCount}" else "Remind"
-                    holder.actionText.text = reminderText
-                }
-                holder.actionButton.setBackgroundResource(R.drawable.btn_remind_like)
-                holder.actionButton.setOnClickListener { onActionClick(member, action) }
+                holder.actionsContainer.visibility = View.VISIBLE
+                val showLike = member.completed
+                holder.btnLike.visibility = if (showLike) View.VISIBLE else View.GONE
+                holder.btnRemind.visibility = if (showLike) View.GONE else View.VISIBLE
+                holder.btnLike.isEnabled = showLike
+                holder.btnRemind.isEnabled = !showLike
+                holder.btnLike.alpha = if (showLike) 1f else 0.6f
+                holder.btnRemind.alpha = if (!showLike) 1f else 0.6f
+
+                holder.btnLike.setOnClickListener { onActionClick(member, ActionType.LIKE) }
+                holder.btnRemind.setOnClickListener { onActionClick(member, ActionType.REMIND) }
             }
 
         }
