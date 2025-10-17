@@ -47,7 +47,7 @@ class FinishActivity : AppCompatActivity() {
         tvSpeed.text = speed  // Display speed directly
         
         // Display steps from ViewModel
-        val steps = workoutViewModel.steps.value ?: 0
+        val steps = intent.getIntExtra("steps", 0)
         tvSteps.text = steps.toString()
         
         // Set workout type and corresponding icon
@@ -95,6 +95,7 @@ class FinishActivity : AppCompatActivity() {
         val duration = intent.getStringExtra("duration") ?: "00:00:00"
         val calories = intent.getStringExtra("calories") ?: "0 kcal"
         val speed = intent.getStringExtra("speed") ?: "0.00 m/s"
+        val steps = intent.getIntExtra("steps", 0)
 
         val dynamicData = workoutViewModel.getWorkoutDynamicData()
         val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
@@ -109,7 +110,7 @@ class FinishActivity : AppCompatActivity() {
             workoutType = "OUTDOOR_RUN",
             distance = parseDistance(distance),
             duration = parseDuration(duration),
-            steps = intent.getIntExtra("steps", workoutViewModel.steps.value ?: 0),
+            steps = steps,
             calories = parseCalories(calories),
             avgSpeed = parseSpeed(speed),
             avgPace = calculateAvgPace(parseDistance(distance), parseDuration(duration)),
