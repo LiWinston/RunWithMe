@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.example.myapplication.group.FeedResponse
 import com.example.myapplication.group.GroupApi
-import com.example.myapplication.group.NotificationItem
 import com.example.myapplication.landr.RetrofitClient
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
@@ -37,20 +36,20 @@ class FeedBottomSheet: BottomSheetDialogFragment() {
                     val items = mutableListOf<Pair<String,String>>()
                     feed.workouts?.forEach { w ->
                         val time = w.startTime ?: ""
-                        val summary = buildString {
+                        val summary = w.summary ?: buildString {
                             append("🏃 ")
-                            append((w.distance ?: 0.0).let { String.format("%.1f km", it) })
+                            append((w.distanceKm ?: 0.0).let { String.format("%.1f km", it) })
                             if (!w.workoutType.isNullOrBlank()) append(" · ").append(w.workoutType)
                         }
                         items += time to summary
                     }
                     feed.interactions?.forEach { n ->
                         val time = n.createdAt ?: ""
-                        val summary = when (n.type) {
-                            "LIKE" -> "👍 ${n.actorUserId ?: "Someone"} → ${n.targetUserId ?: "Someone"}"
-                            "REMIND" -> "⏰ ${n.actorUserId ?: "Someone"} → ${n.targetUserId ?: "Someone"}"
-                            "WEEKLY_GOAL_ACHIEVED" -> "🎯 User ${n.actorUserId ?: ""} reached weekly goal"
-                            else -> n.type
+                        val summary = n.summary ?: when (n.type) {
+                            "LIKE" -> "👍 ${n.actorName ?: "Someone"} → ${n.targetName ?: "Someone"}"
+                            "REMIND" -> "⏰ ${n.actorName ?: "Someone"} → ${n.targetName ?: "Someone"}"
+                            "WEEKLY_GOAL_ACHIEVED" -> "🎯 ${n.actorName ?: "Someone"} reached weekly goal"
+                            else -> n.type ?: ""
                         }
                         items += time to summary
                     }

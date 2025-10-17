@@ -531,8 +531,37 @@ public class GroupServiceImpl implements GroupService {
     public com.rwm.dto.response.FeedResponse feed(Long userId, int limit) {
         Long gid = getUserCurrentGroupId(userId);
         int lim = Math.max(1, limit);
-        java.util.List<com.rwm.entity.Workout> workouts;
-        java.util.List<Notification> interactions = java.util.List.of();
+
+        java.util.List<com.rwm.dto.response.FeedWorkoutItem> workoutItems = new java.util.ArrayList<>();
+        java.util.List<com.rwm.dto.response.FeedInteractionItem> interactionItems = new java.util.ArrayList<>();
+
+        java.util.function.Function<Long, String> nameOf = (uid) -> {
+            if (uid == null) return "User";
+            var u = userMapper.selectById(uid);
+            if (u == null) return "User";
+            return u.getFirstName() != null ? u.getFirstName() : u.getUsername();
+        };
+
+        java.util.function.Function<com.rwm.entity.Workout, String> workoutSummary = (w) -> {
+            double dist = w.getDistance() == null ? 0.0 : w.getDistance().doubleValue();
+            String type = w.getWorkoutType() == null ? "" : w.getWorkoutType();
+            return String.format("🏃 %.1f km%s", dist, type.isEmpty() ? "" : (" · " + type));
+        };
+
+        java.util.function.Function<com.rwm.entity.Workout, com.rwm.dto.response.FeedWorkoutItem> mapWorkout = (w) -> {
+            String startIso = w.getStartTime() == null ? null : w.getStartTime().toString();
+            return new com.rwm.dto.response.FeedWorkoutItem(
+                    w.getId(),
+                    w.getUserId(),
+                    nameOf.apply(w.getUserId()),
+                    w.getWorkoutType(),
+                    w.getDistance() == null ? null : w.getDistance().doubleValue(),
+                    w.getDuration(),
+                    w.getAvgPace(),
+                    startIso,
+                    workoutSummary.apply(w)
+            );
+        };
 
         if (gid == null) {
             // 无组：仅返回自己的 workouts
@@ -541,7 +570,7 @@ public class GroupServiceImpl implements GroupService {
               .eq("status", "COMPLETED")
               .orderByDesc("start_time")
               .last("LIMIT " + lim);
-            workouts = workoutMapper.selectList(wq);
+            for (var w : workoutMapper.selectList(wq)) workoutItems.add(mapWorkout.apply(w));
         } else {
             // 有组：返回组员 workouts
             java.util.Set<Long> memberIds = new java.util.HashSet<>();
@@ -549,26 +578,46 @@ public class GroupServiceImpl implements GroupService {
             mq.eq("group_id", gid).eq("deleted", false);
             for (GroupMember m : groupMemberMapper.selectList(mq)) memberIds.add(m.getUserId());
 
-            if (memberIds.isEmpty()) {
-                workouts = java.util.List.of();
-            } else {
+            if (!memberIds.isEmpty()) {
                 QueryWrapper<com.rwm.entity.Workout> wq = new QueryWrapper<>();
                 wq.in("user_id", memberIds)
                   .eq("status", "COMPLETED")
                   .orderByDesc("start_time")
                   .last("LIMIT " + lim);
-                workouts = workoutMapper.selectList(wq);
+                for (var w : workoutMapper.selectList(wq)) workoutItems.add(mapWorkout.apply(w));
             }
 
-                        // 组内的互动记录（LIKE/REMIND/WEEKLY_GOAL_ACHIEVED），基于通知（包含 group_id/actor/target）
+            // 组内的互动记录（LIKE/REMIND/WEEKLY_GOAL_ACHIEVED），基于通知（包含 group_id/actor/target）
             QueryWrapper<Notification> iq = new QueryWrapper<>();
             iq.eq("group_id", gid)
-                            .in("type", java.util.List.of("LIKE", "REMIND", "WEEKLY_GOAL_ACHIEVED"))
+              .in("type", java.util.List.of("LIKE", "REMIND", "WEEKLY_GOAL_ACHIEVED"))
               .orderByDesc("created_at")
               .last("LIMIT " + lim);
-            interactions = notificationMapper.selectList(iq);
+            for (var n : notificationMapper.selectList(iq)) {
+                String actorName = nameOf.apply(n.getActorUserId());
+                String targetName = nameOf.apply(n.getTargetUserId());
+                String createdIso = n.getCreatedAt() == null ? null : n.getCreatedAt().toString();
+                String summary;
+                switch (n.getType()) {
+                    case "LIKE":
+                        summary = String.format("👍 %s → %s", actorName, targetName);
+                        break;
+                    case "REMIND":
+                        summary = String.format("⏰ %s → %s", actorName, targetName);
+                        break;
+                    case "WEEKLY_GOAL_ACHIEVED":
+                        summary = String.format("🎯 %s reached weekly goal", actorName);
+                        break;
+                    default:
+                        summary = n.getType();
+                }
+                interactionItems.add(new com.rwm.dto.response.FeedInteractionItem(
+                        n.getId(), n.getType(), n.getActorUserId(), actorName,
+                        n.getTargetUserId(), targetName, n.getGroupId(), createdIso, summary
+                ));
+            }
         }
 
-        return new com.rwm.dto.response.FeedResponse(workouts, interactions);
+        return new com.rwm.dto.response.FeedResponse(workoutItems, interactionItems);
     }
 }

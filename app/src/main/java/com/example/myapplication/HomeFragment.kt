@@ -136,9 +136,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
                     feed.workouts?.take(3)?.forEach { w ->
                         val dateStr = w.startTime ?: ""
-                        val summary = buildString {
+                        val summary = w.summary ?: buildString {
                             append("🏃 ")
-                            append((w.distance ?: 0.0).let { String.format("%.1f km", it) })
+                            append((w.distanceKm ?: 0.0).let { String.format("%.1f km", it) })
                             if (!w.workoutType.isNullOrBlank()) append(" · ").append(w.workoutType)
                         }
                         items += dateStr to summary
@@ -148,10 +148,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     if (remaining > 0) {
                         feed.interactions?.take(remaining)?.forEach { n ->
                             val dateStr = n.createdAt ?: ""
-                            val summary = when(n.type) {
-                                "LIKE" -> "👍 Like" 
+                            val summary = n.summary ?: when(n.type) {
+                                "LIKE" -> "👍 Like"
                                 "REMIND" -> "⏰ Remind"
-                                else -> n.type
+                                else -> n.type ?: ""
                             }
                             items += dateStr to summary
                         }
