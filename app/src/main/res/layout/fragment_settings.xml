@@ -217,43 +217,12 @@
 
                 </LinearLayout>
 
-                <!-- Privacy Settings -->
-                <TextView
-                    android:id="@+id/privacy_settings"
+                <View
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:text="Privacy Settings"
-                    android:textColor="@android:color/black"
-                    android:textSize="16sp"
-                    android:gravity="center_vertical"
-                    android:paddingStart="8dp"
-                    android:background="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true" />
-
-                <!-- Voice Permission -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Voice Enabled"
-                        android:textColor="@android:color/black"
-                        android:textSize="16sp"
-                        android:paddingStart="8dp" />
-
-                    <Switch
-                        android:id="@+id/switch_voice"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="false" />
-
-                </LinearLayout>
+                    android:layout_height="1dp"
+                    android:background="@android:color/black"
+                    android:alpha="0.1"
+                    android:layout_marginVertical="8dp" />
 
                 <!-- Location/GPS Permission -->
                 <LinearLayout
@@ -278,61 +247,6 @@
                         android:checked="true" />
 
                 </LinearLayout>
-
-            </LinearLayout>
-
-            <!-- Help Section -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/settings_card_background"
-                android:padding="16dp"
-                android:layout_marginBottom="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Help"
-                    android:textColor="@android:color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="12dp" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@android:color/black"
-                    android:alpha="0.3"
-                    android:layout_marginBottom="12dp" />
-
-                <!-- Contact Support -->
-                <TextView
-                    android:id="@+id/contact_support"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:text="Contact Support"
-                    android:textColor="@android:color/black"
-                    android:textSize="16sp"
-                    android:gravity="center_vertical"
-                    android:paddingStart="8dp"
-                    android:background="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true" />
-
-                <!-- FAQ -->
-                <TextView
-                    android:id="@+id/faq"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:text="Frequently Asked Questions (FAQ)"
-                    android:textColor="@android:color/black"
-                    android:textSize="16sp"
-                    android:gravity="center_vertical"
-                    android:paddingStart="8dp"
-                    android:background="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true" />
 
             </LinearLayout>
 

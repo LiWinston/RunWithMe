@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -57,23 +58,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             startActivity(intent)
         }
         
-        // Permissions
-        view.findViewById<TextView>(R.id.privacy_settings).setOnClickListener {
-            Toast.makeText(context, "Privacy Settings clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Navigate to privacy settings (default sharing permission for messages)
-        }
-        
-        // Help
-        view.findViewById<TextView>(R.id.contact_support).setOnClickListener {
-            Toast.makeText(context, "Contact Support clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Navigate to contact support page (describe issue + add image)
-        }
-        
-        view.findViewById<TextView>(R.id.faq).setOnClickListener {
-            Toast.makeText(context, "FAQ clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Navigate to FAQ page
-        }
-        
         // Logout Button
         view.findViewById<Button>(R.id.btn_logout).setOnClickListener {
             showLogoutConfirmation()
@@ -82,26 +66,92 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     
     private fun setupSwitches(view: View) {
         val notificationSwitch = view.findViewById<Switch>(R.id.switch_notifications)
-        val voiceSwitch = view.findViewById<Switch>(R.id.switch_voice)
         val locationSwitch = view.findViewById<Switch>(R.id.switch_location)
+        
+        // Load saved preferences
+        val sharedPreferences = requireContext().getSharedPreferences("app_permissions", Context.MODE_PRIVATE)
+        val notificationsEnabled = sharedPreferences.getBoolean("notifications_enabled", true)
+        val locationEnabled = sharedPreferences.getBoolean("location_enabled", true)
+        
+        notificationSwitch.isChecked = notificationsEnabled
+        locationSwitch.isChecked = locationEnabled
         
         // Push Notifications
         notificationSwitch.setOnCheckedChangeListener { _, isChecked ->
+            sharedPreferences.edit().putBoolean("notifications_enabled", isChecked).apply()
             Toast.makeText(context, "Push Notifications ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
-            // TODO: Update notification preference in backend
-        }
-        
-        // Voice Permission
-        voiceSwitch.setOnCheckedChangeListener { _, isChecked ->
-            Toast.makeText(context, "Voice ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
-            // TODO: Request/revoke voice permission
+            
+            // Update notification channel if needed
+            if (isChecked) {
+                // Enable notifications
+                enableNotifications()
+            } else {
+                // Disable notifications
+                disableNotifications()
+            }
         }
         
         // Location/GPS Permission
         locationSwitch.setOnCheckedChangeListener { _, isChecked ->
+            sharedPreferences.edit().putBoolean("location_enabled", isChecked).apply()
             Toast.makeText(context, "Location/GPS ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
-            // TODO: Request/revoke location permission
+            
+            if (isChecked) {
+                // Request location permission if not granted
+                requestLocationPermission()
+            }
         }
+    }
+    
+    private fun enableNotifications() {
+        // Enable notification channels
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val notificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            val channel = android.app.NotificationChannel(
+                "default_channel",
+                "General Notifications",
+                android.app.NotificationManager.IMPORTANCE_DEFAULT
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+    
+    private fun disableNotifications() {
+        // Note: We can't fully disable notifications programmatically
+        // Users need to do this in system settings
+        // We just update our app preference
+    }
+    
+    private fun requestLocationPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            if (requireContext().checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) 
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(
+                    arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                    LOCATION_PERMISSION_REQUEST_CODE
+                )
+            }
+        }
+    }
+    
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(context, "Location permission granted", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Location permission denied", Toast.LENGTH_SHORT).show()
+                // Update switch state
+                val locationSwitch = view?.findViewById<Switch>(R.id.switch_location)
+                locationSwitch?.isChecked = false
+                requireContext().getSharedPreferences("app_permissions", Context.MODE_PRIVATE)
+                    .edit().putBoolean("location_enabled", false).apply()
+            }
+        }
+    }
+    
+    companion object {
+        private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
     }
     
     private fun showLogoutConfirmation() {
