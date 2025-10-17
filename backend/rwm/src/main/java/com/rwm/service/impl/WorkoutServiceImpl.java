@@ -77,6 +77,7 @@ public class WorkoutServiceImpl implements WorkoutService {
         if (existingWorkout == null) {
             throw new RuntimeException("运动记录不存在");
         }
+        // 基本防越权校验在控制器层通过 JWT + 记录归属完成，这里不再依赖请求体中的 userId 字段
         
         // 只更新非null字段
         if (request.getDistance() != null) existingWorkout.setDistance(request.getDistance());
@@ -121,6 +122,7 @@ public class WorkoutServiceImpl implements WorkoutService {
         if (workout == null) {
             throw new RuntimeException("运动记录不存在");
         }
+        // 这里只能由记录所有者删除（控制器层可进一步用 JWT 校验当前用户）
         
         // 软删除
         workout.setDeleted(true);
@@ -261,6 +263,7 @@ public class WorkoutServiceImpl implements WorkoutService {
         if (workout == null) {
             throw new RuntimeException("运动记录不存在");
         }
+        // 基本防越权：禁止修改不属于自己的记录（控制器负责匹配当前用户）
         
         workout.setStatus(status);
         

@@ -9,6 +9,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication.R
 import com.example.myapplication.MainActivity
+import com.example.myapplication.landr.TokenManager
+import com.example.myapplication.landr.RetrofitClient as LandrRetrofit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -100,8 +102,10 @@ class FinishActivity : AppCompatActivity() {
         val durationSeconds = parseDuration(duration)?.toLong() ?: 0L
         val startTimeStr = sdf.format(java.util.Date(System.currentTimeMillis() - durationSeconds * 1000))
 
+        // 从登录态读取当前用户ID
+        val userIdFromToken = TokenManager.getInstance(applicationContext).getUserId()
         val workoutRequest = WorkoutCreateRequest(
-            userId = 1L,
+            userId = userIdFromToken,
             workoutType = "OUTDOOR_RUN",
             distance = parseDistance(distance),
             duration = parseDuration(duration),
