@@ -36,7 +36,7 @@ class AdjustGoalActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        findViewById<ImageView>(R.id.btn_back).setOnClickListener { finish() }
+        findViewById<android.widget.ImageButton>(R.id.btn_back).setOnClickListener { finish() }
 
         etWeeklyDistance = findViewById(R.id.et_weekly_distance)
         etWeeklyWorkouts = findViewById(R.id.et_weekly_workouts)

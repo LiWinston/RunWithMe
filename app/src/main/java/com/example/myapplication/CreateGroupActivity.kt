@@ -42,6 +42,11 @@ class CreateGroupActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
+        // Back button
+        findViewById<android.widget.ImageButton>(R.id.btn_back).setOnClickListener {
+            finish()
+        }
+
         btnCreateGroup.setOnClickListener {
             createGroup()
         }

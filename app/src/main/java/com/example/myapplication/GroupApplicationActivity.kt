@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -42,7 +43,7 @@ class GroupApplicationActivity : AppCompatActivity() {
 
     private lateinit var tabLayout: TabLayout
     private lateinit var recyclerView: RecyclerView
-    private lateinit var btnBack: Button
+    private lateinit var btnBack: android.widget.ImageButton
     private lateinit var tvEmpty: TextView
 
     private var currentTab = 0 // only Received remains

@@ -41,7 +41,7 @@ class ExerciseRecordingActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        findViewById<ImageView>(R.id.btn_back).setOnClickListener {
+        findViewById<android.widget.ImageButton>(R.id.btn_back).setOnClickListener {
             finish()
         }
         

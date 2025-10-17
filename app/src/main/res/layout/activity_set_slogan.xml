@@ -19,14 +19,14 @@
             android:gravity="center_vertical"
             android:paddingBottom="24dp">
 
-            <ImageView
+            <ImageButton
                 android:id="@+id/btn_back"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:src="@drawable/ic_back"
                 android:contentDescription="Back"
-                android:clickable="true"
-                android:focusable="true"/>
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"/>
 
             <TextView
                 android:layout_width="0dp"
@@ -36,7 +36,7 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:layout_marginEnd="24dp"/>
+                android:layout_marginEnd="40dp"/>
         </LinearLayout>
 
         <!-- Loading Progress -->
