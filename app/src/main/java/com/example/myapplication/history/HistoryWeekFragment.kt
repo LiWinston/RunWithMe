@@ -60,21 +60,26 @@ class HistoryWeekFragment : Fragment() {
     }
 
     private fun initViews(view: View) {
-        tvWeekDistance = view.findViewById(R.id.tvWeekDistance)
-        tvWeekDuration = view.findViewById(R.id.tvWeekDuration)
-        tvWeekPace = view.findViewById(R.id.tvWeekPace)
-        tvWeekCalories = view.findViewById(R.id.tvWeekCalories)
-        tvWeekSteps = view.findViewById(R.id.tvWeekSteps)
-        rvWeekWorkouts = view.findViewById(R.id.rvWeekWorkouts)
-        
-        // AI建议相关
-        btnGenerateWeekAdvice = view.findViewById(R.id.btnGenerateWeekAdvice)
-        tvWeekAdvice = view.findViewById(R.id.tvWeekAdvice)
-        pbAdviceLoading = view.findViewById(R.id.pbAdviceLoading)
-        
-        // 设置按钮点击事件
-        btnGenerateWeekAdvice.setOnClickListener {
-            historyViewModel.generateWeekAdvice()
+        try {
+            tvWeekDistance = view.findViewById(R.id.tvWeekDistance) ?: throw NullPointerException("tvWeekDistance not found")
+            tvWeekDuration = view.findViewById(R.id.tvWeekDuration) ?: throw NullPointerException("tvWeekDuration not found")
+            tvWeekPace = view.findViewById(R.id.tvWeekPace) ?: throw NullPointerException("tvWeekPace not found")
+            tvWeekCalories = view.findViewById(R.id.tvWeekCalories) ?: throw NullPointerException("tvWeekCalories not found")
+            tvWeekSteps = view.findViewById(R.id.tvWeekSteps) ?: throw NullPointerException("tvWeekSteps not found")
+            rvWeekWorkouts = view.findViewById(R.id.rvWeekWorkouts) ?: throw NullPointerException("rvWeekWorkouts not found")
+            
+            // AI建议相关
+            btnGenerateWeekAdvice = view.findViewById(R.id.btnGenerateWeekAdvice) ?: throw NullPointerException("btnGenerateWeekAdvice not found")
+            tvWeekAdvice = view.findViewById(R.id.tvWeekAdvice) ?: throw NullPointerException("tvWeekAdvice not found")
+            pbAdviceLoading = view.findViewById(R.id.pbAdviceLoading) ?: throw NullPointerException("pbAdviceLoading not found")
+            
+            // 设置按钮点击事件
+            btnGenerateWeekAdvice.setOnClickListener {
+                historyViewModel.generateWeekAdvice()
+            }
+        } catch (e: NullPointerException) {
+            Log.e("HistoryWeekFragment", "Failed to initialize views: ${e.message}", e)
+            throw e
         }
     }
 

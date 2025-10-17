@@ -34,13 +34,22 @@ class FeedBottomSheet: BottomSheetDialogFragment() {
                 if (response.isSuccessful && res != null && res.code == 0 && res.data != null) {
                     val feed = res.data
                     val items = mutableListOf<Pair<String,String>>()
+                    fun fmtPace(secPerKm: Int?): String? {
+                        if (secPerKm == null || secPerKm <= 0) return null
+                        val m = secPerKm / 60
+                        val s = secPerKm % 60
+                        return "$m'${String.format("%02d", s)}\"/km"
+                    }
+
                     feed.workouts?.forEach { w ->
                         val time = w.startTime ?: ""
-                        val summary = w.summary ?: buildString {
-                            append("🏃 ")
-                            append((w.distanceKm ?: 0.0).let { String.format("%.1f km", it) })
-                            if (!w.workoutType.isNullOrBlank()) append(" · ").append(w.workoutType)
-                        }
+                        val name = w.userName?.takeIf { it.isNotBlank() } ?: "Someone"
+                        val pieces = mutableListOf<String>()
+                        pieces += name
+                        pieces += ((w.distanceKm ?: 0.0).let { String.format("%.1f km", it) })
+                        if (!w.workoutType.isNullOrBlank()) pieces += w.workoutType!!
+                        fmtPace(w.avgPaceSecPerKm)?.let { pieces += it }
+                        val summary = "🏃 " + pieces.joinToString(" · ")
                         items += time to summary
                     }
                     feed.interactions?.forEach { n ->

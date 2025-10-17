@@ -14,6 +14,7 @@ data class UserProfile(
     val id: Long,
     val username: String,
     val email: String?,
+    val emailVerified: Boolean?,
     val firstName: String,
     val lastName: String,
     val gender: String?,

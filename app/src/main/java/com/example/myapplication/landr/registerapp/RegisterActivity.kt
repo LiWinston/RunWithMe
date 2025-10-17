@@ -154,7 +154,6 @@ class RegisterActivity : AppCompatActivity() {
         val phoneNumber = phoneEt.text.toString().trim()
         val heightText = heightEt.text.toString().trim()
         val weightText = weightEt.text.toString().trim()
-        val fitnessGoalText = fitnessGoalEt.text.toString().trim()
 
         // Validate username (3-30 characters)
         if (username.isEmpty()) {
@@ -316,7 +315,7 @@ class RegisterActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful) {
                         val registerResponse = response.body()
-                        if (registerResponse?.status == 1) {
+                        if (registerResponse?.code == 0) {  // 后端成功时返回 code = 0
                             Toast.makeText(this@RegisterActivity, "Register Successfully! Please Log in.", Toast.LENGTH_SHORT).show()
                             val intent = Intent(this@RegisterActivity, LoginActivity::class.java)
                             startActivity(intent)
