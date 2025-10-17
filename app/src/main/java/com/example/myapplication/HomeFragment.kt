@@ -31,6 +31,8 @@ import com.google.android.material.card.MaterialCardView  // 新增导入
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
 
@@ -101,6 +103,84 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private fun initializeUIComponents(view: View) {
         aiAdviceText = view.findViewById(R.id.aiAdviceText)
         adviceLoadingProgress = view.findViewById(R.id.adviceLoadingProgress)
+
+        // 加载组动态审计 Feed
+        loadGroupFeed(view)
+    }
+
+    private fun loadGroupFeed(view: View) {
+        val todayDate = view.findViewById<TextView>(R.id.todayDate)
+        val todayDeed = view.findViewById<TextView>(R.id.todayDeed)
+        val yesterdayDate = view.findViewById<TextView>(R.id.yesterdayDate)
+        val yesterdayDeed = view.findViewById<TextView>(R.id.yesterdayDeed)
+        val thirdDate = view.findViewById<TextView>(R.id.thirdDate)
+        val thirdDeed = view.findViewById<TextView>(R.id.thirdDeed)
+
+        val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.group.GroupApi::class.java)
+        api.feed(20).enqueue(object: retrofit2.Callback<com.example.myapplication.group.Result<com.example.myapplication.group.FeedResponse>>{
+            override fun onResponse(
+                call: retrofit2.Call<com.example.myapplication.group.Result<com.example.myapplication.group.FeedResponse>>,
+                response: retrofit2.Response<com.example.myapplication.group.Result<com.example.myapplication.group.FeedResponse>>
+            ) {
+                val res = response.body()
+                if (response.isSuccessful && res != null && res.code == 0 && res.data != null) {
+                    val feed = res.data
+                    // 组装一个简单的三行：优先展示 workout，再展示互动
+                    val items = mutableListOf<Pair<String,String>>()
+
+                    feed.workouts?.take(3)?.forEach { w ->
+                        val dateStr = w.startTime ?: ""
+                        val summary = buildString {
+                            append("🏃 ")
+                            append((w.distance ?: 0.0).let { String.format("%.1f km", it) })
+                            if (!w.workoutType.isNullOrBlank()) append(" · ").append(w.workoutType)
+                        }
+                        items += dateStr to summary
+                    }
+
+                    val remaining = 3 - items.size
+                    if (remaining > 0) {
+                        feed.interactions?.take(remaining)?.forEach { n ->
+                            val dateStr = n.createdAt ?: ""
+                            val summary = when(n.type) {
+                                "LIKE" -> "👍 Like" 
+                                "REMIND" -> "⏰ Remind"
+                                else -> n.type
+                            }
+                            items += dateStr to summary
+                        }
+                    }
+
+                    fun fmt(src: String): String {
+                        return try {
+                            // 后端是 LocalDateTime -> 序列化格式不一定有偏移，这里尽量原样或做简单切割
+                            if (src.length >= 16) src.substring(5, 16).replace('T',' ') else src
+                        } catch (e: Exception) { src }
+                    }
+
+                    // 写入三个槽位
+                    val line1 = items.getOrNull(0)
+                    val line2 = items.getOrNull(1)
+                    val line3 = items.getOrNull(2)
+
+                    todayDate.text = line1?.first?.let { fmt(it) } ?: "dd/mm/yy--"
+                    todayDeed.text = line1?.second ?: "--"
+
+                    yesterdayDate.text = line2?.first?.let { fmt(it) } ?: "dd/yy/mm--"
+                    yesterdayDeed.text = line2?.second ?: "--"
+
+                    thirdDate.text = line3?.first?.let { fmt(it) } ?: "dd/yy/mm--"
+                    thirdDeed.text = line3?.second ?: "--"
+                }
+            }
+
+            override fun onFailure(
+                call: retrofit2.Call<com.example.myapplication.group.Result<com.example.myapplication.group.FeedResponse>>,
+                t: Throwable
+            ) {
+                // 保持占位符
+            }
+        })
     }
 
     private fun setupLocationServices() {

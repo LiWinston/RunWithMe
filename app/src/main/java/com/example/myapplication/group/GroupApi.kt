@@ -53,7 +53,23 @@ data class NotificationItem(
     val title: String?,
     val content: String?,
     val read: Boolean,
-    val createdAt: String?
+    val createdAt: String?,
+    val actorUserId: Long? = null,
+    val targetUserId: Long? = null,
+    val groupId: Long? = null
+)
+
+data class FeedWorkout(
+    val id: Long?,
+    val userId: Long,
+    val workoutType: String?,
+    val distance: Double?,
+    val startTime: String?
+)
+
+data class FeedResponse(
+    val workouts: List<FeedWorkout>?,
+    val interactions: List<NotificationItem>?
 )
 
 interface GroupApi {
@@ -86,4 +102,7 @@ interface GroupApi {
 
     @GET("/api/group/notifications")
     fun notifications(): Call<Result<List<NotificationItem>>>
+
+    @GET("/api/group/feed")
+    fun feed(@retrofit2.http.Query("limit") limit: Int = 20): Call<Result<FeedResponse>>
 }
