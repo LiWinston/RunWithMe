@@ -162,7 +162,7 @@ class FinishActivity : AppCompatActivity() {
         finish()
     }
 
-    // Helper function - parse distance string
+    // Helper function - parse distance string and convert to kilometers (backend expects km)
     private fun parseDistance(distanceStr: String): Double? {
         return try {
             val regex = Regex("""(\d+\.?\d*)\s*(m|km)""")
@@ -171,9 +171,9 @@ class FinishActivity : AppCompatActivity() {
                 val value = matchResult.groupValues[1].toDouble()
                 val unit = matchResult.groupValues[2]
                 when (unit) {
-                    "km" -> value * 1000.0   // Convert km to m
-                    "m" -> value
-                    else -> value
+                    "km" -> value              // Already in km
+                    "m" -> value / 1000.0      // Convert m to km (backend stores in km)
+                    else -> value / 1000.0
                 }
             } else {
                 null
@@ -212,14 +212,14 @@ class FinishActivity : AppCompatActivity() {
         }
     }
 
-    // Helper function - parse speed string (e.g. "5.2 mph" -> m/s)
+    // Helper function - parse speed string and convert to km/h (backend expects km/h)
     private fun parseSpeed(speedStr: String): Double? {
         return try {
             val regex = Regex("""(\d+\.?\d*)\s*(m/s|mps)""")
             val matchResult = regex.find(speedStr)
             if (matchResult != null) {
                 val value = matchResult.groupValues[1].toDouble()
-                value
+                value * 3.6  // Convert m/s to km/h (backend stores in km/h)
             } else {
                 null
             }
@@ -229,9 +229,10 @@ class FinishActivity : AppCompatActivity() {
     }
 
 
-    // Helper function - calculate average pace (seconds/meter)
+    // Helper function - calculate average pace (seconds/km, backend expects seconds per km)
     private fun calculateAvgPace(distance: Double?, duration: Int?): Int? {
         return if (distance != null && duration != null && distance > 0) {
+            // distance is now in km, so duration/distance gives seconds per km
             (duration / distance).toInt()
         } else {
             null
@@ -240,8 +241,8 @@ class FinishActivity : AppCompatActivity() {
 
     // Helper function - check goal achievement (distance>=1km or duration>=15min)
     private fun checkGoalAchievement(distance: Double?, duration: Int?): Boolean {
-        val distanceGoal = distance != null && distance >= 1000.0 // 1000m = 1km
-        val durationGoal = duration != null && duration >= 900 // 15 minutes
+        val distanceGoal = distance != null && distance >= 1.0 // distance is now in km
+        val durationGoal = duration != null && duration >= 900 // 15 minutes = 900 seconds
         return distanceGoal || durationGoal
     }
 

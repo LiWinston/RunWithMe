@@ -1,6 +1,7 @@
 package com.example.myapplication.history
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
+import com.example.myapplication.landr.TokenManager
 import com.example.myapplication.record.Workout
 import kotlinx.coroutines.launch
 
@@ -134,10 +136,17 @@ class HistoryTodayFragment : Fragment() {
 
     private fun loadTodayData() {
         lifecycleScope.launch {
-            // Load user profile first
-            historyViewModel.loadUserProfile()
-            // Then load today data
-            historyViewModel.loadTodayData(1L) // TODO: 使用真实用户ID
+            val userId = TokenManager.getInstance(requireContext()).getUserId()
+            Log.d("HistoryTodayFragment", "Loading today data for user: $userId")
+            
+            if (userId > 0) {
+                // Load user profile first
+                historyViewModel.loadUserProfile()
+                // Then load today data
+                historyViewModel.loadTodayData(userId)
+            } else {
+                Log.e("HistoryTodayFragment", "Invalid user ID: $userId")
+            }
         }
     }
 

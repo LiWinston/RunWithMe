@@ -89,4 +89,11 @@ public class GroupController {
         var list = groupService.myNotifications(currentUserId(req), limit);
         return ResponseEntity.ok(Result.ok(list));
     }
+
+    @GetMapping("/feed")
+    public ResponseEntity<Result<com.rwm.dto.response.FeedResponse>> feed(HttpServletRequest req,
+                                                                          @RequestParam(defaultValue = "20") int limit) {
+        var feed = groupService.feed(currentUserId(req), limit);
+        return ResponseEntity.ok(Result.ok(feed));
+    }
 }

@@ -51,35 +51,80 @@
                     android:textColor="#666666" />
         </LinearLayout>
 
-        <!-- 操作按钮 (图片 + 文字) -->
+        <!-- 操作按钮容器：提醒 与 点赞 -->
         <LinearLayout
-                android:id="@+id/btn_action"
+                android:id="@+id/actions_container"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:orientation="horizontal"
-                android:background="@drawable/btn_remind_like"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="6dp"
                 android:gravity="center">
 
-            <ImageView
-                    android:id="@+id/iv_action_icon"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/group_remind"
-                    android:contentDescription="Action icon" />
-
-            <TextView
-                    android:id="@+id/tv_action_text"
+            <!-- 提醒按钮 -->
+            <LinearLayout
+                    android:id="@+id/btn_remind"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="Remind"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal"
+                    android:background="@drawable/btn_remind_like"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:gravity="center">
+
+                <ImageView
+                        android:id="@+id/iv_remind_icon"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/group_remind"
+                        android:contentDescription="Remind icon" />
+
+                <TextView
+                        android:id="@+id/tv_remind_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="Remind 0"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <!-- 间距 -->
+            <Space
+                    android:layout_width="8dp"
+                    android:layout_height="1dp" />
+
+            <!-- 点赞按钮 -->
+            <LinearLayout
+                    android:id="@+id/btn_like"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="@drawable/btn_remind_like"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:gravity="center">
+
+                <ImageView
+                        android:id="@+id/iv_like_icon"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/group_like"
+                        android:contentDescription="Like icon" />
+
+                <TextView
+                        android:id="@+id/tv_like_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="Like 0"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+            </LinearLayout>
 
         </LinearLayout>
 

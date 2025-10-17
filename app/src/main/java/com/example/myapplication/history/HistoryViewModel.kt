@@ -119,6 +119,7 @@ class HistoryViewModel : ViewModel() {
      */
     fun loadWeekData(userId: Long) {
         viewModelScope.launch {
+            Log.d(TAG, "Starting to load week data for userId: $userId")
             _isLoading.value = true
             _error.value = null
 
@@ -129,21 +130,35 @@ class HistoryViewModel : ViewModel() {
                 val chartResponse = RetrofitClient.api.getWeekChart(userId)
 
                 if (statsResponse.isSuccessful && statsResponse.body()?.code == 0) {
-                    _weekStats.value = statsResponse.body()?.data ?: emptyMap()
+                    val data = statsResponse.body()?.data ?: emptyMap()
+                    Log.d(TAG, "Week stats loaded: $data")
+                    _weekStats.value = data
+                } else {
+                    Log.e(TAG, "Failed to load week stats: ${statsResponse.code()} - ${statsResponse.body()?.message}")
                 }
 
                 if (workoutsResponse.isSuccessful && workoutsResponse.body()?.code == 0) {
-                    _weekWorkouts.value = workoutsResponse.body()?.data ?: emptyList<Workout>()
+                    val workouts = workoutsResponse.body()?.data ?: emptyList<Workout>()
+                    Log.d(TAG, "Week workouts loaded: ${workouts.size} workouts")
+                    _weekWorkouts.value = workouts
+                } else {
+                    Log.e(TAG, "Failed to load week workouts: ${workoutsResponse.code()} - ${workoutsResponse.body()?.message}")
                 }
 
                 if (chartResponse.isSuccessful && chartResponse.body()?.code == 0) {
-                    _weekChart.value = chartResponse.body()?.data ?: emptyMap()
+                    val chart = chartResponse.body()?.data ?: emptyMap()
+                    Log.d(TAG, "Week chart loaded: $chart")
+                    _weekChart.value = chart
+                } else {
+                    Log.e(TAG, "Failed to load week chart: ${chartResponse.code()} - ${chartResponse.body()?.message}")
                 }
 
             } catch (e: Exception) {
+                Log.e(TAG, "Error loading week data", e)
                 _error.value = "网络错误: ${e.message}"
             } finally {
                 _isLoading.value = false
+                Log.d(TAG, "Finished loading week data")
             }
         }
     }
@@ -153,6 +168,7 @@ class HistoryViewModel : ViewModel() {
      */
     fun loadMonthData(userId: Long) {
         viewModelScope.launch {
+            Log.d(TAG, "Starting to load month data for userId: $userId")
             _isLoading.value = true
             _error.value = null
 
@@ -163,21 +179,35 @@ class HistoryViewModel : ViewModel() {
                 val chartResponse = RetrofitClient.api.getMonthChart(userId)
 
                 if (statsResponse.isSuccessful && statsResponse.body()?.code == 0) {
-                    _monthStats.value = statsResponse.body()?.data ?: emptyMap()
+                    val data = statsResponse.body()?.data ?: emptyMap()
+                    Log.d(TAG, "Month stats loaded: $data")
+                    _monthStats.value = data
+                } else {
+                    Log.e(TAG, "Failed to load month stats: ${statsResponse.code()} - ${statsResponse.body()?.message}")
                 }
 
                 if (workoutsResponse.isSuccessful && workoutsResponse.body()?.code == 0) {
-                    _monthWorkouts.value = workoutsResponse.body()?.data ?: emptyList<Workout>()
+                    val workouts = workoutsResponse.body()?.data ?: emptyList<Workout>()
+                    Log.d(TAG, "Month workouts loaded: ${workouts.size} workouts")
+                    _monthWorkouts.value = workouts
+                } else {
+                    Log.e(TAG, "Failed to load month workouts: ${workoutsResponse.code()} - ${workoutsResponse.body()?.message}")
                 }
 
                 if (chartResponse.isSuccessful && chartResponse.body()?.code == 0) {
-                    _monthChart.value = chartResponse.body()?.data ?: emptyMap()
+                    val chart = chartResponse.body()?.data ?: emptyMap()
+                    Log.d(TAG, "Month chart loaded: $chart")
+                    _monthChart.value = chart
+                } else {
+                    Log.e(TAG, "Failed to load month chart: ${chartResponse.code()} - ${chartResponse.body()?.message}")
                 }
 
             } catch (e: Exception) {
+                Log.e(TAG, "Error loading month data", e)
                 _error.value = "网络错误: ${e.message}"
             } finally {
                 _isLoading.value = false
+                Log.d(TAG, "Finished loading month data")
             }
         }
     }

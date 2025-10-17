@@ -14,6 +14,15 @@ public class Notification {
     @TableField("user_id")
     private Long userId; // recipient
 
+    @TableField("actor_user_id")
+    private Long actorUserId; // 触发者（如点赞/提醒的发起人）
+
+    @TableField("target_user_id")
+    private Long targetUserId; // 被操作的人（如被点赞/提醒的人）
+
+    @TableField("group_id")
+    private Long groupId; // 所属群组（若有）
+
     @TableField("type")
     private String type; // JOIN_REQUEST, JOIN_APPROVED, JOIN_REJECTED, LIKE, REMIND, GROUP_UPDATED
 

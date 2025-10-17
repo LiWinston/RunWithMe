@@ -23,4 +23,11 @@ public interface GroupService {
 
     java.util.List<com.rwm.dto.response.GroupMemberInfo> listMembers(Long userId);
     java.util.List<com.rwm.entity.Notification> myNotifications(Long userId, int limit);
+
+    /**
+     * 动态审计：
+     * - 有组：返回本组成员的 workouts 与组内点赞/提醒事件
+     * - 无组：返回当前用户的 workouts
+     */
+    com.rwm.dto.response.FeedResponse feed(Long userId, int limit);
 }

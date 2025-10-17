@@ -19,7 +19,7 @@ public class FilterConfig {
     public FilterRegistrationBean<JwtAuthenticationFilter> jwtAuthenticationFilterRegistration() {
         FilterRegistrationBean<JwtAuthenticationFilter> registrationBean = new FilterRegistrationBean<>();
         registrationBean.setFilter(jwtAuthenticationFilter);
-        registrationBean.addUrlPatterns("/api/*"); // 只对 /api/* 路径启用JWT过滤器
+        registrationBean.addUrlPatterns("/*"); // 对所有路径启用JWT过滤器，在Filter内部判断是否需要认证
         registrationBean.setOrder(1); // 设置过滤器优先级
         return registrationBean;
     }

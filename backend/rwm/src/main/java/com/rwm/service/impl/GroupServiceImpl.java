@@ -315,28 +315,60 @@ public class GroupServiceImpl implements GroupService {
         if (actorGroupId == null || !Objects.equals(actorGroupId, targetGroupId)) {
             throw new RuntimeException("Not in same group");
         }
-        // update weekly counters
+        // update weekly counters (weekly unique per actor-target-action)
         QueryWrapper<GroupMember> qActor = new QueryWrapper<>();
         qActor.eq("user_id", targetUserId).eq("group_id", actorGroupId).eq("deleted", false);
         GroupMember target = groupMemberMapper.selectOne(qActor);
         if (target == null) throw new RuntimeException("Target not found");
 
-        if ("LIKE".equalsIgnoreCase(action)) {
-            target.setWeeklyLikeCount((target.getWeeklyLikeCount() == null ? 0 : target.getWeeklyLikeCount()) + 1);
-            groupMemberMapper.updateById(target);
-            sendNotification(targetUserId, "LIKE", "New like", "Someone liked your progress");
-        } else if ("REMIND".equalsIgnoreCase(action)) {
-            target.setWeeklyRemindCount((target.getWeeklyRemindCount() == null ? 0 : target.getWeeklyRemindCount()) + 1);
-            groupMemberMapper.updateById(target);
-            sendNotification(targetUserId, "REMIND", "Reminder", "Please keep up with your plan");
-        } else {
+        LocalDate ws = weekStartUtc(LocalDate.now());
+        String actionUpper = action.toUpperCase();
+        if (!"LIKE".equals(actionUpper) && !"REMIND".equals(actionUpper)) {
             throw new RuntimeException("Invalid action");
         }
+
+        // 检查当周是否已计数（同一 actor -> target 的同一动作）
+        QueryWrapper<Notification> nq = new QueryWrapper<>();
+        nq.eq("actor_user_id", actorUserId)
+          .eq("target_user_id", targetUserId)
+          .eq("type", actionUpper)
+          .ge("created_at", ws.atStartOfDay());
+    Long cnt = notificationMapper.selectCount(nq);
+    boolean alreadyCountedThisWeek = cnt != null && cnt > 0;
+
+        if (!alreadyCountedThisWeek) {
+            if ("LIKE".equals(actionUpper)) {
+                target.setWeeklyLikeCount((target.getWeeklyLikeCount() == null ? 0 : target.getWeeklyLikeCount()) + 1);
+            } else {
+                target.setWeeklyRemindCount((target.getWeeklyRemindCount() == null ? 0 : target.getWeeklyRemindCount()) + 1);
+            }
+            groupMemberMapper.updateById(target);
+        }
+
+        // 始终记录通知事件（用于审计/时间线）
+        sendNotificationDetailed(targetUserId, actorUserId, targetUserId, actorGroupId, actionUpper,
+                "LIKE".equals(actionUpper) ? "New like" : "Reminder",
+                "LIKE".equals(actionUpper) ? "Someone liked your progress" : "Please keep up with your plan");
     }
 
     private void sendNotification(Long userId, String type, String title, String content) {
         Notification n = new Notification();
         n.setUserId(userId);
+        n.setType(type);
+        n.setTitle(title);
+        n.setContent(content);
+        n.setRead(false);
+        n.setCreatedAt(LocalDateTime.now());
+        notificationMapper.insert(n);
+    }
+
+    private void sendNotificationDetailed(Long recipientUserId, Long actorUserId, Long targetUserId, Long groupId,
+                                          String type, String title, String content) {
+        Notification n = new Notification();
+        n.setUserId(recipientUserId);
+        n.setActorUserId(actorUserId);
+        n.setTargetUserId(targetUserId);
+        n.setGroupId(groupId);
         n.setType(type);
         n.setTitle(title);
         n.setContent(content);
@@ -448,31 +480,31 @@ public class GroupServiceImpl implements GroupService {
             boolean completed = c != null && Boolean.TRUE.equals(c.getIndividualCompleted());
 
             // aggregate this week's distance from workouts
-            java.math.BigDecimal weekDistance = java.math.BigDecimal.ZERO;
+            java.math.BigDecimal weekDistanceKm = java.math.BigDecimal.ZERO;
             try {
-                // Sum workouts distance for this user since week start, completed only
+                // Sum workouts distance for this user since week start, completed only (distance in km)
                 com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.rwm.entity.Workout> wq = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
                 wq.eq("user_id", m.getUserId())
                   .ge("start_time", ws.atStartOfDay())
                   .eq("status", "COMPLETED");
                 List<com.rwm.entity.Workout> workouts = workoutMapper.selectList(wq);
                 for (com.rwm.entity.Workout w : workouts) {
-                    if (w.getDistance() != null) weekDistance = weekDistance.add(w.getDistance());
+                    if (w.getDistance() != null) weekDistanceKm = weekDistanceKm.add(w.getDistance());
                 }
             } catch (Exception ex) {
                 log.warn("Failed to sum weekly distance for user {}: {}", m.getUserId(), ex.getMessage());
             }
 
-            // fetch user's weekly goal from profile
-            Double goal = null;
+            // fetch user's weekly goal from profile (in km)
+            Double goalKm = null;
             var user = userMapper.selectById(m.getUserId());
             if (user != null && user.getFitnessGoal() != null && user.getFitnessGoal().getWeeklyDistanceKm() != null) {
-                goal = user.getFitnessGoal().getWeeklyDistanceKm();
+                goalKm = user.getFitnessGoal().getWeeklyDistanceKm();
             }
-            double done = weekDistance.doubleValue();
+            double doneKm = weekDistanceKm.doubleValue();
             int percent = 0;
-            if (goal != null && goal > 0) {
-                percent = (int) Math.min(100, Math.round((done / goal) * 100));
+            if (goalKm != null && goalKm > 0) {
+                percent = (int) Math.min(100, Math.round((doneKm / goalKm) * 100));
             }
             return new com.rwm.dto.response.GroupMemberInfo(
                     m.getUserId(),
@@ -481,8 +513,8 @@ public class GroupServiceImpl implements GroupService {
                     m.getWeeklyRemindCount() == null ? 0 : m.getWeeklyRemindCount(),
                     completed,
                     Objects.equals(m.getUserId(), userId),
-                    done,
-                    goal,
+                    doneKm,
+                    goalKm,
                     percent
             );
         }).collect(Collectors.toList());
@@ -493,5 +525,101 @@ public class GroupServiceImpl implements GroupService {
         QueryWrapper<Notification> nq = new QueryWrapper<>();
         nq.eq("user_id", userId).orderByDesc("created_at").last("LIMIT " + Math.max(1, limit));
         return notificationMapper.selectList(nq);
+    }
+
+    @Override
+    public com.rwm.dto.response.FeedResponse feed(Long userId, int limit) {
+        Long gid = getUserCurrentGroupId(userId);
+        int lim = Math.max(1, limit);
+
+        java.util.List<com.rwm.dto.response.FeedWorkoutItem> workoutItems = new java.util.ArrayList<>();
+        java.util.List<com.rwm.dto.response.FeedInteractionItem> interactionItems = new java.util.ArrayList<>();
+
+        java.util.function.Function<Long, String> nameOf = (uid) -> {
+            if (uid == null) return "User";
+            var u = userMapper.selectById(uid);
+            if (u == null) return "User";
+            return u.getFirstName() != null ? u.getFirstName() : u.getUsername();
+        };
+
+        java.util.function.Function<com.rwm.entity.Workout, String> workoutSummary = (w) -> {
+            // distance is stored in km
+            double distKm = w.getDistance() == null ? 0.0 : w.getDistance().doubleValue();
+            String type = w.getWorkoutType() == null ? "" : w.getWorkoutType();
+            return String.format("🏃 %.1f km%s", distKm, type.isEmpty() ? "" : (" · " + type));
+        };
+
+        java.util.function.Function<com.rwm.entity.Workout, com.rwm.dto.response.FeedWorkoutItem> mapWorkout = (w) -> {
+            String startIso = w.getStartTime() == null ? null : w.getStartTime().toString();
+            // distance is stored in km, pass as km to frontend
+            return new com.rwm.dto.response.FeedWorkoutItem(
+                    w.getId(),
+                    w.getUserId(),
+                    nameOf.apply(w.getUserId()),
+                    w.getWorkoutType(),
+                    w.getDistance() == null ? null : w.getDistance().doubleValue(),
+                    w.getDuration(),
+                    w.getAvgPace(),
+                    startIso,
+                    workoutSummary.apply(w)
+            );
+        };
+
+        if (gid == null) {
+            // 无组：仅返回自己的 workouts
+            QueryWrapper<com.rwm.entity.Workout> wq = new QueryWrapper<>();
+            wq.eq("user_id", userId)
+              .eq("status", "COMPLETED")
+              .orderByDesc("start_time")
+              .last("LIMIT " + lim);
+            for (var w : workoutMapper.selectList(wq)) workoutItems.add(mapWorkout.apply(w));
+        } else {
+            // 有组：返回组员 workouts
+            java.util.Set<Long> memberIds = new java.util.HashSet<>();
+            QueryWrapper<GroupMember> mq = new QueryWrapper<>();
+            mq.eq("group_id", gid).eq("deleted", false);
+            for (GroupMember m : groupMemberMapper.selectList(mq)) memberIds.add(m.getUserId());
+
+            if (!memberIds.isEmpty()) {
+                QueryWrapper<com.rwm.entity.Workout> wq = new QueryWrapper<>();
+                wq.in("user_id", memberIds)
+                  .eq("status", "COMPLETED")
+                  .orderByDesc("start_time")
+                  .last("LIMIT " + lim);
+                for (var w : workoutMapper.selectList(wq)) workoutItems.add(mapWorkout.apply(w));
+            }
+
+            // 组内的互动记录（LIKE/REMIND/WEEKLY_GOAL_ACHIEVED），基于通知（包含 group_id/actor/target）
+            QueryWrapper<Notification> iq = new QueryWrapper<>();
+            iq.eq("group_id", gid)
+              .in("type", java.util.List.of("LIKE", "REMIND", "WEEKLY_GOAL_ACHIEVED"))
+              .orderByDesc("created_at")
+              .last("LIMIT " + lim);
+            for (var n : notificationMapper.selectList(iq)) {
+                String actorName = nameOf.apply(n.getActorUserId());
+                String targetName = nameOf.apply(n.getTargetUserId());
+                String createdIso = n.getCreatedAt() == null ? null : n.getCreatedAt().toString();
+                String summary;
+                switch (n.getType()) {
+                    case "LIKE":
+                        summary = String.format("👍 %s → %s", actorName, targetName);
+                        break;
+                    case "REMIND":
+                        summary = String.format("⏰ %s → %s", actorName, targetName);
+                        break;
+                    case "WEEKLY_GOAL_ACHIEVED":
+                        summary = String.format("🎯 %s reached weekly goal", actorName);
+                        break;
+                    default:
+                        summary = n.getType();
+                }
+                interactionItems.add(new com.rwm.dto.response.FeedInteractionItem(
+                        n.getId(), n.getType(), n.getActorUserId(), actorName,
+                        n.getTargetUserId(), targetName, n.getGroupId(), createdIso, summary
+                ));
+            }
+        }
+
+        return new com.rwm.dto.response.FeedResponse(workoutItems, interactionItems);
     }
 }
