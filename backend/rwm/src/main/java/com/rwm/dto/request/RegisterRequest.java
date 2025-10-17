@@ -3,6 +3,7 @@ package com.rwm.dto.request;
 import lombok.Data;
 
 import jakarta.validation.constraints.*;
+import com.rwm.dto.FitnessGoal;
 
 /**
  * 用户注册请求DTO
@@ -47,7 +48,7 @@ public class RegisterRequest {
     @DecimalMax(value = "500.0", message = "Weight cannot be greater than 500kg")
     private Double weight;
     
-    private String fitnessGoal;
+    private FitnessGoal fitnessGoal;
     
     private String weeklyAvailability;
 }

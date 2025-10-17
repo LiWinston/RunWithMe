@@ -22,6 +22,12 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.*
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.Priority
+
 
 class RecordingFragment : Fragment(), OnMapReadyCallback {
 
@@ -84,28 +90,40 @@ class RecordingFragment : Fragment(), OnMapReadyCallback {
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
 
-        // 配置地图
+        // 地图基础设置
         map.apply {
             mapType = GoogleMap.MAP_TYPE_NORMAL
             uiSettings.apply {
                 isZoomControlsEnabled = false
                 isCompassEnabled = true
-                isMyLocationButtonEnabled = false
-            }
-
-            // 检查位置权限
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                isMyLocationEnabled = true
+                isMyLocationButtonEnabled = true
             }
         }
 
-        // 设置初始位置（北京）
-        val defaultLocation = LatLng(39.9042, 116.4074)
-        googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 15f))
+        val context = requireContext()
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+        // 权限检查
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            googleMap?.isMyLocationEnabled = true
+
+            fusedLocationClient.lastLocation.addOnSuccessListener { location: android.location.Location? ->
+                if (location != null) {
+                    val currentLatLng = LatLng(location.latitude, location.longitude)
+                    googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 16f))
+                } else {
+                    val defaultLocation = LatLng(39.9042, 116.4074)
+                    googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 15f))
+                }
+            }
+        } else {
+            val defaultLocation = LatLng(39.9042, 116.4074)
+            googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 15f))
+        }
     }
 
     private fun observeWorkoutData() {
@@ -185,10 +203,11 @@ class RecordingFragment : Fragment(), OnMapReadyCallback {
 
         // 跳转到完成页面，传递数据
         val intent = Intent(requireContext(), FinishActivity::class.java).apply {
-            putExtra("distance", workoutViewModel.distance.value ?: "0.00 miles")
+            putExtra("distance", workoutViewModel.distance.value ?: "0.00 m")
             putExtra("duration", workoutViewModel.time.value ?: "00:00:00")
             putExtra("calories", workoutViewModel.calories.value ?: "0 kcal")
-            putExtra("speed", workoutViewModel.speed.value ?: "0.00 mph")
+            putExtra("speed", workoutViewModel.speed.value ?: "0.00 m/s")
+            putExtra("workoutType", workoutViewModel.workoutType.value ?: "Running")
         }
         startActivity(intent)
         activity?.finish()
@@ -201,45 +220,70 @@ class RecordingFragment : Fragment(), OnMapReadyCallback {
                     workoutViewModel.tick()
                     updateMapRoute()
                 }
-                handler.postDelayed(this, 1000)
+                handler.postDelayed(this, 200)
             }
         })
     }
 
     private fun updateMapRoute() {
         val routes = workoutViewModel.getRoutePoints()
-        if (routes.isNotEmpty() && googleMap != null) {
-            val newRoutePoints = routes.map { LatLng(it.lat, it.lng) }
+        if (routes.size < 2 || googleMap == null) return
 
-            // 更新路线
-            routePolyline?.remove()
-            routePolyline = googleMap?.addPolyline(
-                PolylineOptions()
-                    .addAll(newRoutePoints)
-                    .color(Color.parseColor("#FF4444"))
-                    .width(8f)
-                    .pattern(listOf(Dash(20f), Gap(10f)))
+        val lastTwo = routes.takeLast(2)
+        val start = LatLng(lastTwo[0].lat, lastTwo[0].lng)
+        val end = LatLng(lastTwo[1].lat, lastTwo[1].lng)
+
+        // 计算两点距离（米）
+        val dist = FloatArray(1)
+        android.location.Location.distanceBetween(
+            start.latitude, start.longitude, end.latitude, end.longitude, dist
+        )
+        val distance = dist[0]
+
+        // ✅ 根据距离判断：>50m 画虚线，否则画实线
+        val polylineOptions = PolylineOptions()
+            .add(start, end)
+            .width(8f)
+            .color(Color.parseColor("#FF4444"))
+
+        if (distance > 50f) {
+            // 🚫 GPS 跳点 → 画虚线
+            polylineOptions.pattern(listOf(Dot(), Gap(10f)))
+        }
+
+        // ✅ 在地图上添加新线段
+        googleMap?.addPolyline(polylineOptions)
+
+        // ✅ 更新 marker
+        val latestPoint = end
+        if (userMarker == null) {
+            userMarker = googleMap?.addMarker(
+                MarkerOptions()
+                    .position(latestPoint)
+                    .title("当前位置")
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
             )
+        } else {
+            userMarker!!.position = latestPoint
+        }
 
-            // 更新用户位置标记
-            if (newRoutePoints.isNotEmpty()) {
-                val currentLocation = newRoutePoints.last()
-
-                userMarker?.remove()
-                userMarker = googleMap?.addMarker(
-                    MarkerOptions()
-                        .position(currentLocation)
-                        .title("当前位置")
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
-                )
-
-                // 移动摄像头跟随用户
-                googleMap?.animateCamera(
-                    CameraUpdateFactory.newLatLngZoom(currentLocation, 17f)
-                )
-            }
+        // ✅ 摄像头移动逻辑
+        val cameraPos = googleMap?.cameraPosition?.target
+        if (cameraPos == null || distanceBetween(cameraPos, latestPoint) > 10) {
+            googleMap?.animateCamera(CameraUpdateFactory.newLatLng(latestPoint))
         }
     }
+
+
+    // 计算两点距离（米）
+    private fun distanceBetween(p1: LatLng, p2: LatLng): Float {
+        val results = FloatArray(1)
+        android.location.Location.distanceBetween(
+            p1.latitude, p1.longitude, p2.latitude, p2.longitude, results
+        )
+        return results[0]
+    }
+
 
     private fun requestLocationPermission() {
         if (ActivityCompat.checkSelfPermission(

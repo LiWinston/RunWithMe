@@ -1,9 +1,12 @@
 package com.example.myapplication.history
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -11,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
+import com.example.myapplication.landr.TokenManager
 import com.example.myapplication.record.Workout
 import kotlinx.coroutines.launch
 
@@ -28,9 +32,15 @@ class HistoryMonthFragment : Fragment() {
     private lateinit var tvMonthDuration: TextView
     private lateinit var tvMonthPace: TextView
     private lateinit var tvMonthCalories: TextView
+    private lateinit var tvMonthSteps: TextView
 
     // 运动记录列表
     private lateinit var rvMonthWorkouts: RecyclerView
+    
+    // AI建议相关UI
+    private lateinit var btnGenerateMonthAdvice: Button
+    private lateinit var tvMonthAdvice: TextView
+    private lateinit var pbAdviceLoading: ProgressBar
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,11 +60,27 @@ class HistoryMonthFragment : Fragment() {
     }
 
     private fun initViews(view: View) {
-        tvMonthDistance = view.findViewById(R.id.tvMonthDistance)
-        tvMonthDuration = view.findViewById(R.id.tvMonthDuration)
-        tvMonthPace = view.findViewById(R.id.tvMonthPace)
-        tvMonthCalories = view.findViewById(R.id.tvMonthCalories)
-        rvMonthWorkouts = view.findViewById(R.id.rvMonthWorkouts)
+        try {
+            tvMonthDistance = view.findViewById(R.id.tvMonthDistance) ?: throw NullPointerException("tvMonthDistance not found")
+            tvMonthDuration = view.findViewById(R.id.tvMonthDuration) ?: throw NullPointerException("tvMonthDuration not found")
+            tvMonthPace = view.findViewById(R.id.tvMonthPace) ?: throw NullPointerException("tvMonthPace not found")
+            tvMonthCalories = view.findViewById(R.id.tvMonthCalories) ?: throw NullPointerException("tvMonthCalories not found")
+            tvMonthSteps = view.findViewById(R.id.tvMonthSteps) ?: throw NullPointerException("tvMonthSteps not found")
+            rvMonthWorkouts = view.findViewById(R.id.rvMonthWorkouts) ?: throw NullPointerException("rvMonthWorkouts not found")
+            
+            // AI建议相关
+            btnGenerateMonthAdvice = view.findViewById(R.id.btnGenerateMonthAdvice) ?: throw NullPointerException("btnGenerateMonthAdvice not found")
+            tvMonthAdvice = view.findViewById(R.id.tvMonthAdvice) ?: throw NullPointerException("tvMonthAdvice not found")
+            pbAdviceLoading = view.findViewById(R.id.pbAdviceLoading) ?: throw NullPointerException("pbAdviceLoading not found")
+            
+            // 设置按钮点击事件
+            btnGenerateMonthAdvice.setOnClickListener {
+                historyViewModel.generateMonthAdvice()
+            }
+        } catch (e: NullPointerException) {
+            Log.e("HistoryMonthFragment", "Failed to initialize views: ${e.message}", e)
+            throw e
+        }
     }
 
     private fun setupRecyclerView() {
@@ -80,11 +106,41 @@ class HistoryMonthFragment : Fragment() {
         historyViewModel.monthChart.observe(viewLifecycleOwner) { chartData ->
             // TODO: 显示月趋势图（折线图）
         }
+        
+        // 观察AI建议
+        historyViewModel.monthAdvice.observe(viewLifecycleOwner) { advice ->
+            advice?.let {
+                tvMonthAdvice.text = it
+            }
+        }
+        
+        // 观察AI加载状态
+        historyViewModel.isLoadingAdvice.observe(viewLifecycleOwner) { isLoading ->
+            if (isLoading) {
+                pbAdviceLoading.visibility = View.VISIBLE
+                tvMonthAdvice.visibility = View.GONE
+                btnGenerateMonthAdvice.isEnabled = false
+            } else {
+                pbAdviceLoading.visibility = View.GONE
+                tvMonthAdvice.visibility = View.VISIBLE
+                btnGenerateMonthAdvice.isEnabled = true
+            }
+        }
     }
 
     private fun loadMonthData() {
         lifecycleScope.launch {
-            historyViewModel.loadMonthData(1L)
+            val userId = TokenManager.getInstance(requireContext()).getUserId()
+            Log.d("HistoryMonthFragment", "Loading month data for user: $userId")
+            
+            if (userId > 0) {
+                // Load user profile first
+                historyViewModel.loadUserProfile()
+                // Then load month data
+                historyViewModel.loadMonthData(userId)
+            } else {
+                Log.e("HistoryMonthFragment", "Invalid user ID: $userId")
+            }
         }
     }
 
@@ -92,6 +148,7 @@ class HistoryMonthFragment : Fragment() {
         val distance = stats["totalDistance"] as? Double ?: 0.0
         val duration = (stats["totalDuration"] as? Number)?.toInt() ?: 0 // 兼容Int和Double
         val calories = stats["totalCalories"] as? Double ?: 0.0
+        val steps = (stats["totalSteps"] as? Number)?.toInt() ?: 0
 
         tvMonthDistance.text = String.format("%.1f km", distance)
 
@@ -118,5 +175,7 @@ class HistoryMonthFragment : Fragment() {
         tvMonthPace.text = "$avgPace /km"
 
         tvMonthCalories.text = "${calories.toInt()} kcal"
+
+        tvMonthSteps.text = steps.toString()
     }
 }

@@ -26,17 +26,26 @@ class HistoryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        setupTabLayout(view)
+        try {
+            setupTabLayout(view)
 
-        // 默认显示今日数据
-        if (savedInstanceState == null) {
-            showTodayFragment()
+            // 默认显示今日数据
+            if (savedInstanceState == null) {
+                // 使用 post 延迟执行，确保 Fragment 已经完全附加到 Activity
+                view.post {
+                    if (isAdded && !isDetached) {
+                        showTodayFragment()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("HistoryFragment", "Error in onViewCreated", e)
         }
     }
 
     private fun setupTabLayout(rootView: View) {
         val tabLayout = rootView.findViewById<TabLayout>(R.id.tabLayout)
-        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+        tabLayout?.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 when (tab?.position) {
                     0 -> showTodayFragment()
@@ -47,7 +56,7 @@ class HistoryFragment : Fragment() {
 
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {}
-        })
+        }) ?: android.util.Log.e("HistoryFragment", "TabLayout not found!")
     }
 
     private fun showTodayFragment() {
@@ -63,8 +72,16 @@ class HistoryFragment : Fragment() {
     }
 
     private fun replaceFragment(fragment: Fragment) {
-        childFragmentManager.beginTransaction()
-            .replace(R.id.historyContainer, fragment)
-            .commit()
+        try {
+            if (isAdded && !isDetached) {
+                childFragmentManager.beginTransaction()
+                    .replace(R.id.historyContainer, fragment)
+                    .commitAllowingStateLoss()
+            } else {
+                android.util.Log.w("HistoryFragment", "Cannot replace fragment - not attached to activity")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("HistoryFragment", "Error replacing fragment", e)
+        }
     }
 }

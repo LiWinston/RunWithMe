@@ -19,36 +19,42 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
-//    TODO: change this back before launch
-//    private lateinit var tokenManager: TokenManager
+    // Enforce login and init Retrofit client for authenticated APIs
+    private lateinit var tokenManager: TokenManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-// TODO: change this back before launch
-        // 初始化
-//        RetrofitClient.init(this)
-//        tokenManager = TokenManager.getInstance(this)
-//
-//        // 检查登录状态
-//        if (!tokenManager.isLoggedIn()) {
-//            navigateToLogin()
-//            return
-//        }
+    // Initialize networking and enforce login
+    RetrofitClient.init(this)
+    tokenManager = TokenManager.getInstance(this)
+
+    if (!tokenManager.isLoggedIn()) {
+        navigateToLogin()
+        return
+    }
 
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+        
+        // Just add top padding to FrameLayout, let BottomNavigationView to handle bottom padding
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+            insets
+        }
+        
+        // add bottonm padding to BottomNavigationView to fit navigation menu
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
+        ViewCompat.setOnApplyWindowInsetsListener(bottomNav) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(0, 0, 0, systemBars.bottom)
             insets
         }
 
         supportFragmentManager.beginTransaction()
             .replace(R.id.main, HomeFragment())
             .commit()
-
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
 
         bottomNav.setOnItemSelectedListener { item ->
             val fragment = when (item.itemId) {
@@ -72,40 +78,47 @@ class MainActivity : AppCompatActivity() {
         menuInflater.inflate(R.menu.main_menu, menu)
         return true
     }
-//    TODO: change this back before launch
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_logout -> {
+                showLogoutConfirmation()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
 
-//    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-//        return when (item.itemId) {
-//            R.id.action_logout -> {
-//                logout()
-//                true
-//            }
-//            else -> super.onOptionsItemSelected(item)
-//        }
-//    }
-//
-//    private fun logout() {
-//        CoroutineScope(Dispatchers.IO).launch {
-//            try {
-//                val accessToken = tokenManager.getAccessToken()
-//                if (accessToken != null) {
-//                    RetrofitClient.api.logout("Bearer $accessToken")
-//                }
-//            } catch (e: Exception) {
-//                // 忽略网络错误，直接清除本地token
-//            } finally {
-//                tokenManager.clearTokens()
-//                runOnUiThread {
-//                    navigateToLogin()
-//                }
-//            }
-//        }
-//    }
-//
-//    private fun navigateToLogin() {
-//        val intent = Intent(this, LoginActivity::class.java)
-//        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-//        startActivity(intent)
-//        finish()
-//    }
+    private fun showLogoutConfirmation() {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Logout")
+            .setMessage("Are you sure you want to logout?")
+            .setPositiveButton("Yes") { _, _ ->
+                logout()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    
+    private fun logout() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val accessToken = tokenManager.getAccessToken()
+                if (accessToken != null) {
+                    RetrofitClient.api.logout("Bearer $accessToken")
+                }
+            } catch (e: Exception) {
+                // ignore network error
+            } finally {
+                tokenManager.clearTokens()
+                runOnUiThread { navigateToLogin() }
+            }
+        }
+    }
+
+    private fun navigateToLogin() {
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
+    }
 }

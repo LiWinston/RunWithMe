@@ -1,5 +1,6 @@
 package com.example.myapplication.record
 
+import com.example.myapplication.landr.loginapp.models.User
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -59,6 +60,14 @@ interface RecordApi {
     // History API - 获取本月图表数据
     @GET("/api/history/chart/month/{userId}")
     suspend fun getMonthChart(@Path("userId") userId: Long): Response<ApiResponse<Map<String, Any>>>
+    
+    // History API - 获取本周最佳运动记录
+    @GET("/api/history/best/week/{userId}")
+    suspend fun getWeekBestWorkout(@Path("userId") userId: Long): Response<ApiResponse<Workout>>
+    
+    // User API - 获取用户信息
+    @GET("/api/user/profile")
+    suspend fun getUserProfile(): Response<ApiResponse<User>>
 }
 
 // Workout数据类（与后端对应）

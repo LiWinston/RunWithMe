@@ -1,68 +1,305 @@
 package com.example.myapplication
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import android.view.View
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.example.myapplication.gemini.GeminiApiService
+import com.example.myapplication.gemini.GeminiConfig
 import com.example.myapplication.weather.api.WeatherApiService
+import com.example.myapplication.weather.data.CurrentWeather
 import com.example.myapplication.weather.repository.WeatherRepository
 import com.example.myapplication.weather.ui.ExpandableWeatherWidget
+import com.example.myapplication.weather.ui.WeatherExpandedActivity  // 新增导入
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.material.card.MaterialCardView  // 新增导入
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
-    
+
     private lateinit var weatherWidget: ExpandableWeatherWidget
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var weatherRepository: WeatherRepository
+    private lateinit var geminiApiService: GeminiApiService
     private var locationCallback: LocationCallback? = null
     
+    // UI elements for AI advice
+    private lateinit var aiAdviceText: TextView
+    private lateinit var adviceLoadingProgress: ProgressBar
+
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
         private const val TAG = "HomeFragment"
         private const val DEFAULT_LATITUDE = -33.768796
         private const val DEFAULT_LONGITUDE = 151.015735
+        
+        // Default weather data for fallback when API fails
+        private const val DEFAULT_TEMPERATURE = 20.0
+        private const val DEFAULT_WEATHER_CONDITION = "Partly Cloudy"
+        private const val DEFAULT_WIND_SPEED = 15.0
+        private const val DEFAULT_HUMIDITY = 65
     }
-    
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+
         initializeComponents()
+        initializeGeminiService()
+        initializeUIComponents(view)
         setupLocationServices()
         loadWeatherData()
+
+        // 新增：添加天气卡片点击事件
+        setupWeatherCardClick(view)
     }
-    
+
+    // 新增这个方法
+    private fun setupWeatherCardClick(view: View) {
+        val weatherCard = view.findViewById<MaterialCardView>(R.id.weather_card)
+        weatherCard?.setOnClickListener {
+            val intent = Intent(requireContext(), WeatherExpandedActivity::class.java)
+            startActivity(intent)
+
+        }
+    }
+
     private fun initializeComponents() {
         weatherWidget = requireView().findViewById(R.id.weather_card)
-        
-        // 初始化Retrofit和API服务
-        val retrofit = Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/") // 开发环境使用模拟器默认IP
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        
-        val apiService = retrofit.create(WeatherApiService::class.java)
+
+        val apiService = com.example.myapplication.landr.RetrofitClient.create(WeatherApiService::class.java)
         weatherRepository = WeatherRepository(apiService)
     }
     
+    private fun initializeGeminiService() {
+        // Check if API key is configured
+        if (!GeminiConfig.isConfigured()) {
+            Log.w(TAG, "Gemini API key not configured. Please set your API key in GeminiConfig.kt")
+            return
+        }
+        
+        geminiApiService = GeminiApiService(GeminiConfig.API_KEY)
+        Log.d(TAG, "Gemini API service initialized")
+    }
+    
+    private fun initializeUIComponents(view: View) {
+        aiAdviceText = view.findViewById(R.id.aiAdviceText)
+        adviceLoadingProgress = view.findViewById(R.id.adviceLoadingProgress)
+
+        // 加载组动态审计 Feed
+        loadGroupFeed(view)
+
+        // 点击动态卡片打开 Modal 展示完整 Feed
+        view.findViewById<com.google.android.material.card.MaterialCardView>(R.id.dynamic_card)?.setOnClickListener {
+            val sheet = com.example.myapplication.feed.FeedBottomSheet()
+            sheet.show(parentFragmentManager, "feedBottomSheet")
+        }
+        
+        // 加载本周最佳运动记录
+        loadWeekBestWorkout(view)
+    }
+
+    private fun loadGroupFeed(view: View) {
+        val todayDate = view.findViewById<TextView>(R.id.todayDate)
+        val todayDeed = view.findViewById<TextView>(R.id.todayDeed)
+        val yesterdayDate = view.findViewById<TextView>(R.id.yesterdayDate)
+        val yesterdayDeed = view.findViewById<TextView>(R.id.yesterdayDeed)
+        val thirdDate = view.findViewById<TextView>(R.id.thirdDate)
+        val thirdDeed = view.findViewById<TextView>(R.id.thirdDeed)
+
+        val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.group.GroupApi::class.java)
+        api.feed(20).enqueue(object: retrofit2.Callback<com.example.myapplication.group.Result<com.example.myapplication.group.FeedResponse>>{
+            override fun onResponse(
+                call: retrofit2.Call<com.example.myapplication.group.Result<com.example.myapplication.group.FeedResponse>>,
+                response: retrofit2.Response<com.example.myapplication.group.Result<com.example.myapplication.group.FeedResponse>>
+            ) {
+                val res = response.body()
+                if (response.isSuccessful && res != null && res.code == 0 && res.data != null) {
+                    val feed = res.data
+                    // 组装一个简单的三行：优先展示 workout，再展示互动
+                    val items = mutableListOf<Pair<String,String>>()
+
+                    feed.workouts?.take(3)?.forEach { w ->
+                        val dateStr = w.startTime ?: ""
+                        val name = w.userName?.takeIf { it.isNotBlank() } ?: "Someone"
+                        val summary = w.summary ?: buildString {
+                            append("🏃 ")
+                            append(name)
+                            append(" · ")
+                            append((w.distanceKm ?: 0.0).let { String.format("%.1f km", it) })
+                            if (!w.workoutType.isNullOrBlank()) append(" · ").append(w.workoutType)
+                        }
+                        items += dateStr to summary
+                    }
+
+                    val remaining = 3 - items.size
+                    if (remaining > 0) {
+                        feed.interactions?.take(remaining)?.forEach { n ->
+                            val dateStr = n.createdAt ?: ""
+                            val summary = n.summary ?: when(n.type) {
+                                "LIKE" -> "👍 Like"
+                                "REMIND" -> "⏰ Remind"
+                                else -> n.type ?: ""
+                            }
+                            items += dateStr to summary
+                        }
+                    }
+
+                    fun fmt(src: String): String {
+                        return try {
+                            // 后端是 LocalDateTime -> 序列化格式不一定有偏移，这里尽量原样或做简单切割
+                            if (src.length >= 16) src.substring(5, 16).replace('T',' ') else src
+                        } catch (e: Exception) { src }
+                    }
+
+                    // 写入三个槽位
+                    val line1 = items.getOrNull(0)
+                    val line2 = items.getOrNull(1)
+                    val line3 = items.getOrNull(2)
+
+                    todayDate.text = line1?.first?.let { fmt(it) } ?: "dd/mm/yy--"
+                    todayDeed.text = line1?.second ?: "--"
+
+                    yesterdayDate.text = line2?.first?.let { fmt(it) } ?: "dd/yy/mm--"
+                    yesterdayDeed.text = line2?.second ?: "--"
+
+                    thirdDate.text = line3?.first?.let { fmt(it) } ?: "dd/yy/mm--"
+                    thirdDeed.text = line3?.second ?: "--"
+                }
+            }
+
+            override fun onFailure(
+                call: retrofit2.Call<com.example.myapplication.group.Result<com.example.myapplication.group.FeedResponse>>,
+                t: Throwable
+            ) {
+                // 保持占位符
+            }
+        })
+    }
+
+    private fun loadWeekBestWorkout(view: View) {
+        val tvPbDate = view.findViewById<TextView>(R.id.tvPbDate)
+        val distanceText = view.findViewById<TextView>(R.id.distance)
+        val paceText = view.findViewById<TextView>(R.id.Pace)
+        val durationText = view.findViewById<TextView>(R.id.duration)
+        val caloriesText = view.findViewById<TextView>(R.id.tvLabelCalories)
+        
+        lifecycleScope.launch {
+            try {
+                val userId = com.example.myapplication.landr.TokenManager.getInstance(requireContext()).getUserId()
+                if (userId <= 0) {
+                    Log.e(TAG, "Invalid user ID for personal best")
+                    return@launch
+                }
+                
+                val api = com.example.myapplication.landr.RetrofitClient.create(com.example.myapplication.record.RecordApi::class.java)
+                val response = api.getWeekBestWorkout(userId)
+                
+                if (response.isSuccessful && response.body() != null) {
+                    val result = response.body()!!
+                    if (result.code == 0 && result.data != null) {
+                        val workout = result.data
+                        
+                        // 格式化日期
+                        try {
+                            val startTime = workout.startTime
+                            if (startTime.length >= 10) {
+                                tvPbDate.text = startTime.substring(5, 10).replace('-', '/')
+                            }
+                        } catch (e: Exception) {
+                            tvPbDate.text = "--"
+                        }
+                        
+                        // 显示距离
+                        val distance = workout.distance?.toDoubleOrNull() ?: 0.0
+                        distanceText.text = String.format("📍%.2f km", distance)
+                        
+                        // 显示时长
+                        val duration = workout.duration ?: 0
+                        val hours = duration / 3600
+                        val minutes = (duration % 3600) / 60
+                        val seconds = duration % 60
+                        val timeStr = if (hours > 0) {
+                            String.format("⏱️%dh %dm", hours, minutes)
+                        } else if (minutes > 0) {
+                            String.format("⏱️%dm %ds", minutes, seconds)
+                        } else {
+                            String.format("⏱️%ds", seconds)
+                        }
+                        durationText.text = timeStr
+                        
+                        // 显示配速
+                        val avgPace = workout.avgPace ?: 0
+                        if (avgPace > 0) {
+                            val paceMinutes = avgPace / 60
+                            val paceSeconds = avgPace % 60
+                            paceText.text = String.format("🏃%d'%02d\"/km", paceMinutes, paceSeconds)
+                        } else {
+                            paceText.text = "🏃--"
+                        }
+                        
+                        // 显示卡路里
+                        val calories = workout.calories?.toDoubleOrNull() ?: 0.0
+                        caloriesText.text = String.format("🔥%d kcal", calories.toInt())
+                        
+                        Log.d(TAG, "Personal best loaded successfully")
+                    } else {
+                        // 没有本周数据，显示默认值
+                        setDefaultPersonalBest(tvPbDate, distanceText, paceText, durationText, caloriesText)
+                    }
+                } else {
+                    Log.e(TAG, "Failed to get week best workout: ${response.code()}")
+                    setDefaultPersonalBest(tvPbDate, distanceText, paceText, durationText, caloriesText)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading personal best", e)
+                setDefaultPersonalBest(
+                    view.findViewById(R.id.tvPbDate),
+                    view.findViewById(R.id.distance),
+                    view.findViewById(R.id.Pace),
+                    view.findViewById(R.id.duration),
+                    view.findViewById(R.id.tvLabelCalories)
+                )
+            }
+        }
+    }
+    
+    private fun setDefaultPersonalBest(
+        tvPbDate: TextView,
+        distanceText: TextView,
+        paceText: TextView,
+        durationText: TextView,
+        caloriesText: TextView
+    ) {
+        tvPbDate.text = "--"
+        distanceText.text = "📍--"
+        paceText.text = "🏃--"
+        durationText.text = "⏱️--"
+        caloriesText.text = "🔥--"
+    }
+
     private fun setupLocationServices() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
     }
-    
+
     private fun loadWeatherData() {
         if (checkLocationPermission()) {
             getCurrentLocationAndLoadWeather()
@@ -70,14 +307,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             requestLocationPermission()
         }
     }
-    
+
     private fun checkLocationPermission(): Boolean {
         return ActivityCompat.checkSelfPermission(
             requireContext(),
             Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
     }
-    
+
     private fun requestLocationPermission() {
         ActivityCompat.requestPermissions(
             requireActivity(),
@@ -85,16 +322,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             LOCATION_PERMISSION_REQUEST_CODE
         )
     }
-    
+
     private fun getCurrentLocationAndLoadWeather() {
         if (!checkLocationPermission()) {
             Log.w(TAG, "位置权限未授权，使用默认位置")
             return
         }
-        
+
         Log.d(TAG, "开始获取当前位置...")
-        
-        // 首先尝试获取最后已知位置
+
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location: Location? ->
                 if (location != null && isLocationValid(location)) {
@@ -112,18 +348,16 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 requestNewLocation()
             }
     }
-    
+
     private fun isLocationValid(location: Location): Boolean {
-        // 检查位置是否有效（不是模拟器的默认位置，且时间不太旧）
         val currentTime = System.currentTimeMillis()
         val locationAge = currentTime - location.time
-        val maxAge = 5 * 60 * 1000 // 5分钟
-        
+        val maxAge = 5 * 60 * 1000
+
         return locationAge <= maxAge && location.accuracy <= 100
     }
 
     private fun requestNewLocation() {
-        // 添加检查
         if (!isAdded || view == null) {
             useDefaultLocation()
             return
@@ -142,7 +376,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
 
-                // 添加检查 - 关键修复！
                 if (!isAdded || view == null) {
                     return
                 }
@@ -152,12 +385,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     Log.i(TAG, "成功获取新位置: 纬度=${location.latitude}, 经度=${location.longitude}")
                     Log.i(TAG, "位置精度: ${location.accuracy}米")
 
-                    // 停止位置更新
                     fusedLocationClient.removeLocationUpdates(locationCallback!!)
+                    locationCallback = null  // 设置为null，防止超时Handler再次触发
 
                     fetchWeatherData(location.latitude, location.longitude)
                 } else {
                     Log.w(TAG, "获取新位置失败，使用默认位置")
+                    locationCallback = null  // 清理callback
                     useDefaultLocation()
                 }
             }
@@ -170,9 +404,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 Looper.getMainLooper()
             )
 
-            // 使用 Handler 替代 requireView().postDelayed() - 关键修复！
             android.os.Handler(Looper.getMainLooper()).postDelayed({
-                // 添加检查 - 关键修复！
                 if (!isAdded || view == null) {
                     return@postDelayed
                 }
@@ -180,18 +412,19 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 if (locationCallback != null) {
                     Log.w(TAG, "位置请求超时，使用默认位置")
                     fusedLocationClient.removeLocationUpdates(locationCallback!!)
+                    locationCallback = null  // 清理callback
                     useDefaultLocation()
                 }
             }, 5000)
 
         } catch (e: SecurityException) {
             Log.e(TAG, "位置权限被拒绝", e)
+            locationCallback = null
             useDefaultLocation()
         }
     }
 
     private fun useDefaultLocation() {
-        // 添加检查
         if (!isAdded || view == null) {
             return
         }
@@ -199,7 +432,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
     private fun fetchWeatherData(latitude: Double, longitude: Double) {
-        // 添加检查
         if (!isAdded || view == null) {
             return
         }
@@ -215,46 +447,196 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         val hourlyForecast = hourlyForecastResult.getOrNull()
                         Log.d(TAG, "成功获取两项数据 - 当前天气: ${currentWeather.temperature.degrees}°, 每小时预报数量: ${hourlyForecast?.forecasts?.size ?: 0}")
                         weatherWidget.updateWeatherData(currentWeather, hourlyForecast)
+                        
+                        // Generate AI advice based on weather
+                        generateExerciseAdvice(currentWeather)
                     }
                     currentWeatherResult.isSuccess -> {
                         val currentWeather = currentWeatherResult.getOrNull()!!
                         Log.d(TAG, "只获取到当前天气数据 - 温度: ${currentWeather.temperature.degrees}°")
                         weatherWidget.updateWeatherData(currentWeather)
                         Log.w(TAG, "每小时预报获取失败", hourlyForecastResult.exceptionOrNull())
+                        
+                        // Generate AI advice based on weather
+                        generateExerciseAdvice(currentWeather)
                     }
                     else -> {
-                        showError("获取天气数据失败")
+                        showError("Fail to get weather data")
                         Log.e(TAG, "获取天气数据失败", currentWeatherResult.exceptionOrNull())
+                        
+                        // Generate AI advice with default weather data
+                        generateExerciseAdviceWithDefaults()
                     }
                 }
             } catch (e: Exception) {
-                showError("网络连接失败")
+                showError("Internet Error")
                 Log.e(TAG, "获取天气数据异常", e)
+                
+                // Generate AI advice with default weather data
+                generateExerciseAdviceWithDefaults()
             }
         }
     }
-    
+
     private fun showError(message: String) {
-        // 检查Fragment是否还附着到Activity，避免crash
         if (isAdded && context != null) {
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
         }
     }
     
+    /**
+     * Generate exercise advice using Gemini AI based on current weather
+     */
+    private fun generateExerciseAdvice(weather: CurrentWeather) {
+        // Check if Gemini API is configured
+        if (!GeminiConfig.isConfigured()) {
+            aiAdviceText.text = "⚠️ AI advice unavailable. Please configure Gemini API key in GeminiConfig.kt to enable personalized exercise recommendations."
+            return
+        }
+        
+        // Check if service is initialized
+        if (!::geminiApiService.isInitialized) {
+            aiAdviceText.text = "AI service not available"
+            return
+        }
+        
+        // Show loading state
+        showAdviceLoading()
+        
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                Log.d(TAG, "Generating AI advice for weather: ${weather.temperature.degrees}°C, ${weather.condition.description.text}")
+                
+                val result = geminiApiService.getWeatherBasedAdvice(
+                    temperature = weather.temperature.degrees,
+                    weatherCondition = weather.condition.description.text,
+                    windSpeed = weather.wind.speed.value,
+                    humidity = weather.humidity
+                )
+                
+                if (!isAdded || view == null) {
+                    return@launch
+                }
+                
+                result.fold(
+                    onSuccess = { advice ->
+                        Log.d(TAG, "Successfully generated AI advice")
+                        showAdvice(advice)
+                    },
+                    onFailure = { error ->
+                        Log.e(TAG, "Failed to generate AI advice", error)
+                        showAdviceError()
+                    }
+                )
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Error generating exercise advice", e)
+                if (isAdded && view != null) {
+                    showAdviceError()
+                }
+            }
+        }
+    }
+    
+    /**
+     * Show loading state for AI advice
+     */
+    private fun showAdviceLoading() {
+        if (!isAdded || view == null) return
+        
+        adviceLoadingProgress.visibility = View.VISIBLE
+        aiAdviceText.text = "Generating personalized exercise advice..."
+    }
+    
+    /**
+     * Display the generated advice
+     */
+    private fun showAdvice(advice: String) {
+        if (!isAdded || view == null) return
+        
+        adviceLoadingProgress.visibility = View.GONE
+        aiAdviceText.text = advice
+    }
+    
+    /**
+     * Show error state for AI advice
+     */
+    private fun showAdviceError() {
+        if (!isAdded || view == null) return
+        
+        adviceLoadingProgress.visibility = View.GONE
+        aiAdviceText.text = "Unable to generate advice at this time. Please check your internet connection and try again."
+    }
+    
+    /**
+     * Generate exercise advice using default weather data when weather API fails
+     */
+    private fun generateExerciseAdviceWithDefaults() {
+        // Check if Gemini API is configured
+        if (!GeminiConfig.isConfigured()) {
+            aiAdviceText.text = "⚠️ AI advice unavailable. Please configure Gemini API key in GeminiConfig.kt to enable personalized exercise recommendations."
+            return
+        }
+        
+        // Check if service is initialized
+        if (!::geminiApiService.isInitialized) {
+            aiAdviceText.text = "AI service not available"
+            return
+        }
+        
+        Log.i(TAG, "Weather data unavailable, using default weather conditions for AI advice")
+        
+        // Show loading state
+        showAdviceLoading()
+        
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                Log.d(TAG, "Generating AI advice with default weather: ${DEFAULT_TEMPERATURE}°C, $DEFAULT_WEATHER_CONDITION")
+                
+                val result = geminiApiService.getWeatherBasedAdvice(
+                    temperature = DEFAULT_TEMPERATURE,
+                    weatherCondition = DEFAULT_WEATHER_CONDITION,
+                    windSpeed = DEFAULT_WIND_SPEED,
+                    humidity = DEFAULT_HUMIDITY
+                )
+                
+                if (!isAdded || view == null) {
+                    return@launch
+                }
+                
+                result.fold(
+                    onSuccess = { advice ->
+                        Log.d(TAG, "Successfully generated AI advice with default weather")
+                        showAdvice(advice)
+                    },
+                    onFailure = { error ->
+                        Log.e(TAG, "Failed to generate AI advice with default weather", error)
+                        showAdviceError()
+                    }
+                )
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Error generating exercise advice with defaults", e)
+                if (isAdded && view != null) {
+                    showAdviceError()
+                }
+            }
+        }
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        
+
         when (requestCode) {
             LOCATION_PERMISSION_REQUEST_CODE -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Log.i(TAG, "位置权限已授权，重新尝试获取位置")
                     getCurrentLocationAndLoadWeather()
                 } else {
-                    // 权限被拒绝，使用默认位置
                     Log.w(TAG, "位置权限被拒绝，使用默认位置")
                     useDefaultLocation()
                     Toast.makeText(requireContext(), "使用默认位置显示天气信息", Toast.LENGTH_SHORT).show()
@@ -262,10 +644,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             }
         }
     }
-    
+
     override fun onDestroyView() {
         super.onDestroyView()
-        // 清理位置回调
         locationCallback?.let {
             fusedLocationClient.removeLocationUpdates(it)
         }

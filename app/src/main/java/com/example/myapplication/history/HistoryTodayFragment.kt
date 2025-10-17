@@ -1,9 +1,12 @@
 package com.example.myapplication.history
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -11,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
+import com.example.myapplication.landr.TokenManager
 import com.example.myapplication.record.Workout
 import kotlinx.coroutines.launch
 
@@ -28,9 +32,15 @@ class HistoryTodayFragment : Fragment() {
     private lateinit var tvTotalDuration: TextView
     private lateinit var tvTotalPace: TextView
     private lateinit var tvTotalCalories: TextView
+    private lateinit var tvTotalSteps: TextView
 
     // 运动记录列表
     private lateinit var rvWorkoutRecords: RecyclerView
+    
+    // AI建议相关UI
+    private lateinit var btnGenerateTodayAdvice: Button
+    private lateinit var tvTodayAdvice: TextView
+    private lateinit var pbAdviceLoading: ProgressBar
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,14 +60,30 @@ class HistoryTodayFragment : Fragment() {
     }
 
     private fun initViews(view: View) {
-        // 统计卡片
-        tvTotalDistance = view.findViewById(R.id.tvTotalDistance)
-        tvTotalDuration = view.findViewById(R.id.tvTotalDuration)
-        tvTotalPace = view.findViewById(R.id.tvTotalPace)
-        tvTotalCalories = view.findViewById(R.id.tvTotalCalories)
+        try {
+            // 统计卡片
+            tvTotalDistance = view.findViewById(R.id.tvTotalDistance) ?: throw NullPointerException("tvTotalDistance not found")
+            tvTotalDuration = view.findViewById(R.id.tvTotalDuration) ?: throw NullPointerException("tvTotalDuration not found")
+            tvTotalPace = view.findViewById(R.id.tvTotalPace) ?: throw NullPointerException("tvTotalPace not found")
+            tvTotalCalories = view.findViewById(R.id.tvTotalCalories) ?: throw NullPointerException("tvTotalCalories not found")
+            tvTotalSteps = view.findViewById(R.id.tvTotalSteps) ?: throw NullPointerException("tvTotalSteps not found")
 
-        // 运动记录列表
-        rvWorkoutRecords = view.findViewById(R.id.rvWorkoutRecords)
+            // 运动记录列表
+            rvWorkoutRecords = view.findViewById(R.id.rvWorkoutRecords) ?: throw NullPointerException("rvWorkoutRecords not found")
+            
+            // AI建议相关
+            btnGenerateTodayAdvice = view.findViewById(R.id.btnGenerateTodayAdvice) ?: throw NullPointerException("btnGenerateTodayAdvice not found")
+            tvTodayAdvice = view.findViewById(R.id.tvTodayAdvice) ?: throw NullPointerException("tvTodayAdvice not found")
+            pbAdviceLoading = view.findViewById(R.id.pbAdviceLoading) ?: throw NullPointerException("pbAdviceLoading not found")
+            
+            // 设置按钮点击事件
+            btnGenerateTodayAdvice.setOnClickListener {
+                historyViewModel.generateTodayAdvice()
+            }
+        } catch (e: NullPointerException) {
+            Log.e("HistoryTodayFragment", "Failed to initialize views: ${e.message}", e)
+            throw e
+        }
     }
 
     private fun setupRecyclerView() {
@@ -91,11 +117,41 @@ class HistoryTodayFragment : Fragment() {
         historyViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             // TODO: 显示/隐藏加载指示器
         }
+        
+        // 观察AI建议
+        historyViewModel.todayAdvice.observe(viewLifecycleOwner) { advice ->
+            advice?.let {
+                tvTodayAdvice.text = it
+            }
+        }
+        
+        // 观察AI加载状态
+        historyViewModel.isLoadingAdvice.observe(viewLifecycleOwner) { isLoading ->
+            if (isLoading) {
+                pbAdviceLoading.visibility = View.VISIBLE
+                tvTodayAdvice.visibility = View.GONE
+                btnGenerateTodayAdvice.isEnabled = false
+            } else {
+                pbAdviceLoading.visibility = View.GONE
+                tvTodayAdvice.visibility = View.VISIBLE
+                btnGenerateTodayAdvice.isEnabled = true
+            }
+        }
     }
 
     private fun loadTodayData() {
         lifecycleScope.launch {
-            historyViewModel.loadTodayData(1L) // TODO: 使用真实用户ID
+            val userId = TokenManager.getInstance(requireContext()).getUserId()
+            Log.d("HistoryTodayFragment", "Loading today data for user: $userId")
+            
+            if (userId > 0) {
+                // Load user profile first
+                historyViewModel.loadUserProfile()
+                // Then load today data
+                historyViewModel.loadTodayData(userId)
+            } else {
+                Log.e("HistoryTodayFragment", "Invalid user ID: $userId")
+            }
         }
     }
 
@@ -103,6 +159,7 @@ class HistoryTodayFragment : Fragment() {
         val distance = stats["totalDistance"] as? Double ?: 0.0
         val duration = (stats["totalDuration"] as? Number)?.toInt() ?: 0 // 秒，兼容Int和Double
         val calories = stats["totalCalories"] as? Double ?: 0.0
+        val steps = (stats["totalSteps"] as? Number)?.toInt() ?: 0
         val workoutCount = (stats["workoutCount"] as? Number)?.toInt() ?: 0
         
         // 调试信息
@@ -138,6 +195,9 @@ class HistoryTodayFragment : Fragment() {
 
         // 更新卡路里
         tvTotalCalories.text = "${calories.toInt()} kcal"
+
+        // 更新步数
+        tvTotalSteps.text = steps.toString()
     }
 
     private fun showWorkoutDetail(workout: Workout) {

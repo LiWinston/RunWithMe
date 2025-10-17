@@ -96,26 +96,63 @@
                             android:textColor="@android:color/black" />
                     </RelativeLayout>
 
-                    <!-- 植物图片占位 -->
+                    <!-- 优惠券显示区域 -->
+                    <LinearLayout
+                        android:id="@+id/coupon_container"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="8dp"
+                        android:background="@drawable/btn_remind_like">
+
+                        <ImageView
+                            android:id="@+id/iv_coupon_icon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/coupon_icon"
+                            android:contentDescription="Coffee Coupon" />
+
+                        <TextView
+                            android:id="@+id/tv_coupon_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="0"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:text="Free Coffee Won!"
+                            android:textSize="14sp"
+                            android:textColor="@android:color/black" />
+                    </LinearLayout>
+
+                    <!-- coffee image -->
                     <ImageView
-                        android:id="@+id/iv_plant"
+                        android:id="@+id/iv_coffee"
                         android:layout_width="150dp"
                         android:layout_height="150dp"
                         android:layout_gravity="center"
                         android:layout_marginVertical="16dp"
-                        android:src="@drawable/plant"
-                        android:contentDescription="Plant growth" />
+                        android:src="@drawable/coffee_cup"
+                        android:contentDescription="Coffee Cup" />
 
                     <!-- 进度文本 -->
                     <TextView
-                        android:id="@+id/tv_progress"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="Weekly Progress 2/5 · +40💧"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black" />
+                            android:id="@+id/tv_progress"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="Weekly Progress 0"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black" />
 
                     <!-- 进度条 -->
                     <ProgressBar

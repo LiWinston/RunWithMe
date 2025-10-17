@@ -17,6 +17,7 @@ import com.example.myapplication.R
 import com.example.myapplication.weather.data.CurrentWeather
 import com.example.myapplication.weather.data.HourlyForecast
 import com.example.myapplication.weather.utils.WeatherIconUtils
+import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 
 /**
@@ -27,12 +28,12 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr) {
+) : MaterialCardView(context, attrs, defStyleAttr) {
 
     private var isExpanded = false
     private var currentWeather: CurrentWeather? = null
     private var hourlyForecast: HourlyForecast? = null
-    
+
     // 简化视图组件
     private lateinit var compactCard: View
     private lateinit var compactWeatherIcon: ImageView
@@ -44,7 +45,7 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
     private lateinit var compactFeelsLikeText: TextView
     private lateinit var compactPressureText: TextView
     private lateinit var compactUvText: TextView
-    
+
     // 展开视图组件
     private lateinit var expandedCard: View
     private lateinit var expandedWeatherIcon: ImageView
@@ -62,35 +63,37 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
     private lateinit var expandedWindChillValue: TextView
     private lateinit var expandedHeatIndexValue: TextView
     private lateinit var hourlyForecastRecycler: RecyclerView
-    
+
     // 每小时预报适配器
     private lateinit var hourlyForecastAdapter: HourlyForecastAdapter
-    
+
     init {
         setupViews()
         setupClickListeners()
     }
-    
+
+
+
     private fun setupViews() {
         // 添加简化视图
         compactCard = LayoutInflater.from(context).inflate(R.layout.weather_card_compact, this, false)
         addView(compactCard)
-        
+
         // 添加展开视图（初始隐藏）
         expandedCard = LayoutInflater.from(context).inflate(R.layout.weather_card_expanded, this, false)
         expandedCard.visibility = View.GONE
         addView(expandedCard)
-        
+
         // 初始化简化视图组件
         initCompactViews()
-        
+
         // 初始化展开视图组件
         initExpandedViews()
-        
+
         // 设置每小时预报RecyclerView
         setupHourlyForecastRecycler()
     }
-    
+
     private fun initCompactViews() {
         compactWeatherIcon = compactCard.findViewById(R.id.weather_icon)
         compactLocationText = compactCard.findViewById(R.id.location_text)
@@ -102,7 +105,7 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
         compactPressureText = compactCard.findViewById(R.id.pressure_text)
         compactUvText = compactCard.findViewById(R.id.uv_text)
     }
-    
+
     private fun initExpandedViews() {
         expandedWeatherIcon = expandedCard.findViewById(R.id.weather_icon_expanded)
         expandedLocationText = expandedCard.findViewById(R.id.location_text_expanded)
@@ -120,7 +123,7 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
         expandedHeatIndexValue = expandedCard.findViewById(R.id.heat_index_value_expanded)
         hourlyForecastRecycler = expandedCard.findViewById(R.id.hourly_forecast_recycler)
     }
-    
+
     private fun setupHourlyForecastRecycler() {
         hourlyForecastAdapter = HourlyForecastAdapter()
         hourlyForecastRecycler.apply {
@@ -130,25 +133,25 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
             isNestedScrollingEnabled = false
         }
     }
-    
+
     private fun setupClickListeners() {
         compactCard.setOnClickListener {
             expandCard()
         }
-        
+
         expandedCard.setOnClickListener {
             collapseCard()
         }
     }
-    
+
     /**
      * 展开卡片
      */
     private fun expandCard() {
         if (isExpanded) return
-        
+
         isExpanded = true
-        
+
         // 淡入展开视图
         expandedCard.alpha = 0f
         expandedCard.visibility = View.VISIBLE
@@ -156,7 +159,7 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
             .alpha(1f)
             .setDuration(300)
             .start()
-        
+
         // 淡出简化视图
         compactCard.animate()
             .alpha(0f)
@@ -165,19 +168,19 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
                 compactCard.visibility = View.GONE
             }
             .start()
-        
+
         // 更新展开视图数据
         updateExpandedView()
     }
-    
+
     /**
      * 收起卡片
      */
     private fun collapseCard() {
         if (!isExpanded) return
-        
+
         isExpanded = false
-        
+
         // 淡入简化视图
         compactCard.alpha = 0f
         compactCard.visibility = View.VISIBLE
@@ -185,7 +188,7 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
             .alpha(1f)
             .setDuration(300)
             .start()
-        
+
         // 淡出展开视图
         expandedCard.animate()
             .alpha(0f)
@@ -195,20 +198,20 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
             }
             .start()
     }
-    
+
     /**
      * 更新天气数据
      */
     fun updateWeatherData(currentWeather: CurrentWeather, hourlyForecast: HourlyForecast? = null) {
         this.currentWeather = currentWeather
         this.hourlyForecast = hourlyForecast
-        
+
         updateCompactView()
         if (isExpanded) {
             updateExpandedView()
         }
     }
-    
+
     private fun updateCompactView() {
         currentWeather?.let { weather ->
             // 加载天气图标
@@ -216,19 +219,19 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
             Glide.with(context)
                 .load(iconUrl)
                 .into(compactWeatherIcon)
-            
+
             // 更新文本信息
-            compactLocationText.text = "墨尔本, 卡尔顿" // 可以根据实际位置获取
+            compactLocationText.text = "Melbourne, Carlton" // 可以根据实际位置获取
             compactWeatherDescription.text = WeatherIconUtils.getWeatherDescription(weather.condition.type)
-            compactTemperatureText.text = "${weather.temperature.degrees.toInt()}°"
-            compactHumidityText.text = "湿度 ${weather.humidity}%"
-            compactWindText.text = "风速 ${weather.wind.speed.value.toInt()}${weather.wind.speed.unit}"
-            compactFeelsLikeText.text = "体感 ${weather.feelsLikeTemperature.degrees.toInt()}°"
-            compactPressureText.text = "气压 ${weather.pressure.meanSeaLevelMillibars.toInt()} hPa"
+            compactTemperatureText.text = "T = ${weather.temperature.degrees.toInt()}°C"
+            compactHumidityText.text = "H: ${weather.humidity}%"
+            compactWindText.text = "W: ${weather.wind.speed.value.toInt()} ${weather.wind.speed.unit}"
+            compactFeelsLikeText.text = "Feels Like ${weather.feelsLikeTemperature.degrees.toInt()}°"
+            compactPressureText.text = "P: ${weather.pressure.meanSeaLevelMillibars.toInt()} hPa"
             compactUvText.text = "UV ${weather.uvIndex}"
         }
     }
-    
+
     private fun updateExpandedView() {
         currentWeather?.let { weather ->
             // 加载天气图标
@@ -236,17 +239,17 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
             Glide.with(context)
                 .load(iconUrl)
                 .into(expandedWeatherIcon)
-            
+
             // 更新主要信息
-            expandedLocationText.text = "墨尔本, 卡尔顿"
-            expandedWeatherDescription.text = "${WeatherIconUtils.getWeatherDescription(weather.condition.type)}，适合户外运动"
+            expandedLocationText.text = "Melbourne, Carlton"
+            expandedWeatherDescription.text = "${WeatherIconUtils.getWeatherDescription(weather.condition.type)}, perfect for outdoor activities"
             expandedTemperatureText.text = "${weather.temperature.degrees.toInt()}°"
-            
+
             // 更新详细信息
             expandedHumidityValue.text = "${weather.humidity}%"
             expandedFeelsLikeValue.text = "${weather.feelsLikeTemperature.degrees.toInt()}°C"
             expandedWindValue.text = "${weather.wind.speed.value.toInt()} ${weather.wind.speed.unit} ${weather.wind.direction.cardinal}"
-            expandedWindGustValue.text = weather.wind.gust?.let { "${it.value.toInt()} ${it.unit}" } ?: "无"
+            expandedWindGustValue.text = weather.wind.gust?.let { "${it.value.toInt()} ${it.unit}" } ?: "N/A"
             expandedPressureValue.text = "${weather.pressure.meanSeaLevelMillibars.toInt()} hPa"
             expandedVisibilityValue.text = "${weather.visibility.distance.toInt()} ${weather.visibility.unit}"
             expandedUvIndexValue.text = "${weather.uvIndex} ${getUvDescription(weather.uvIndex)}"
@@ -254,7 +257,7 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
             expandedWindChillValue.text = "${weather.windChill.degrees.toInt()}°C"
             expandedHeatIndexValue.text = "${weather.heatIndex.degrees.toInt()}°C"
         }
-        
+
         // 更新每小时预报
         hourlyForecast?.let { forecast ->
             android.util.Log.d("ExpandableWeatherWidget", "更新每小时预报数据，预报条目数: ${forecast.forecasts.size}")
@@ -263,7 +266,7 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
                     android.util.Log.d("ExpandableWeatherWidget", "预报[$index]: 时间=${item.time}, 温度=${item.temperature.degrees}°, 降水=${item.precipitationProbability}%")
                 }
                 hourlyForecastAdapter.updateData(forecast.forecasts)
-                
+
                 // 添加一个淡入动画
                 hourlyForecastRecycler.alpha = 0f
                 hourlyForecastRecycler.animate()
@@ -275,31 +278,31 @@ class ExpandableWeatherWidget @JvmOverloads constructor(
             android.util.Log.w("ExpandableWeatherWidget", "每小时预报数据为空")
         }
     }
-    
+
     private fun getUvDescription(uvIndex: Int): String {
         return when {
-            uvIndex <= 2 -> "低"
-            uvIndex <= 5 -> "中等"
-            uvIndex <= 7 -> "高"
-            uvIndex <= 10 -> "很高"
-            else -> "极高"
+            uvIndex <= 2 -> "Low"
+            uvIndex <= 5 -> "Moderate"
+            uvIndex <= 7 -> "High"
+            uvIndex <= 10 -> "Very High"
+            else -> "Extreme"
         }
     }
-    
+
     /**
      * 强制展开（用于外部调用）
      */
     fun expand() {
         expandCard()
     }
-    
+
     /**
      * 强制收起（用于外部调用）
      */
     fun collapse() {
         collapseCard()
     }
-    
+
     /**
      * 获取当前展开状态
      */

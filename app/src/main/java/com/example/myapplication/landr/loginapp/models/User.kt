@@ -1,4 +1,5 @@
 package com.example.myapplication.landr.loginapp.models
+
 data class User(
     val id: Long,
     val username: String,
@@ -10,7 +11,7 @@ data class User(
     val phoneNumber: String?,
     val height: Double?,
     val weight: Double?,
-    val fitnessGoal: String?,
+    val fitnessGoal: FitnessGoal?,
     val fitnessLevel: String?,
     val weeklyAvailability: String?
 )

@@ -59,13 +59,12 @@ public class AuthController {
      * 刷新访问令牌
      */
     @PostMapping("/refresh")
-    public ResponseEntity<Result<LoginResponse>> refreshToken(@RequestBody Map<String, String> request) {
+    public ResponseEntity<Result<LoginResponse>> refreshToken(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
-            String refreshToken = request.get("refreshToken");
-            if (refreshToken == null || refreshToken.trim().isEmpty()) {
-                return ResponseEntity.ok(Result.error("Refresh token cannot be empty"));
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.ok(Result.error("Refresh token header missing"));
             }
-            
+            String refreshToken = authHeader.substring(7);
             LoginResponse loginResponse = userService.refreshToken(refreshToken);
             return ResponseEntity.ok(Result.ok("Token refresh successful", loginResponse));
         } catch (Exception e) {

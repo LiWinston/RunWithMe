@@ -15,6 +15,7 @@ import com.example.myapplication.landr.RetrofitClient
 import com.example.myapplication.landr.loginapp.LoginActivity
 import com.example.myapplication.R
 import com.example.myapplication.landr.registerapp.models.RegisterRequest
+import com.example.myapplication.landr.registerapp.models.FitnessGoal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -32,7 +33,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var phoneEt: EditText
     private lateinit var heightEt: EditText
     private lateinit var weightEt: EditText
-    private lateinit var fitnessGoalEt: EditText
+    private lateinit var weeklyDistanceSpinner: Spinner
     private lateinit var fitnessLevelSpinner: Spinner
     private lateinit var registerBtn: Button
     private lateinit var backToLoginBtn: Button
@@ -46,9 +47,16 @@ class RegisterActivity : AppCompatActivity() {
 
         initViews()
         setupFitnessLevelSpinner()
+        setupWeeklyDistanceSpinner()
         setupGenderSelection()
         setupClickListeners()
     }
+
+    private lateinit var tilUsername: com.google.android.material.textfield.TextInputLayout
+    private lateinit var tilPassword: com.google.android.material.textfield.TextInputLayout
+    private lateinit var tilAge: com.google.android.material.textfield.TextInputLayout
+    private lateinit var tilHeight: com.google.android.material.textfield.TextInputLayout
+    private lateinit var tilWeight: com.google.android.material.textfield.TextInputLayout
 
     private fun initViews() {
         usernameEt = findViewById(R.id.usernameEt)
@@ -61,10 +69,17 @@ class RegisterActivity : AppCompatActivity() {
         phoneEt = findViewById(R.id.phoneEt)
         heightEt = findViewById(R.id.heightEt)
         weightEt = findViewById(R.id.weightEt)
-        fitnessGoalEt = findViewById(R.id.fitnessGoalEt)
+        weeklyDistanceSpinner = findViewById(R.id.weeklyDistanceSpinner)
         fitnessLevelSpinner = findViewById(R.id.fitnessLevelSpinner)
         registerBtn = findViewById(R.id.registerBtn)
         backToLoginBtn = findViewById(R.id.backToLoginBtn)
+        
+        // Get TextInputLayout references for error display
+        tilUsername = findViewById(R.id.til_username)
+        tilPassword = findViewById(R.id.til_password)
+        tilAge = findViewById(R.id.til_age)
+        tilHeight = findViewById(R.id.til_height)
+        tilWeight = findViewById(R.id.til_weight)
     }
 
     private fun setupFitnessLevelSpinner() {
@@ -75,6 +90,24 @@ class RegisterActivity : AppCompatActivity() {
         )
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         fitnessLevelSpinner.adapter = adapter
+    }
+
+    private fun setupWeeklyDistanceSpinner() {
+        // Weekly distance options in km
+        val distanceOptions = arrayOf(
+            "Select Weekly Goal",
+            "5 km",
+            "10 km",
+            "15 km",
+            "20 km",
+            "25 km",
+            "30 km",
+            "40 km",
+            "50 km"
+        )
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, distanceOptions)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        weeklyDistanceSpinner.adapter = adapter
     }
 
     private fun setupGenderSelection() {
@@ -105,6 +138,13 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun performRegister() {
+        // Clear previous errors
+        tilUsername.error = null
+        tilPassword.error = null
+        tilAge.error = null
+        tilHeight.error = null
+        tilWeight.error = null
+        
         val username = usernameEt.text.toString().trim()
         val password = passwordEt.text.toString().trim()
         val email = emailEt.text.toString().trim()
@@ -114,31 +154,53 @@ class RegisterActivity : AppCompatActivity() {
         val phoneNumber = phoneEt.text.toString().trim()
         val heightText = heightEt.text.toString().trim()
         val weightText = weightEt.text.toString().trim()
-        val fitnessGoal = fitnessGoalEt.text.toString().trim()
 
-        // 验证必填字段
+        // Validate username (3-30 characters)
         if (username.isEmpty()) {
-            Toast.makeText(this, "Username can not be empty", Toast.LENGTH_SHORT).show()
+            tilUsername.error = "Username cannot be empty"
+            usernameEt.requestFocus()
+            return
+        }
+        if (username.length < 3) {
+            tilUsername.error = "Username must be at least 3 characters"
+            usernameEt.requestFocus()
+            return
+        }
+        if (username.length > 30) {
+            tilUsername.error = "Username cannot exceed 30 characters"
+            usernameEt.requestFocus()
             return
         }
 
+        // Validate password (6-100 characters)
         if (password.isEmpty()) {
-            Toast.makeText(this, "Password can not be empty", Toast.LENGTH_SHORT).show()
+            tilPassword.error = "Password cannot be empty"
+            passwordEt.requestFocus()
             return
         }
-
         if (password.length < 6) {
-            Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+            tilPassword.error = "Password must be at least 6 characters"
+            passwordEt.requestFocus()
             return
         }
 
+        // Validate first name
         if (firstName.isEmpty()) {
-            Toast.makeText(this, "FirstName can not be empty", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "First name cannot be empty", Toast.LENGTH_SHORT).show()
+            firstnameEt.requestFocus()
             return
         }
 
+        // Validate last name
         if (lastName.isEmpty()) {
-            Toast.makeText(this, "Lastname can not be empty", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Last name cannot be empty", Toast.LENGTH_SHORT).show()
+            lastnameEt.requestFocus()
+            return
+        }
+
+        // 验证weekly distance goal必须选择
+        if (weeklyDistanceSpinner.selectedItemPosition == 0) {
+            Toast.makeText(this, "Please select a weekly distance goal", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -149,15 +211,86 @@ class RegisterActivity : AppCompatActivity() {
             else -> null
         }
 
-        // 转换数值类型
-        val age = if (ageText.isNotEmpty()) ageText.toIntOrNull() else null
-        val height = if (heightText.isNotEmpty()) heightText.toDoubleOrNull() else null
-        val weight = if (weightText.isNotEmpty()) weightText.toDoubleOrNull() else null
+        // Validate and convert age (13-120)
+        val age = if (ageText.isNotEmpty()) {
+            val ageValue = ageText.toIntOrNull()
+            if (ageValue == null) {
+                tilAge.error = "Please enter a valid age"
+                ageEt.requestFocus()
+                return
+            }
+            if (ageValue < 13) {
+                tilAge.error = "Age must be at least 13"
+                ageEt.requestFocus()
+                return
+            }
+            if (ageValue > 120) {
+                tilAge.error = "Age cannot exceed 120"
+                ageEt.requestFocus()
+                return
+            }
+            ageValue
+        } else null
+
+        // Validate and convert height (50-300 cm)
+        val height = if (heightText.isNotEmpty()) {
+            val heightValue = heightText.toDoubleOrNull()
+            if (heightValue == null) {
+                tilHeight.error = "Please enter a valid height"
+                heightEt.requestFocus()
+                return
+            }
+            if (heightValue < 50.0) {
+                tilHeight.error = "Height must be at least 50 cm"
+                heightEt.requestFocus()
+                return
+            }
+            if (heightValue > 300.0) {
+                tilHeight.error = "Height cannot exceed 300 cm"
+                heightEt.requestFocus()
+                return
+            }
+            heightValue
+        } else null
+
+        // Validate and convert weight (20-500 kg)
+        val weight = if (weightText.isNotEmpty()) {
+            val weightValue = weightText.toDoubleOrNull()
+            if (weightValue == null) {
+                tilWeight.error = "Please enter a valid weight"
+                weightEt.requestFocus()
+                return
+            }
+            if (weightValue < 20.0) {
+                tilWeight.error = "Weight must be at least 20 kg"
+                weightEt.requestFocus()
+                return
+            }
+            if (weightValue > 500.0) {
+                tilWeight.error = "Weight cannot exceed 500 kg"
+                weightEt.requestFocus()
+                return
+            }
+            weightValue
+        } else null
 
         // 获取健身水平
         val fitnessLevel = if (fitnessLevelSpinner.selectedItemPosition > 0) {
             fitnessLevelSpinner.selectedItem.toString().uppercase()
         } else null
+
+        // 获取每周距离目标 (从下拉菜单选项中提取数字，例如 "10 km" -> 10.0)
+        val weeklyDistanceKm = when (weeklyDistanceSpinner.selectedItemPosition) {
+            1 -> 5.0
+            2 -> 10.0
+            3 -> 15.0
+            4 -> 20.0
+            5 -> 25.0
+            6 -> 30.0
+            7 -> 40.0
+            8 -> 50.0
+            else -> null
+        }
 
         val request = RegisterRequest(
             username = username,
@@ -170,7 +303,7 @@ class RegisterActivity : AppCompatActivity() {
             phoneNumber = if (phoneNumber.isNotEmpty()) phoneNumber else null,
             height = height,
             weight = weight,
-            fitnessGoal = if (fitnessGoal.isNotEmpty()) fitnessGoal else null,
+            fitnessGoal = weeklyDistanceKm?.let { FitnessGoal(weeklyDistanceKm = it) },
             fitnessLevel = fitnessLevel,
             weeklyAvailability = null
         )
@@ -182,7 +315,7 @@ class RegisterActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful) {
                         val registerResponse = response.body()
-                        if (registerResponse?.status == 1) {
+                        if (registerResponse?.code == 0) {  // 后端成功时返回 code = 0
                             Toast.makeText(this@RegisterActivity, "Register Successfully! Please Log in.", Toast.LENGTH_SHORT).show()
                             val intent = Intent(this@RegisterActivity, LoginActivity::class.java)
                             startActivity(intent)

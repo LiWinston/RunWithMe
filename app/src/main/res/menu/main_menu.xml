@@ -5,5 +5,6 @@
         android:id="@+id/action_logout"
         android:title="退出登录"
         android:icon="@android:drawable/ic_menu_close_clear_cancel"
-        app:showAsAction="never" />
+        app:showAsAction="ifRoom" />
+        <!-- 如果改成 "always" 就会一直显示；"ifRoom" 是有空间就显示；"never" 是隐藏在菜单中 -->
 </menu>

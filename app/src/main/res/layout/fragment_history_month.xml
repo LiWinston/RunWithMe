@@ -33,11 +33,27 @@
                     style="@style/StatsCardStyle"
                     android:layout_marginEnd="6dp">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Distance"
-                        style="@style/StatsLabelText" />
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/distance"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="4dp"
+                            app:tint="#666666" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Distance"
+                            style="@style/StatsLabelText" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvMonthDistance"
@@ -56,11 +72,27 @@
                     style="@style/StatsCardStyle"
                     android:layout_marginStart="6dp">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Duration"
-                        style="@style/StatsLabelText" />
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/duration"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="4dp"
+                            app:tint="#666666" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Duration"
+                            style="@style/StatsLabelText" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvMonthDuration"
@@ -86,11 +118,27 @@
                     style="@style/StatsCardStyle"
                     android:layout_marginEnd="6dp">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Pace"
-                        style="@style/StatsLabelText" />
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/pace"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="4dp"
+                            app:tint="#666666" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Pace"
+                            style="@style/StatsLabelText" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvMonthPace"
@@ -109,11 +157,74 @@
                     style="@style/StatsCardStyle"
                     android:layout_marginStart="6dp">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Calories"
-                        style="@style/StatsLabelText" />
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/steps"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="4dp"
+                            app:tint="#666666" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Steps"
+                            style="@style/StatsLabelText" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvMonthSteps"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        style="@style/StatsNumberText" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- 第三行：卡路里（占一整行） -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <!-- 卡路里卡片 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    style="@style/StatsCardStyle">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/kcal"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="4dp"
+                            app:tint="#666666" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Calories"
+                            style="@style/StatsLabelText" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvMonthCalories"
@@ -139,7 +250,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="本月运动趋势"
+                android:text="Monthly Trend"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="#000000"
@@ -201,20 +312,40 @@
                     app:tint="#9C27B0" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="Personal Fitness Trainer"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="#9C27B0"
                     android:layout_marginStart="12dp" />
 
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btnGenerateMonthAdvice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="Get Advice"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
+                    android:background="@android:color/holo_purple"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp" />
+
             </LinearLayout>
 
+            <ProgressBar
+                android:id="@+id/pbAdviceLoading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone" />
+
             <TextView
+                android:id="@+id/tvMonthAdvice"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="AI Generating Insights, based on this month's workout of this person"
+                android:text="Click 'Get Advice' to receive personalized fitness recommendations based on your month's performance and goals."
                 android:textSize="14sp"
                 android:textColor="#666666"
                 android:lineSpacingExtra="4dp" />
