@@ -320,22 +320,25 @@ public class WorkoutServiceImpl implements WorkoutService {
         java.time.LocalDate ws = weekStartUtc(java.time.LocalDate.now());
         java.time.LocalDateTime weekStart = ws.atStartOfDay();
 
-        // 汇总本周已完成的距离
+        // 汇总本周已完成的距离（单位：km，database stores in km）
         QueryWrapper<Workout> wq = new QueryWrapper<>();
         wq.eq("user_id", userId).ge("start_time", weekStart).eq("status", "COMPLETED");
         List<Workout> workouts = workoutMapper.selectList(wq);
-        java.math.BigDecimal total = java.math.BigDecimal.ZERO;
-        for (Workout w : workouts) { if (w.getDistance() != null) total = total.add(w.getDistance()); }
-
-        // 读取用户周目标
-        User u = userMapper.selectById(userId);
-        Double goal = null;
-        if (u != null && u.getFitnessGoal() != null && u.getFitnessGoal().getWeeklyDistanceKm() != null) {
-            goal = u.getFitnessGoal().getWeeklyDistanceKm();
+        java.math.BigDecimal totalKm = java.math.BigDecimal.ZERO;
+        for (Workout w : workouts) { 
+            if (w.getDistance() != null) totalKm = totalKm.add(w.getDistance()); 
         }
-        if (goal == null || goal <= 0) return;
 
-        boolean reached = total.doubleValue() >= goal;
+        // 读取用户周目标（单位：km）
+        User u = userMapper.selectById(userId);
+        Double goalKm = null;
+        if (u != null && u.getFitnessGoal() != null && u.getFitnessGoal().getWeeklyDistanceKm() != null) {
+            goalKm = u.getFitnessGoal().getWeeklyDistanceKm();
+        }
+        if (goalKm == null || goalKm <= 0) return;
+
+        // 单位统一：km vs km
+        boolean reached = totalKm.doubleValue() >= goalKm;
         if (!reached) return;
 
         // 查看是否已标记完成

@@ -480,31 +480,31 @@ public class GroupServiceImpl implements GroupService {
             boolean completed = c != null && Boolean.TRUE.equals(c.getIndividualCompleted());
 
             // aggregate this week's distance from workouts
-            java.math.BigDecimal weekDistance = java.math.BigDecimal.ZERO;
+            java.math.BigDecimal weekDistanceKm = java.math.BigDecimal.ZERO;
             try {
-                // Sum workouts distance for this user since week start, completed only
+                // Sum workouts distance for this user since week start, completed only (distance in km)
                 com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.rwm.entity.Workout> wq = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
                 wq.eq("user_id", m.getUserId())
                   .ge("start_time", ws.atStartOfDay())
                   .eq("status", "COMPLETED");
                 List<com.rwm.entity.Workout> workouts = workoutMapper.selectList(wq);
                 for (com.rwm.entity.Workout w : workouts) {
-                    if (w.getDistance() != null) weekDistance = weekDistance.add(w.getDistance());
+                    if (w.getDistance() != null) weekDistanceKm = weekDistanceKm.add(w.getDistance());
                 }
             } catch (Exception ex) {
                 log.warn("Failed to sum weekly distance for user {}: {}", m.getUserId(), ex.getMessage());
             }
 
-            // fetch user's weekly goal from profile
-            Double goal = null;
+            // fetch user's weekly goal from profile (in km)
+            Double goalKm = null;
             var user = userMapper.selectById(m.getUserId());
             if (user != null && user.getFitnessGoal() != null && user.getFitnessGoal().getWeeklyDistanceKm() != null) {
-                goal = user.getFitnessGoal().getWeeklyDistanceKm();
+                goalKm = user.getFitnessGoal().getWeeklyDistanceKm();
             }
-            double done = weekDistance.doubleValue();
+            double doneKm = weekDistanceKm.doubleValue();
             int percent = 0;
-            if (goal != null && goal > 0) {
-                percent = (int) Math.min(100, Math.round((done / goal) * 100));
+            if (goalKm != null && goalKm > 0) {
+                percent = (int) Math.min(100, Math.round((doneKm / goalKm) * 100));
             }
             return new com.rwm.dto.response.GroupMemberInfo(
                     m.getUserId(),
@@ -513,8 +513,8 @@ public class GroupServiceImpl implements GroupService {
                     m.getWeeklyRemindCount() == null ? 0 : m.getWeeklyRemindCount(),
                     completed,
                     Objects.equals(m.getUserId(), userId),
-                    done,
-                    goal,
+                    doneKm,
+                    goalKm,
                     percent
             );
         }).collect(Collectors.toList());
@@ -543,13 +543,15 @@ public class GroupServiceImpl implements GroupService {
         };
 
         java.util.function.Function<com.rwm.entity.Workout, String> workoutSummary = (w) -> {
-            double dist = w.getDistance() == null ? 0.0 : w.getDistance().doubleValue();
+            // distance is stored in km
+            double distKm = w.getDistance() == null ? 0.0 : w.getDistance().doubleValue();
             String type = w.getWorkoutType() == null ? "" : w.getWorkoutType();
-            return String.format("🏃 %.1f km%s", dist, type.isEmpty() ? "" : (" · " + type));
+            return String.format("🏃 %.1f km%s", distKm, type.isEmpty() ? "" : (" · " + type));
         };
 
         java.util.function.Function<com.rwm.entity.Workout, com.rwm.dto.response.FeedWorkoutItem> mapWorkout = (w) -> {
             String startIso = w.getStartTime() == null ? null : w.getStartTime().toString();
+            // distance is stored in km, pass as km to frontend
             return new com.rwm.dto.response.FeedWorkoutItem(
                     w.getId(),
                     w.getUserId(),
