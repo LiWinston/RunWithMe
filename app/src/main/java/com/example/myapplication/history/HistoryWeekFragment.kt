@@ -1,5 +1,6 @@
 package com.example.myapplication.history
 
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -16,6 +17,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.example.myapplication.landr.TokenManager
 import com.example.myapplication.record.Workout
+import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.BarData
+import com.github.mikephil.charting.data.BarDataSet
+import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import kotlinx.coroutines.launch
 
 /**
@@ -36,6 +43,9 @@ class HistoryWeekFragment : Fragment() {
 
     // 运动记录列表
     private lateinit var rvWeekWorkouts: RecyclerView
+    
+    // 图表
+    private lateinit var weekBarChart: BarChart
     
     // AI建议相关UI
     private lateinit var btnGenerateWeekAdvice: Button
@@ -67,6 +77,10 @@ class HistoryWeekFragment : Fragment() {
             tvWeekCalories = view.findViewById(R.id.tvWeekCalories) ?: throw NullPointerException("tvWeekCalories not found")
             tvWeekSteps = view.findViewById(R.id.tvWeekSteps) ?: throw NullPointerException("tvWeekSteps not found")
             rvWeekWorkouts = view.findViewById(R.id.rvWeekWorkouts) ?: throw NullPointerException("rvWeekWorkouts not found")
+            
+            // 图表
+            weekBarChart = view.findViewById(R.id.weekBarChart) ?: throw NullPointerException("weekBarChart not found")
+            setupBarChart()
             
             // AI建议相关
             btnGenerateWeekAdvice = view.findViewById(R.id.btnGenerateWeekAdvice) ?: throw NullPointerException("btnGenerateWeekAdvice not found")
@@ -104,7 +118,7 @@ class HistoryWeekFragment : Fragment() {
         }
 
         historyViewModel.weekChart.observe(viewLifecycleOwner) { chartData ->
-            // TODO: 显示周图表（柱状图）
+            updateWeekBarChart(chartData)
         }
         
         // 观察AI建议
@@ -177,5 +191,93 @@ class HistoryWeekFragment : Fragment() {
         tvWeekCalories.text = "${calories.toInt()} kcal"
 
         tvWeekSteps.text = steps.toString()
+    }
+    
+    private fun setupBarChart() {
+        weekBarChart.apply {
+            description.isEnabled = false
+            setDrawGridBackground(false)
+            setDrawBarShadow(false)
+            setDrawValueAboveBar(true)
+            setPinchZoom(false)
+            setScaleEnabled(false)
+            
+            // X轴设置
+            xAxis.apply {
+                position = XAxis.XAxisPosition.BOTTOM
+                setDrawGridLines(false)
+                granularity = 1f
+                textColor = Color.GRAY
+                textSize = 10f
+            }
+            
+            // 左Y轴设置
+            axisLeft.apply {
+                setDrawGridLines(true)
+                gridColor = Color.LTGRAY
+                textColor = Color.GRAY
+                textSize = 10f
+                axisMinimum = 0f
+            }
+            
+            // 右Y轴禁用
+            axisRight.isEnabled = false
+            
+            // 图例设置
+            legend.isEnabled = false
+            
+            // 动画
+            animateY(800)
+        }
+    }
+    
+    private fun updateWeekBarChart(chartData: Map<String, Any>?) {
+        if (chartData == null) {
+            weekBarChart.clear()
+            return
+        }
+        
+        try {
+            // 从chartData中提取每日数据
+            @Suppress("UNCHECKED_CAST")
+            val dailyData = chartData["daily"] as? List<Map<String, Any>> ?: emptyList()
+            
+            val entries = mutableListOf<BarEntry>()
+            val labels = mutableListOf<String>()
+            
+            // 准备数据 - 一周7天
+            val daysOfWeek = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+            
+            for (i in 0..6) {
+                labels.add(daysOfWeek[i])
+                
+                // 查找当天的数据
+                val dayData = dailyData.getOrNull(i)
+                val distance = (dayData?.get("distance") as? Number)?.toFloat() ?: 0f
+                
+                entries.add(BarEntry(i.toFloat(), distance))
+            }
+            
+            // 创建数据集
+            val dataSet = BarDataSet(entries, "Distance (km)").apply {
+                color = Color.parseColor("#4CAF50")
+                valueTextColor = Color.BLACK
+                valueTextSize = 9f
+                setDrawValues(true)
+            }
+            
+            // 设置数据
+            val barData = BarData(dataSet)
+            barData.barWidth = 0.6f
+            
+            weekBarChart.data = barData
+            weekBarChart.xAxis.valueFormatter = IndexAxisValueFormatter(labels)
+            weekBarChart.xAxis.labelCount = labels.size
+            weekBarChart.invalidate()
+            
+        } catch (e: Exception) {
+            Log.e("HistoryWeekFragment", "Error updating bar chart", e)
+            weekBarChart.clear()
+        }
     }
 }

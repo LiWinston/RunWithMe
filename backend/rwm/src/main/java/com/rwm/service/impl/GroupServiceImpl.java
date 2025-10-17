@@ -19,6 +19,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -33,6 +34,9 @@ public class GroupServiceImpl implements GroupService {
     private final NotificationMapper notificationMapper;
     private final UserMapper userMapper;
     private final WorkoutMapper workoutMapper;
+
+    // 单机锁：按 groupId 进行细粒度加锁，确保周积分与全勤奖励结算的原子性
+    private static final ConcurrentHashMap<Long, Object> GROUP_LOCKS = new ConcurrentHashMap<>();
 
     private LocalDate weekStartUtc(LocalDate date) {
         // Assume Monday as start
@@ -384,83 +388,92 @@ public class GroupServiceImpl implements GroupService {
         if (gid == null) throw new RuntimeException("User not in a group");
         LocalDate ws = weekStartUtc(LocalDate.now());
         LocalDate we = weekEndUtc(LocalDate.now());
+        // 单机锁范围内执行业务，避免并发重复加分/重复发放全勤奖励
+        Object lock = GROUP_LOCKS.computeIfAbsent(gid, k -> new Object());
+        synchronized (lock) {
+            // ensure one-group-per-week contribution
+            QueryWrapper<UserWeeklyContribution> uq = new QueryWrapper<>();
+            uq.eq("user_id", userId).eq("week_start", ws);
+            UserWeeklyContribution c = userWeeklyContributionMapper.selectOne(uq);
+            if (c != null && !Objects.equals(c.getGroupId(), gid)) {
+                throw new RuntimeException("Weekly contribution already made for another group");
+            }
 
-        // ensure one-group-per-week contribution
-        QueryWrapper<UserWeeklyContribution> uq = new QueryWrapper<>();
-        uq.eq("user_id", userId).eq("week_start", ws);
-        UserWeeklyContribution c = userWeeklyContributionMapper.selectOne(uq);
-        if (c != null && !Objects.equals(c.getGroupId(), gid)) {
-            throw new RuntimeException("Weekly contribution already made for another group");
-        }
+            boolean firstTimeForUserThisWeek = false;
+            if (c == null) {
+                c = new UserWeeklyContribution();
+                c.setUserId(userId);
+                c.setGroupId(gid);
+                c.setWeekStart(ws);
+                c.setWeekEnd(we);
+                c.setIndividualCompleted(true);
+                userWeeklyContributionMapper.insert(c);
+                firstTimeForUserThisWeek = true;
+            } else if (Boolean.TRUE.equals(c.getIndividualCompleted())) {
+                // already contributed; nothing to do
+                return;
+            } else {
+                c.setIndividualCompleted(true);
+                userWeeklyContributionMapper.updateById(c);
+                firstTimeForUserThisWeek = true;
+            }
 
-        if (c == null) {
-            c = new UserWeeklyContribution();
-            c.setUserId(userId);
-            c.setGroupId(gid);
-            c.setWeekStart(ws);
-            c.setWeekEnd(we);
-            c.setIndividualCompleted(true);
-            userWeeklyContributionMapper.insert(c);
-        } else if (Boolean.TRUE.equals(c.getIndividualCompleted())) {
-            // already contributed
-            return;
-        } else {
-            c.setIndividualCompleted(true);
-            userWeeklyContributionMapper.updateById(c);
-        }
-
-        // +15 points to group weekly
-        QueryWrapper<GroupWeeklyStats> wq = new QueryWrapper<>();
-        wq.eq("group_id", gid).eq("week_start", ws);
-        GroupWeeklyStats stats = groupWeeklyStatsMapper.selectOne(wq);
-        if (stats == null) {
-            stats = new GroupWeeklyStats();
-            stats.setGroupId(gid);
-            stats.setWeekStart(ws);
-            stats.setWeekEnd(we);
-            stats.setWeeklyPoints(0);
-            stats.setTotalPoints(0);
-            stats.setCouponEarned(0);
-            stats.setFullAttendanceBonusApplied(false);
-            groupWeeklyStatsMapper.insert(stats);
-        }
-        int newWeekly = (stats.getWeeklyPoints() == null ? 0 : stats.getWeeklyPoints()) + 15;
-        stats.setWeeklyPoints(newWeekly);
-
-        // full attendance detection: all current members have individualCompleted=true in this week
-        if (!Boolean.TRUE.equals(stats.getFullAttendanceBonusApplied())) {
-            QueryWrapper<GroupMember> mq = new QueryWrapper<>();
-            mq.eq("group_id", gid).eq("deleted", false);
-            List<GroupMember> members = groupMemberMapper.selectList(mq);
-            int completed = 0;
-            for (GroupMember m : members) {
-                QueryWrapper<UserWeeklyContribution> mq2 = new QueryWrapper<>();
-                mq2.eq("user_id", m.getUserId()).eq("week_start", ws);
-                UserWeeklyContribution mc = userWeeklyContributionMapper.selectOne(mq2);
-                if (mc != null && Boolean.TRUE.equals(mc.getIndividualCompleted())) {
-                    completed++;
+            // 仅首次标记完成时才加分
+            if (firstTimeForUserThisWeek) {
+                // +15 points to group weekly
+                QueryWrapper<GroupWeeklyStats> wq = new QueryWrapper<>();
+                wq.eq("group_id", gid).eq("week_start", ws);
+                GroupWeeklyStats stats = groupWeeklyStatsMapper.selectOne(wq);
+                if (stats == null) {
+                    stats = new GroupWeeklyStats();
+                    stats.setGroupId(gid);
+                    stats.setWeekStart(ws);
+                    stats.setWeekEnd(we);
+                    stats.setWeeklyPoints(0);
+                    stats.setTotalPoints(0);
+                    stats.setCouponEarned(0);
+                    stats.setFullAttendanceBonusApplied(false);
+                    groupWeeklyStatsMapper.insert(stats);
                 }
-            }
-            if (completed == members.size() && members.size() > 0) {
-                stats.setWeeklyPoints(stats.getWeeklyPoints() + 10);
-                stats.setFullAttendanceBonusApplied(true);
+                int newWeekly = (stats.getWeeklyPoints() == null ? 0 : stats.getWeeklyPoints()) + 15;
+                stats.setWeeklyPoints(newWeekly);
+
+                // full attendance detection: all current members have individualCompleted=true in this week
+                if (!Boolean.TRUE.equals(stats.getFullAttendanceBonusApplied())) {
+                    QueryWrapper<GroupMember> mq = new QueryWrapper<>();
+                    mq.eq("group_id", gid).eq("deleted", false);
+                    List<GroupMember> members = groupMemberMapper.selectList(mq);
+                    int completed = 0;
+                    for (GroupMember m : members) {
+                        QueryWrapper<UserWeeklyContribution> mq2 = new QueryWrapper<>();
+                        mq2.eq("user_id", m.getUserId()).eq("week_start", ws);
+                        UserWeeklyContribution mc = userWeeklyContributionMapper.selectOne(mq2);
+                        if (mc != null && Boolean.TRUE.equals(mc.getIndividualCompleted())) {
+                            completed++;
+                        }
+                    }
+                    if (completed == members.size() && members.size() > 0) {
+                        stats.setWeeklyPoints(stats.getWeeklyPoints() + 10);
+                        stats.setFullAttendanceBonusApplied(true);
+                    }
+                }
+
+                // award coupons for every 100 weekly points, carry remainder
+                int couponsEarned = stats.getWeeklyPoints() / 100;
+                int remainder = stats.getWeeklyPoints() % 100;
+                if (couponsEarned > 0) {
+                    stats.setCouponEarned((stats.getCouponEarned() == null ? 0 : stats.getCouponEarned()) + couponsEarned);
+                    stats.setWeeklyPoints(remainder);
+                    Group g = groupMapper.selectById(gid);
+                    g.setCouponCount((g.getCouponCount() == null ? 0 : g.getCouponCount()) + couponsEarned);
+                    groupMapper.updateById(g);
+                    sendNotification(g.getOwnerId(), "GROUP_UPDATED", "Coupon earned", "Your group earned " + couponsEarned + " coupon(s)");
+                }
+
+                stats.setTotalPoints((stats.getTotalPoints() == null ? 0 : stats.getTotalPoints()) + 15);
+                groupWeeklyStatsMapper.updateById(stats);
             }
         }
-
-        // award coupons for every 100 weekly points, carry remainder
-        int couponsEarned = stats.getWeeklyPoints() / 100;
-        int remainder = stats.getWeeklyPoints() % 100;
-        if (couponsEarned > 0) {
-            stats.setCouponEarned((stats.getCouponEarned() == null ? 0 : stats.getCouponEarned()) + couponsEarned);
-            stats.setWeeklyPoints(remainder);
-            Group g = groupMapper.selectById(gid);
-            g.setCouponCount((g.getCouponCount() == null ? 0 : g.getCouponCount()) + couponsEarned);
-            groupMapper.updateById(g);
-            sendNotification(g.getOwnerId(), "GROUP_UPDATED", "Coupon earned", "Your group earned " + couponsEarned + " coupon(s)");
-        }
-
-        stats.setTotalPoints((stats.getTotalPoints() == null ? 0 : stats.getTotalPoints()) + 15);
-        groupWeeklyStatsMapper.updateById(stats);
     }
 
     @Override

@@ -76,20 +76,22 @@ class WorkoutRecordAdapter(
                 }
             }
 
-            // Start time - convert UTC to local time
-            try {
-                val utcTime = LocalDateTime.parse(workout.startTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                val localTime = utcTime.atZone(java.time.ZoneId.of("UTC"))
-                    .withZoneSameInstant(java.time.ZoneId.systemDefault())
-                    .toLocalDateTime()
-                
-                // Debug info
-                android.util.Log.d("WorkoutRecordAdapter", "Original UTC: ${workout.startTime}, Converted Local: $localTime, Timezone: ${java.time.ZoneId.systemDefault()}")
-                
-                tvStartTime.text = localTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-            } catch (e: Exception) {
-                android.util.Log.e("WorkoutRecordAdapter", "Time parsing failed: ${workout.startTime}", e)
-                tvStartTime.text = "Time Error"
+            // Start time - parse backend local time (supports both 'yyyy-MM-dd HH:mm:ss' and ISO_LOCAL_DATE_TIME)
+            val parsedLocal: LocalDateTime? = try {
+                // Try MySQL-like format first
+                LocalDateTime.parse(workout.startTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+            } catch (e1: Exception) {
+                try {
+                    LocalDateTime.parse(workout.startTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                } catch (e2: Exception) {
+                    null
+                }
+            }
+            if (parsedLocal != null) {
+                tvStartTime.text = parsedLocal.format(DateTimeFormatter.ofPattern("HH:mm"))
+            } else {
+                android.util.Log.e("WorkoutRecordAdapter", "Time parsing failed: ${workout.startTime}")
+                tvStartTime.text = "--:--"
             }
 
             // Distance

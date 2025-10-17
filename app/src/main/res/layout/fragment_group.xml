@@ -85,15 +85,32 @@
                             android:textStyle="bold"
                             android:textColor="@android:color/black" />
 
-                        <TextView
-                            android:id="@+id/tv_score"
+                        <!-- Score stack: big number with a small label -->
+                        <LinearLayout
+                            android:id="@+id/score_stack"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
-                            android:text="120"
-                            android:textSize="24sp"
-                            android:textStyle="bold"
-                            android:textColor="@android:color/black" />
+                            android:orientation="vertical"
+                            android:gravity="end">
+
+                            <TextView
+                                android:id="@+id/tv_score"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="120"
+                                android:textSize="24sp"
+                                android:textStyle="bold"
+                                android:textColor="@android:color/black" />
+
+                            <TextView
+                                android:id="@+id/tv_score_label"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Group Points"
+                                android:textSize="12sp"
+                                android:textColor="@android:color/darker_gray" />
+                        </LinearLayout>
                     </RelativeLayout>
 
                     <!-- 优惠券显示区域 -->
@@ -144,12 +161,12 @@
                         android:contentDescription="Coffee Cup" />
 
                     <!-- 进度文本 -->
-                    <TextView
+            <TextView
                             android:id="@+id/tv_progress"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
-                            android:text="Weekly Progress 0"
+                android:text="Coffee Progress 0/100"
                             android:textSize="14sp"
                             android:textStyle="bold"
                             android:textColor="@android:color/black" />

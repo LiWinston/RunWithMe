@@ -8,6 +8,7 @@ import com.rwm.dto.response.WorkoutStatsResponse;
 import com.rwm.entity.*;
 import com.rwm.mapper.*;
 import com.rwm.service.WorkoutService;
+import com.rwm.service.GroupService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     private final NotificationMapper notificationMapper;
     private final UserWeeklyContributionMapper userWeeklyContributionMapper;
     private final UserMapper userMapper;
+    private final GroupService groupService;
     
     @Override
     @Transactional
@@ -74,6 +77,7 @@ public class WorkoutServiceImpl implements WorkoutService {
         if (existingWorkout == null) {
             throw new RuntimeException("运动记录不存在");
         }
+        // 基本防越权校验在控制器层通过 JWT + 记录归属完成，这里不再依赖请求体中的 userId 字段
         
         // 只更新非null字段
         if (request.getDistance() != null) existingWorkout.setDistance(request.getDistance());
@@ -118,6 +122,7 @@ public class WorkoutServiceImpl implements WorkoutService {
         if (workout == null) {
             throw new RuntimeException("运动记录不存在");
         }
+        // 这里只能由记录所有者删除（控制器层可进一步用 JWT 校验当前用户）
         
         // 软删除
         workout.setDeleted(true);
@@ -149,10 +154,10 @@ public class WorkoutServiceImpl implements WorkoutService {
     
     @Override
     public boolean checkTodayGoalAchievement(Long userId) {
-        // 使用UTC时区保持与数据库一致
-        ZoneId utcZone = ZoneId.of("UTC");
-        LocalDateTime startOfDay = LocalDate.now(utcZone).atStartOfDay();
-        LocalDateTime endOfDay = LocalDate.now(utcZone).atTime(23, 59, 59);
+        // 使用服务器本地时区（与数据库 DATETIME 存储一致）
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(23, 59, 59);
         
         QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId)
@@ -165,7 +170,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     
     @Override
     public List<Workout> getUserWorkoutsByDate(Long userId, LocalDate date) {
-        // 传入的LocalDate按照UTC时区处理
+        // 直接按本地时区的日期起止（数据库为本地时间）
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(23, 59, 59);
         
@@ -258,6 +263,7 @@ public class WorkoutServiceImpl implements WorkoutService {
         if (workout == null) {
             throw new RuntimeException("运动记录不存在");
         }
+        // 基本防越权：禁止修改不属于自己的记录（控制器负责匹配当前用户）
         
         workout.setStatus(status);
         
@@ -278,22 +284,15 @@ public class WorkoutServiceImpl implements WorkoutService {
     public Map<String, Object> getUserTodayStats(Long userId) {
         log.info("获取用户今日统计，用户ID: {}", userId);
         
-        // 使用墨尔本时区（用户实际时区）
-        ZoneId melbourneZone = ZoneId.of("Australia/Melbourne");
-        LocalDateTime startOfDay = LocalDate.now(melbourneZone).atStartOfDay();
-        LocalDateTime endOfDay = LocalDate.now(melbourneZone).atTime(23, 59, 59);
-        
-        // 转换为UTC时间用于数据库查询
-        ZoneId utcZone = ZoneId.of("UTC");
-        LocalDateTime utcStartOfDay = startOfDay.atZone(melbourneZone).withZoneSameInstant(utcZone).toLocalDateTime();
-        LocalDateTime utcEndOfDay = endOfDay.atZone(melbourneZone).withZoneSameInstant(utcZone).toLocalDateTime();
-        
-        log.info("墨尔本今日时间范围: {} 到 {}", startOfDay, endOfDay);
-        log.info("转换为UTC时间范围: {} 到 {}", utcStartOfDay, utcEndOfDay);
+        // 使用本地时区与数据库一致的日期范围
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(23, 59, 59);
+        log.info("本地今日时间范围: {} 到 {}", startOfDay, endOfDay);
         
         QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId)
-                   .between("start_time", utcStartOfDay, utcEndOfDay)
+                   .between("start_time", startOfDay, endOfDay)
                    .eq("status", "COMPLETED");
         
         List<Workout> workouts = workoutMapper.selectList(queryWrapper);
@@ -314,11 +313,9 @@ public class WorkoutServiceImpl implements WorkoutService {
         GroupMember gm = groupMemberMapper.selectOne(new QueryWrapper<GroupMember>().eq("user_id", userId).eq("deleted", false));
         Long gid = gm == null ? null : gm.getGroupId();
 
-        // 只在有组时做通知（feed 按 group_id 汇总）
-        if (gid == null) return;
-
         java.time.LocalDate ws = weekStartUtc(java.time.LocalDate.now());
         java.time.LocalDateTime weekStart = ws.atStartOfDay();
+        java.time.LocalDateTime weekEndLdt = ws.plusDays(6).atTime(23,59,59);
 
         // 汇总本周已完成的距离（单位：km，database stores in km）
         QueryWrapper<Workout> wq = new QueryWrapper<>();
@@ -341,53 +338,49 @@ public class WorkoutServiceImpl implements WorkoutService {
         boolean reached = totalKm.doubleValue() >= goalKm;
         if (!reached) return;
 
-        // 查看是否已标记完成
-        UserWeeklyContribution c = userWeeklyContributionMapper.selectOne(new QueryWrapper<UserWeeklyContribution>().eq("user_id", userId).eq("week_start", ws));
-        if (c != null && Boolean.TRUE.equals(c.getIndividualCompleted())) {
-            return; // 已完成过
+        // 触发组内加分与防刷分逻辑（仅当用户在组内时），由 GroupService 完成幂等处理
+        if (gid != null) {
+            try {
+                groupService.completeWeeklyPlan(userId);
+            } catch (Exception ex) {
+                // 不中断主流程，仅记录警告
+                log.warn("completeWeeklyPlan failed for user {}: {}", userId, ex.getMessage());
+            }
         }
 
-        // upsert 标记完成
-        java.time.LocalDate we = ws.plusDays(6);
-        if (c == null) {
-            c = new UserWeeklyContribution();
-            c.setUserId(userId);
-            c.setGroupId(gid);
-            c.setWeekStart(ws);
-            c.setWeekEnd(we);
-            c.setIndividualCompleted(true);
-            userWeeklyContributionMapper.insert(c);
-        } else {
-            c.setIndividualCompleted(true);
-            userWeeklyContributionMapper.updateById(c);
+        // 幂等通知：同一自然周内仅发送一次 WEEKLY_GOAL_ACHIEVED
+        QueryWrapper<Notification> nq = new QueryWrapper<>();
+        nq.eq("actor_user_id", userId)
+          .eq("type", "WEEKLY_GOAL_ACHIEVED")
+          .between("created_at", weekStart, weekEndLdt);
+        Notification existed = notificationMapper.selectOne(nq);
+        if (existed == null) {
+            Notification n = new Notification();
+            // 收件人：自己；groupId 可为空（未入组）
+            n.setUserId(userId);
+            n.setActorUserId(userId);
+            n.setTargetUserId(userId);
+            n.setGroupId(gid);
+            n.setType("WEEKLY_GOAL_ACHIEVED");
+            n.setTitle("Weekly goal achieved");
+            n.setContent("User reached their weekly goal");
+            n.setRead(false);
+            n.setCreatedAt(java.time.LocalDateTime.now());
+            notificationMapper.insert(n);
         }
-
-        // 发送组内通知（用于 feed 展示）
-        Notification n = new Notification();
-        n.setUserId(userId); // 收件人可设为自己（feed 以 group_id 汇聚）
-        n.setActorUserId(userId);
-        n.setTargetUserId(userId);
-        n.setGroupId(gid);
-        n.setType("WEEKLY_GOAL_ACHIEVED");
-        n.setTitle("Weekly goal achieved");
-        n.setContent("User reached their weekly goal");
-        n.setRead(false);
-        n.setCreatedAt(java.time.LocalDateTime.now());
-        notificationMapper.insert(n);
     }
     
     @Override
     public Map<String, Object> getUserWeekStats(Long userId) {
         log.info("获取用户本周统计，用户ID: {}", userId);
         
-        // 使用UTC时区保持与数据库一致
-        ZoneId utcZone = ZoneId.of("UTC");
-        LocalDate today = LocalDate.now(utcZone);
+        // 本地时区的周一作为起点
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
         LocalDate weekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
         LocalDateTime startOfWeek = weekStart.atStartOfDay();
         LocalDateTime endOfWeek = today.atTime(23, 59, 59);
         
-        log.info("UTC本周时间范围: {} 到 {}", startOfWeek, endOfWeek);
+        log.info("本地本周时间范围: {} 到 {}", startOfWeek, endOfWeek);
         
         QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId)
@@ -403,14 +396,13 @@ public class WorkoutServiceImpl implements WorkoutService {
     public Map<String, Object> getUserMonthStats(Long userId) {
         log.info("获取用户本月统计，用户ID: {}", userId);
         
-        // 使用UTC时区保持与数据库一致
-        ZoneId utcZone = ZoneId.of("UTC");
-        LocalDate today = LocalDate.now(utcZone);
+        // 本地时区的月度范围
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
         LocalDate monthStart = today.withDayOfMonth(1);
         LocalDateTime startOfMonth = monthStart.atStartOfDay();
         LocalDateTime endOfMonth = today.atTime(23, 59, 59);
         
-        log.info("UTC本月时间范围: {} 到 {}", startOfMonth, endOfMonth);
+        log.info("本地本月时间范围: {} 到 {}", startOfMonth, endOfMonth);
         
         QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId)
@@ -426,23 +418,14 @@ public class WorkoutServiceImpl implements WorkoutService {
     public List<Workout> getUserWorkoutsByDateRange(Long userId, LocalDate startDate, LocalDate endDate) {
         log.info("获取用户指定日期范围运动记录，用户ID: {}, 开始: {}, 结束: {}", userId, startDate, endDate);
         
-        // 假设传入的日期是墨尔本时区的日期，转换为UTC时区用于数据库查询
-        ZoneId melbourneZone = ZoneId.of("Australia/Melbourne");
-        ZoneId utcZone = ZoneId.of("UTC");
-        
+        // 直接使用本地日期的起止时间（与数据库一致）
         LocalDateTime startDateTime = startDate.atStartOfDay();
-        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+    LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+    log.info("本地日期范围查询: {} 到 {}", startDateTime, endDateTime);
         
-        // 转换为UTC时间
-        LocalDateTime utcStartDateTime = startDateTime.atZone(melbourneZone).withZoneSameInstant(utcZone).toLocalDateTime();
-        LocalDateTime utcEndDateTime = endDateTime.atZone(melbourneZone).withZoneSameInstant(utcZone).toLocalDateTime();
-        
-        log.info("墨尔本日期范围: {} 到 {}", startDateTime, endDateTime);
-        log.info("UTC日期范围查询: {} 到 {}", utcStartDateTime, utcEndDateTime);
-        
-        QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("user_id", userId)
-                   .between("start_time", utcStartDateTime, utcEndDateTime)
+    QueryWrapper<Workout> queryWrapper = new QueryWrapper<>();
+    queryWrapper.eq("user_id", userId)
+           .between("start_time", startDateTime, endDateTime)
                    .orderByDesc("start_time");
         
         List<Workout> workouts = workoutMapper.selectList(queryWrapper);
@@ -455,9 +438,8 @@ public class WorkoutServiceImpl implements WorkoutService {
     public Map<String, Object> getUserWeeklyChart(Long userId) {
         log.info("获取用户本周图表数据，用户ID: {}", userId);
         
-        // 使用UTC时区保持与数据库一致
-        ZoneId utcZone = ZoneId.of("UTC");
-        LocalDate today = LocalDate.now(utcZone);
+        // 本地时区周数据
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
         LocalDate weekStart = today.minusDays(today.getDayOfWeek().getValue() - 1);
         LocalDate weekEnd = weekStart.plusDays(6);
         
@@ -475,35 +457,34 @@ public class WorkoutServiceImpl implements WorkoutService {
         List<Workout> weekWorkouts = workoutMapper.selectList(queryWrapper);
         log.info("本周图表数据查询到{}条记录", weekWorkouts.size());
         
-        Map<String, Object> chartData = new HashMap<>();
-        Map<String, Double> dailyDistance = new HashMap<>();
-        Map<String, Integer> dailyDuration = new HashMap<>();
-        
-        // 初始化所有日期为0
-        for (int i = 0; i < 7; i++) {
-            LocalDate date = weekStart.plusDays(i);
-            String dayName = getDayName(date.getDayOfWeek().getValue());
-            dailyDistance.put(dayName, 0.0);
-            dailyDuration.put(dayName, 0);
-        }
+        // 初始化7天的数据
+        List<Map<String, Object>> dailyData = new ArrayList<>();
+        double[] dailyDistance = new double[7];
         
         // 按日期分组统计
         for (Workout workout : weekWorkouts) {
             LocalDate workoutDate = workout.getStartTime().toLocalDate();
-            String dayName = getDayName(workoutDate.getDayOfWeek().getValue());
+            int dayIndex = workoutDate.getDayOfWeek().getValue() - 1; // 0=Monday, 6=Sunday
             
             if (workout.getDistance() != null) {
-                dailyDistance.put(dayName, dailyDistance.get(dayName) + workout.getDistance().doubleValue());
-            }
-            
-            if (workout.getDuration() != null) {
-                dailyDuration.put(dayName, dailyDuration.get(dayName) + workout.getDuration());
+                dailyDistance[dayIndex] += workout.getDistance().doubleValue();
             }
         }
         
-        chartData.put("dailyDistance", dailyDistance);
-        chartData.put("dailyDuration", dailyDuration);
-        chartData.put("labels", new String[]{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"});
+        // 构建返回数据
+        String[] dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+        for (int i = 0; i < 7; i++) {
+            Map<String, Object> dayData = new HashMap<>();
+            dayData.put("day", i + 1);
+            dayData.put("dayName", dayNames[i]);
+            dayData.put("distance", dailyDistance[i]);
+            dailyData.add(dayData);
+        }
+        
+        Map<String, Object> chartData = new HashMap<>();
+        chartData.put("daily", dailyData);
+        
+        log.info("本周图表数据生成完成: {}", chartData);
         
         return chartData;
     }
@@ -512,38 +493,45 @@ public class WorkoutServiceImpl implements WorkoutService {
     public Map<String, Object> getUserMonthlyChart(Long userId) {
         log.info("获取用户本月图表数据，用户ID: {}", userId);
         
-        // 使用UTC时区保持与数据库一致
-        ZoneId utcZone = ZoneId.of("UTC");
-        LocalDate today = LocalDate.now(utcZone);
+        // 本地时区月数据
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
         LocalDate monthStart = today.withDayOfMonth(1);
         
-        Map<String, Object> chartData = new HashMap<>();
-        Map<String, Double> weeklyDistance = new HashMap<>();
+        // 获取本月所有运动记录
+        List<Workout> monthWorkouts = getUserWorkoutsByDateRange(userId, monthStart, today);
+        log.info("本月图表数据查询到{}条记录", monthWorkouts.size());
         
-        // 按周统计本月数据
-        LocalDate currentWeekStart = monthStart;
-        int weekNumber = 1;
+        // 初始化每日数据
+        int daysInMonth = today.getDayOfMonth();
+        Map<Integer, Double> dailyDistanceMap = new HashMap<>();
         
-        while (currentWeekStart.isBefore(today) || currentWeekStart.isEqual(today)) {
-            LocalDate weekEnd = currentWeekStart.plusDays(6);
-            if (weekEnd.isAfter(today)) {
-                weekEnd = today;
+        // 按日期分组统计
+        for (Workout workout : monthWorkouts) {
+            LocalDate workoutDate = workout.getStartTime().toLocalDate();
+            int day = workoutDate.getDayOfMonth();
+            
+            if (workout.getDistance() != null) {
+                dailyDistanceMap.put(day, 
+                    dailyDistanceMap.getOrDefault(day, 0.0) + workout.getDistance().doubleValue());
             }
-            
-            List<Workout> weekWorkouts = getUserWorkoutsByDateRange(userId, currentWeekStart, weekEnd);
-            double totalDistance = weekWorkouts.stream()
-                    .filter(w -> w.getDistance() != null)
-                    .mapToDouble(w -> w.getDistance().doubleValue())
-                    .sum();
-            
-            weeklyDistance.put("Week " + weekNumber, totalDistance);
-            
-            currentWeekStart = currentWeekStart.plusDays(7);
-            weekNumber++;
         }
         
-        chartData.put("weeklyDistance", weeklyDistance);
+        // 构建返回数据 - 只包含有数据的日期
+        List<Map<String, Object>> dailyData = new ArrayList<>();
+        for (int day = 1; day <= daysInMonth; day++) {
+            if (dailyDistanceMap.containsKey(day) && dailyDistanceMap.get(day) > 0) {
+                Map<String, Object> dayData = new HashMap<>();
+                dayData.put("day", day);
+                dayData.put("distance", dailyDistanceMap.get(day));
+                dailyData.add(dayData);
+            }
+        }
+        
+        Map<String, Object> chartData = new HashMap<>();
+        chartData.put("daily", dailyData);
         chartData.put("period", today.getMonth().toString() + " " + today.getYear());
+        
+        log.info("本月图表数据生成完成: {} 个数据点", dailyData.size());
         
         return chartData;
     }
