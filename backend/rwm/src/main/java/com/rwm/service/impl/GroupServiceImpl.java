@@ -107,9 +107,8 @@ public class GroupServiceImpl implements GroupService {
         Group group = groupMapper.selectById(gm.getGroupId());
         boolean isOwner = Objects.equals(group.getOwnerId(), userId);
 
-        // soft delete membership
-        gm.setDeleted(true);
-        groupMemberMapper.updateById(gm);
+        // soft delete membership via MyBatis-Plus logic delete
+        groupMemberMapper.deleteById(gm.getId());
 
         if (isOwner) {
             transferOwnershipIfOwnerLeaves(group.getId());
