@@ -185,15 +185,12 @@ class HistoryMonthFragment : Fragment() {
         }
         tvMonthDuration.text = timeText
 
-        val avgPace = if (distance > 0 && duration > 0) {
-            val paceSeconds = (duration / distance).toInt()
-            val paceMinutes = paceSeconds / 60
-            val paceSecondsRemainder = paceSeconds % 60
-            "${paceMinutes}'${String.format("%02d", paceSecondsRemainder)}\""
+        val avgPaceMps = if (distance > 0 && duration > 0) {
+            (distance * 1000) / duration  // Convert km to m, then divide by seconds
         } else {
-            "0'00\""
+            0.0
         }
-        tvMonthPace.text = "$avgPace /km"
+        tvMonthPace.text = String.format("%.2f m/s", avgPaceMps)
 
         tvMonthCalories.text = "${calories.toInt()} kcal"
 

@@ -189,16 +189,13 @@ class HistoryTodayFragment : Fragment() {
         }
         tvTotalDuration.text = timeText
 
-        // 更新平均配速（如果有距离和时间）
-        val avgPace = if (distance > 0 && duration > 0) {
-            val paceSeconds = (duration / distance).toInt()
-            val paceMinutes = paceSeconds / 60
-            val paceSecondsRemainder = paceSeconds % 60
-            "${paceMinutes}'${String.format("%02d", paceSecondsRemainder)}\""
+        // 更新平均配速（m/s）
+        val avgPaceMps = if (distance > 0 && duration > 0) {
+            (distance * 1000) / duration  // Convert km to m, then divide by seconds
         } else {
-            "0'00\""
+            0.0
         }
-        tvTotalPace.text = "$avgPace /km"
+        tvTotalPace.text = String.format("%.2f m/s", avgPaceMps)
 
         // 更新卡路里
         tvTotalCalories.text = "${calories.toInt()} kcal"
