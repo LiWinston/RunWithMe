@@ -242,7 +242,7 @@
         <!-- 周图表区域 -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="250dp"
             android:orientation="vertical"
             style="@style/StatsCardStyle"
             android:layout_marginTop="16dp">
@@ -254,15 +254,13 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="#000000"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="12dp" />
 
-            <!-- TODO: 这里应该是一个柱状图显示每天的运动量 -->
-            <TextView
+            <!-- 柱状图 -->
+            <com.github.mikephil.charting.charts.BarChart
+                android:id="@+id/weekBarChart"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="柱状图占位\n(Mon Tue Wed Thu Fri Sat Sun)"
-                android:gravity="center"
-                android:textColor="#999999" />
+                android:layout_height="match_parent" />
 
         </LinearLayout>
 

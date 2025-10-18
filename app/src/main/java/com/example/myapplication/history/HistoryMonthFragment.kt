@@ -1,5 +1,6 @@
 package com.example.myapplication.history
 
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -16,6 +17,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.example.myapplication.landr.TokenManager
 import com.example.myapplication.record.Workout
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import kotlinx.coroutines.launch
 
 /**
@@ -36,6 +43,9 @@ class HistoryMonthFragment : Fragment() {
 
     // 运动记录列表
     private lateinit var rvMonthWorkouts: RecyclerView
+    
+    // 图表
+    private lateinit var monthLineChart: LineChart
     
     // AI建议相关UI
     private lateinit var btnGenerateMonthAdvice: Button
@@ -59,6 +69,13 @@ class HistoryMonthFragment : Fragment() {
         loadMonthData()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Refresh data when user returns to this fragment
+        Log.d("HistoryMonthFragment", "onResume - refreshing month data")
+        loadMonthData()
+    }
+
     private fun initViews(view: View) {
         try {
             tvMonthDistance = view.findViewById(R.id.tvMonthDistance) ?: throw NullPointerException("tvMonthDistance not found")
@@ -67,6 +84,10 @@ class HistoryMonthFragment : Fragment() {
             tvMonthCalories = view.findViewById(R.id.tvMonthCalories) ?: throw NullPointerException("tvMonthCalories not found")
             tvMonthSteps = view.findViewById(R.id.tvMonthSteps) ?: throw NullPointerException("tvMonthSteps not found")
             rvMonthWorkouts = view.findViewById(R.id.rvMonthWorkouts) ?: throw NullPointerException("rvMonthWorkouts not found")
+            
+            // 图表
+            monthLineChart = view.findViewById(R.id.monthLineChart) ?: throw NullPointerException("monthLineChart not found")
+            setupLineChart()
             
             // AI建议相关
             btnGenerateMonthAdvice = view.findViewById(R.id.btnGenerateMonthAdvice) ?: throw NullPointerException("btnGenerateMonthAdvice not found")
@@ -104,7 +125,7 @@ class HistoryMonthFragment : Fragment() {
         }
 
         historyViewModel.monthChart.observe(viewLifecycleOwner) { chartData ->
-            // TODO: 显示月趋势图（折线图）
+            updateMonthLineChart(chartData)
         }
         
         // 观察AI建议
@@ -177,5 +198,102 @@ class HistoryMonthFragment : Fragment() {
         tvMonthCalories.text = "${calories.toInt()} kcal"
 
         tvMonthSteps.text = steps.toString()
+    }
+    
+    private fun setupLineChart() {
+        monthLineChart.apply {
+            description.isEnabled = false
+            setDrawGridBackground(false)
+            setPinchZoom(false)
+            setScaleEnabled(false)
+            isDragEnabled = true
+            
+            // X轴设置
+            xAxis.apply {
+                position = XAxis.XAxisPosition.BOTTOM
+                setDrawGridLines(false)
+                granularity = 1f
+                textColor = Color.GRAY
+                textSize = 10f
+            }
+            
+            // 左Y轴设置
+            axisLeft.apply {
+                setDrawGridLines(true)
+                gridColor = Color.LTGRAY
+                textColor = Color.GRAY
+                textSize = 10f
+                axisMinimum = 0f
+            }
+            
+            // 右Y轴禁用
+            axisRight.isEnabled = false
+            
+            // 图例设置
+            legend.isEnabled = false
+            
+            // 动画
+            animateX(800)
+        }
+    }
+    
+    private fun updateMonthLineChart(chartData: Map<String, Any>?) {
+        if (chartData == null) {
+            monthLineChart.clear()
+            return
+        }
+        
+        try {
+            // 从chartData中提取每日数据
+            @Suppress("UNCHECKED_CAST")
+            val dailyData = chartData["daily"] as? List<Map<String, Any>> ?: emptyList()
+            
+            val entries = mutableListOf<Entry>()
+            val labels = mutableListOf<String>()
+            
+            // 遍历每日数据
+            dailyData.forEachIndexed { index, dayData ->
+                val day = (dayData["day"] as? Number)?.toInt() ?: (index + 1)
+                val distance = (dayData["distance"] as? Number)?.toFloat() ?: 0f
+                
+                labels.add(day.toString())
+                entries.add(Entry(index.toFloat(), distance))
+            }
+            
+            // 如果没有数据，显示空图表
+            if (entries.isEmpty()) {
+                monthLineChart.clear()
+                return
+            }
+            
+            // 创建数据集
+            val dataSet = LineDataSet(entries, "Distance (km)").apply {
+                color = Color.parseColor("#2196F3")
+                lineWidth = 2.5f
+                circleRadius = 4f
+                setCircleColor(Color.parseColor("#2196F3"))
+                circleHoleRadius = 2f
+                circleHoleColor = Color.WHITE
+                valueTextColor = Color.BLACK
+                valueTextSize = 11f  // 增大字体从9f到11f
+                setDrawValues(true)
+                mode = LineDataSet.Mode.CUBIC_BEZIER // 平滑曲线
+                cubicIntensity = 0.2f
+                setDrawFilled(true)
+                fillColor = Color.parseColor("#2196F3")
+                fillAlpha = 50
+            }
+            
+            // 设置数据
+            val lineData = LineData(dataSet)
+            monthLineChart.data = lineData
+            monthLineChart.xAxis.valueFormatter = IndexAxisValueFormatter(labels)
+            monthLineChart.xAxis.labelCount = minOf(7, labels.size) // 最多显示7个标签
+            monthLineChart.invalidate()
+            
+        } catch (e: Exception) {
+            Log.e("HistoryMonthFragment", "Error updating line chart", e)
+            monthLineChart.clear()
+        }
     }
 }

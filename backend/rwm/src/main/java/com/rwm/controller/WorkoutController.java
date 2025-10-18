@@ -34,8 +34,12 @@ public class WorkoutController {
      * 创建运动记录
      */
     @PostMapping
-    public ResponseEntity<Result<Workout>> createWorkout(@Valid @RequestBody WorkoutCreateRequest request) {
+    public ResponseEntity<Result<Workout>> createWorkout(@Valid @RequestBody WorkoutCreateRequest request, jakarta.servlet.http.HttpServletRequest httpReq) {
         try {
+            Long currentUserId = (Long) httpReq.getAttribute("currentUserId");
+            if (currentUserId == null || request.getUserId() == null || !request.getUserId().equals(currentUserId)) {
+                return ResponseEntity.ok(Result.error("UserId mismatch: request userId does not match current user"));
+            }
             Workout workout = workoutService.createWorkout(request);
             return ResponseEntity.ok(Result.ok("运动记录创建成功", workout));
         } catch (Exception e) {
@@ -50,8 +54,19 @@ public class WorkoutController {
     @PutMapping("/{workoutId}")
     public ResponseEntity<Result<Workout>> updateWorkout(
             @PathVariable Long workoutId, 
-            @Valid @RequestBody WorkoutUpdateRequest request) {
+            @Valid @RequestBody WorkoutUpdateRequest request,
+        jakarta.servlet.http.HttpServletRequest httpReq) {
         try {
+            Long currentUserId = (Long) httpReq.getAttribute("currentUserId");
+            if (currentUserId == null) {
+                return ResponseEntity.ok(Result.error("Unauthorized"));
+            }
+            // 所属权校验：当前用户必须是该记录的所有者
+            Workout existing = workoutService.getWorkoutById(workoutId);
+            if (existing == null) return ResponseEntity.ok(Result.error("Workout not found"));
+            if (!existing.getUserId().equals(currentUserId)) {
+                return ResponseEntity.ok(Result.error("Permission denied: not owner"));
+            }
             Workout workout = workoutService.updateWorkout(workoutId, request);
             return ResponseEntity.ok(Result.ok("运动记录更新成功", workout));
         } catch (Exception e) {
@@ -181,8 +196,18 @@ public class WorkoutController {
     @PutMapping("/{workoutId}/status")
     public ResponseEntity<Result<Workout>> updateWorkoutStatus(
             @PathVariable Long workoutId, 
-            @RequestParam String status) {
+            @RequestParam String status,
+        jakarta.servlet.http.HttpServletRequest httpReq) {
         try {
+            Long currentUserId = (Long) httpReq.getAttribute("currentUserId");
+            if (currentUserId == null) {
+                return ResponseEntity.ok(Result.error("Unauthorized"));
+            }
+            Workout existing = workoutService.getWorkoutById(workoutId);
+            if (existing == null) return ResponseEntity.ok(Result.error("Workout not found"));
+            if (!existing.getUserId().equals(currentUserId)) {
+                return ResponseEntity.ok(Result.error("Permission denied: not owner"));
+            }
             Workout workout = workoutService.updateWorkoutStatus(workoutId, status);
             return ResponseEntity.ok(Result.ok("状态更新成功", workout));
         } catch (Exception e) {

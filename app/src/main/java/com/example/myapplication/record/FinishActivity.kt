@@ -6,9 +6,13 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.ProgressBar
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.example.myapplication.R
 import com.example.myapplication.MainActivity
+import com.example.myapplication.landr.TokenManager
+import com.example.myapplication.landr.RetrofitClient as LandrRetrofit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,6 +22,7 @@ import com.example.myapplication.record.WorkoutViewModel
 class FinishActivity : AppCompatActivity() {
 
     private val workoutViewModel: WorkoutViewModel by viewModels()
+    private var isSaving = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +36,7 @@ class FinishActivity : AppCompatActivity() {
         val tvWorkoutType = findViewById<TextView>(R.id.tvWorkoutType)
         val ivWorkoutIcon = findViewById<ImageView>(R.id.ivWorkoutIcon)
         val btnDone = findViewById<Button>(R.id.btnDone)
+        val progressBar = findViewById<ProgressBar>(R.id.progressBar)
 
         // Get passed data
         val distance = intent.getStringExtra("distance") ?: "0.00 m"
@@ -45,8 +51,10 @@ class FinishActivity : AppCompatActivity() {
         tvSpeed.text = speed  // Display speed directly
         
         // Display steps from ViewModel
-        val steps = workoutViewModel.steps.value ?: 0
+        val steps = intent.getIntExtra("steps", 0)
         tvSteps.text = steps.toString()
+        
+        android.util.Log.d("FinishActivity", "Received steps: $steps")
         
         // Set workout type and corresponding icon
         when (workoutType) {
@@ -77,35 +85,57 @@ class FinishActivity : AppCompatActivity() {
         }
 
         btnDone.setOnClickListener {
-            // Save workout to database (asynchronous)
-            saveWorkoutToDatabase()
-
-            // Navigate back to home page
-            navigateBackToStart()
+            if (!isSaving) {
+                // Save workout to database (asynchronous)
+                saveWorkoutToDatabase(btnDone, progressBar)
+            }
         }
     }
 
     /**
      * Save workout record to database (asynchronous processing)
      */
-    private fun saveWorkoutToDatabase() {
+    private fun saveWorkoutToDatabase(btnDone: Button, progressBar: ProgressBar) {
+        if (isSaving) return
+        
+        isSaving = true
+        btnDone.isEnabled = false
+        progressBar.visibility = View.VISIBLE
+        
         val distance = intent.getStringExtra("distance") ?: "0.00 m"
         val duration = intent.getStringExtra("duration") ?: "00:00:00"
         val calories = intent.getStringExtra("calories") ?: "0 kcal"
         val speed = intent.getStringExtra("speed") ?: "0.00 m/s"
+        val steps = intent.getIntExtra("steps", 0)
+
+        android.util.Log.d("FinishActivity", "Saving workout with steps: $steps")
 
         val dynamicData = workoutViewModel.getWorkoutDynamicData()
+        
+        // Create SimpleDateFormat with UTC timezone to match database serverTimezone=UTC
         val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
-        val endTimeStr = sdf.format(java.util.Date())
+        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        
+        // Log the device timezone for debugging
+        val deviceTimezone = java.util.TimeZone.getDefault().id
+        android.util.Log.d("FinishActivity", "Device timezone: $deviceTimezone, Using UTC for backend")
+        
+        val endTime = java.util.Date()
+        val endTimeStr = sdf.format(endTime)
         val durationSeconds = parseDuration(duration)?.toLong() ?: 0L
-        val startTimeStr = sdf.format(java.util.Date(System.currentTimeMillis() - durationSeconds * 1000))
+        val startTime = java.util.Date(System.currentTimeMillis() - durationSeconds * 1000)
+        val startTimeStr = sdf.format(startTime)
+        
+        android.util.Log.d("FinishActivity", "Start time (UTC): $startTimeStr, End time (UTC): $endTimeStr")
 
+        // 从登录态读取当前用户ID
+        val userIdFromToken = TokenManager.getInstance(applicationContext).getUserId()
         val workoutRequest = WorkoutCreateRequest(
-            userId = 1L,
+            userId = userIdFromToken,
             workoutType = "OUTDOOR_RUN",
             distance = parseDistance(distance),
             duration = parseDuration(duration),
-            steps = workoutViewModel.steps.value,
+            steps = steps,
             calories = parseCalories(calories),
             avgSpeed = parseSpeed(speed),
             avgPace = calculateAvgPace(parseDistance(distance), parseDuration(duration)),
@@ -124,27 +154,43 @@ class FinishActivity : AppCompatActivity() {
             workoutData = dynamicData
         )
 
+        android.util.Log.d("FinishActivity", "Workout request created with steps: ${workoutRequest.steps}")
+
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = RetrofitClient.api.createWorkout(workoutRequest)
                 runOnUiThread {
+                    progressBar.visibility = View.GONE
+                    isSaving = false
+                    
                     if (response.isSuccessful && response.body()?.code == 0) {
                         val workoutId = response.body()?.data?.id
 
+                        android.util.Log.d("FinishActivity", "Workout saved successfully with ID: $workoutId")
+                        
                         // Show save success message (JSON data saved in one go)
                         if (workoutId != null) {
                             showSaveSuccess(workoutId)
                         } else {
                             Toast.makeText(this@FinishActivity, "Workout saved successfully!", Toast.LENGTH_SHORT).show()
                         }
+                        
+                        // Navigate back to home page after successful save
+                        navigateBackToStart()
                     } else {
                         val errorMsg = response.body()?.message ?: "Save failed"
-                        Toast.makeText(this@FinishActivity, errorMsg, Toast.LENGTH_SHORT).show()
+                        android.util.Log.e("FinishActivity", "Save failed: $errorMsg")
+                        Toast.makeText(this@FinishActivity, "Save failed: $errorMsg", Toast.LENGTH_LONG).show()
+                        btnDone.isEnabled = true  // Re-enable button on failure
                     }
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    Toast.makeText(this@FinishActivity, "Network error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    progressBar.visibility = View.GONE
+                    isSaving = false
+                    android.util.Log.e("FinishActivity", "Network error: ${e.message}", e)
+                    Toast.makeText(this@FinishActivity, "Network error: ${e.message}", Toast.LENGTH_LONG).show()
+                    btnDone.isEnabled = true  // Re-enable button on error
                 }
             }
         }
