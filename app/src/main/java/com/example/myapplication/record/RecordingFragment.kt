@@ -23,10 +23,13 @@ import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.*
 import com.google.android.gms.location.LocationServices
+import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.Priority
+
+private const val REQ_ACTIVITY_RECOGNITION = 101
 
 
 class RecordingFragment : Fragment(), OnMapReadyCallback {
@@ -69,6 +72,7 @@ class RecordingFragment : Fragment(), OnMapReadyCallback {
         setupButtons()
         startTimer()
         requestLocationPermission()
+        requestActivityRecognitionPermission()
     }
 
     private fun initViews(view: View) {
@@ -206,8 +210,8 @@ class RecordingFragment : Fragment(), OnMapReadyCallback {
             putExtra("distance", workoutViewModel.distance.value ?: "0.00 m")
             putExtra("duration", workoutViewModel.time.value ?: "00:00:00")
             putExtra("calories", workoutViewModel.calories.value ?: "0 kcal")
-            putExtra("speed", workoutViewModel.speed.value ?: "0.00 m/s")
             putExtra("workoutType", workoutViewModel.workoutType.value ?: "Running")
+            putExtra("steps", workoutViewModel.steps.value ?: 0)
         }
         startActivity(intent)
         activity?.finish()
@@ -297,17 +301,44 @@ class RecordingFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
+    private fun requestActivityRecognitionPermission() {
+        val granted = ContextCompat.checkSelfPermission(
+            requireContext(), Manifest.permission.ACTIVITY_RECOGNITION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!granted) {
+            requestPermissions(arrayOf(Manifest.permission.ACTIVITY_RECOGNITION), REQ_ACTIVITY_RECOGNITION)
+        } else {
+            workoutViewModel.startStepSensors()
+        }
+    }
+
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
         if (requestCode == 100 && grantResults.isNotEmpty() &&
             grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            // ✅ 这是你原来的定位逻辑
             workoutViewModel.startLocationTracking()
         }
+
+        if (requestCode == REQ_ACTIVITY_RECOGNITION) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // ✅ 授权成功 → 现在注册计步传感器
+                workoutViewModel.startStepSensors()
+                Toast.makeText(requireContext(), "Activity recognition granted", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), "Permission denied for step detection", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
+
+
 
     // MapView生命周期管理
     override fun onStart() {

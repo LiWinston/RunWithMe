@@ -30,23 +30,46 @@
     </RelativeLayout>
 
     <!-- 地图占位 -->
-    <View
-            android:id="@+id/iv_map"
-            android:layout_width="300dp"
-            android:layout_height="200dp"
-            android:layout_centerHorizontal="true"
-            android:layout_below="@id/top_bar"
-            android:layout_marginTop="20dp"
-            android:background="#E0E0E0" />
+    <FrameLayout
+        android:id="@+id/iv_map"
+        android:layout_width="300dp"
+        android:layout_height="250dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/top_bar"
+        android:layout_marginTop="50dp"
+        android:background="@drawable/rounded_image"
+        android:clipToOutline="true">
+
+        <ImageView
+            android:layout_width="350dp"
+            android:layout_height="290dp"
+            android:layout_gravity="center"
+            android:contentDescription="Workout Image"
+            android:scaleType="centerCrop"
+            android:src="@drawable/workout" />
+    </FrameLayout>
 
     <!-- 开始按钮 - 使用 ImageButton -->
+
+    <TextView
+        android:id="@+id/tv_motivation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/iv_map"
+        android:layout_marginTop="30dp"
+        android:text="Ready to start your journey?"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:textColor="#1B5E20" />
+
     <ImageButton
             android:id="@+id/btn_record"
             android:layout_width="200dp"
             android:layout_height="200dp"
             android:layout_centerHorizontal="true"
-            android:layout_below="@id/iv_map"
-            android:layout_marginTop="120dp"
+            android:layout_below="@id/tv_motivation"
+            android:layout_marginTop="30dp"
             android:src="@drawable/start_record"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:backgroundTint="@android:color/transparent"
