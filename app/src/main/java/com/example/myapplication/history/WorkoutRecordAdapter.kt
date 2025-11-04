@@ -121,22 +121,33 @@ class WorkoutRecordAdapter(
             }
             tvCalories.text = "${calories} kcal"
 
-            // Pace - prioritize avgPace, calculate from avgSpeed if not available
-            val pace = when {
-                workout.avgPace != null && workout.avgPace > 0 -> workout.avgPace
+            // Pace - display as m/s (average speed)
+            // avgSpeed is stored in km/h, avgPace is stored in seconds/km
+            val paceMps = when {
                 workout.avgSpeed != null -> {
                     try {
                         val speedKmh = workout.avgSpeed.toDouble()
-                        if (speedKmh > 0) (3600 / speedKmh).toInt() else 0 // Calculate pace from speed
+                        speedKmh / 3.6  // Convert km/h to m/s
                     } catch (e: NumberFormatException) {
-                        0
+                        0.0
                     }
                 }
-                else -> 0
+                workout.avgPace != null && workout.avgPace > 0 -> {
+                    // Convert pace (seconds/km) to speed (m/s)
+                    try {
+                        val paceSecondsPerKm = workout.avgPace
+                        if (paceSecondsPerKm > 0) {
+                            1000.0 / paceSecondsPerKm  // m/s
+                        } else {
+                            0.0
+                        }
+                    } catch (e: Exception) {
+                        0.0
+                    }
+                }
+                else -> 0.0
             }
-            val paceMinutes = pace / 60
-            val paceSeconds = pace % 60
-            tvPace.text = "${paceMinutes}'${String.format("%02d", paceSeconds)}\""
+            tvPace.text = String.format("%.2f m/s", paceMps)
 
             // Click event
             itemView.setOnClickListener {

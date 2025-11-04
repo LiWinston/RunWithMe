@@ -65,7 +65,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="距离"
+                android:text="distance"
                 android:textSize="10sp"
                 android:textColor="#999999" />
 
@@ -92,7 +92,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="时长"
+                android:text="duration"
                 android:textSize="10sp"
                 android:textColor="#999999" />
 
@@ -119,7 +119,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="卡路里"
+                android:text="calories"
                 android:textSize="10sp"
                 android:textColor="#999999" />
 
@@ -146,7 +146,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="配速"
+                android:text="pace"
                 android:textSize="10sp"
                 android:textColor="#999999" />
 

@@ -31,7 +31,7 @@ class FinishActivity : AppCompatActivity() {
         val tvDistance = findViewById<TextView>(R.id.tvDistance)
         val tvDuration = findViewById<TextView>(R.id.tvDuration)
         val tvCalories = findViewById<TextView>(R.id.tvCalories)
-        val tvSpeed = findViewById<TextView>(R.id.tvPace)  // Use speed to fill pace field
+        val tvPace = findViewById<TextView>(R.id.tvPace)  // Display average pace (m/s)
         val tvSteps = findViewById<TextView>(R.id.tvSteps)
         val tvWorkoutType = findViewById<TextView>(R.id.tvWorkoutType)
         val ivWorkoutIcon = findViewById<ImageView>(R.id.ivWorkoutIcon)
@@ -42,13 +42,19 @@ class FinishActivity : AppCompatActivity() {
         val distance = intent.getStringExtra("distance") ?: "0.00 m"
         val duration = intent.getStringExtra("duration") ?: "00:00:00"
         val calories = intent.getStringExtra("calories") ?: "0 kcal"
-        val speed = intent.getStringExtra("speed") ?: "0.00 m/s"
         val workoutType = intent.getStringExtra("workoutType") ?: "Running"
 
         tvDistance.text = distance
         tvDuration.text = duration
         tvCalories.text = calories
-        tvSpeed.text = speed  // Display speed directly
+        
+        // Calculate and display average pace in m/s
+        val avgPaceMps = calculateAvgPaceMps(parseDistanceToMeters(distance), parseDuration(duration))
+        tvPace.text = if (avgPaceMps > 0) {
+            String.format("%.2f m/s", avgPaceMps)
+        } else {
+            "0.00 m/s"
+        }
         
         // Display steps from ViewModel
         val steps = intent.getIntExtra("steps", 0)
@@ -105,7 +111,6 @@ class FinishActivity : AppCompatActivity() {
         val distance = intent.getStringExtra("distance") ?: "0.00 m"
         val duration = intent.getStringExtra("duration") ?: "00:00:00"
         val calories = intent.getStringExtra("calories") ?: "0 kcal"
-        val speed = intent.getStringExtra("speed") ?: "0.00 m/s"
         val steps = intent.getIntExtra("steps", 0)
 
         android.util.Log.d("FinishActivity", "Saving workout with steps: $steps")
@@ -137,8 +142,8 @@ class FinishActivity : AppCompatActivity() {
             duration = parseDuration(duration),
             steps = steps,
             calories = parseCalories(calories),
-            avgSpeed = parseSpeed(speed),
-            avgPace = calculateAvgPace(parseDistance(distance), parseDuration(duration)),
+            avgSpeed = calculateAvgSpeedKmh(parseDistance(distance), parseDuration(duration)),
+            avgPace = calculateAvgPaceSecondsPerKm(parseDistance(distance), parseDuration(duration)),
             avgHeartRate = workoutViewModel.heartRate.value?.takeIf { it > 0 },
             maxHeartRate = workoutViewModel.heartRate.value?.takeIf { it > 0 },
             startTime = startTimeStr,
@@ -208,6 +213,27 @@ class FinishActivity : AppCompatActivity() {
         finish()
     }
 
+    // Helper function - parse distance string and convert to meters
+    private fun parseDistanceToMeters(distanceStr: String): Double? {
+        return try {
+            val regex = Regex("""(\d+\.?\d*)\s*(m|km)""")
+            val matchResult = regex.find(distanceStr)
+            if (matchResult != null) {
+                val value = matchResult.groupValues[1].toDouble()
+                val unit = matchResult.groupValues[2]
+                when (unit) {
+                    "km" -> value * 1000.0     // Convert km to m
+                    "m" -> value               // Already in m
+                    else -> value
+                }
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     // Helper function - parse distance string and convert to kilometers (backend expects km)
     private fun parseDistance(distanceStr: String): Double? {
         return try {
@@ -258,28 +284,29 @@ class FinishActivity : AppCompatActivity() {
         }
     }
 
-    // Helper function - parse speed string and convert to km/h (backend expects km/h)
-    private fun parseSpeed(speedStr: String): Double? {
-        return try {
-            val regex = Regex("""(\d+\.?\d*)\s*(m/s|mps)""")
-            val matchResult = regex.find(speedStr)
-            if (matchResult != null) {
-                val value = matchResult.groupValues[1].toDouble()
-                value * 3.6  // Convert m/s to km/h (backend stores in km/h)
-            } else {
-                null
-            }
-        } catch (e: Exception) {
+    // Helper function - calculate average pace in m/s for display
+    private fun calculateAvgPaceMps(distanceMeters: Double?, durationSeconds: Int?): Double {
+        return if (distanceMeters != null && durationSeconds != null && durationSeconds > 0 && distanceMeters > 0) {
+            distanceMeters / durationSeconds  // m/s
+        } else {
+            0.0
+        }
+    }
+
+    // Helper function - calculate average speed in km/h for backend
+    private fun calculateAvgSpeedKmh(distanceKm: Double?, durationSeconds: Int?): Double? {
+        return if (distanceKm != null && durationSeconds != null && durationSeconds > 0 && distanceKm > 0) {
+            (distanceKm / durationSeconds) * 3600  // km/h
+        } else {
             null
         }
     }
 
-
     // Helper function - calculate average pace (seconds/km, backend expects seconds per km)
-    private fun calculateAvgPace(distance: Double?, duration: Int?): Int? {
-        return if (distance != null && duration != null && distance > 0) {
+    private fun calculateAvgPaceSecondsPerKm(distanceKm: Double?, durationSeconds: Int?): Int? {
+        return if (distanceKm != null && durationSeconds != null && distanceKm > 0) {
             // distance is now in km, so duration/distance gives seconds per km
-            (duration / distance).toInt()
+            (durationSeconds / distanceKm).toInt()
         } else {
             null
         }
